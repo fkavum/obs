@@ -79,7 +79,17 @@ function card(row) {
   // Channel name is needed whichever way you log in.
   const channelField = field('Your channel name', 'text', `${row.id}-channel`, '');
   channelField.wrap.style.marginTop = '18px';
-  el.append(channelField.wrap);
+  if (row.needsChannel) el.append(channelField.wrap);
+
+  if (!row.anonymousChat) {
+    const note = document.createElement('div');
+    note.className = 'note warn';
+    note.style.margin = '18px 0 0';
+    note.innerHTML = `Unlike Twitch and Kick, <strong>${escape(row.label)} does not let anyone read chat
+      without signing in</strong> \u2014 that is Google\u2019s rule, not something the toolkit can work around.
+      Set it up below; you only do it once.`;
+    el.append(note);
+  }
 
   const saveChannel = async () => {
     const channel = channelField.input.value.trim();
@@ -359,15 +369,15 @@ function plainStatus(row) {
   if (!row.enabled) return 'Off';
   if (row.connected) return row.detail || 'Working';
   if (row.error) return row.error;
-  if (row.needsLogin) return 'Needs you to sign in';
+  if (row.needsLogin) return row.detail || 'Needs you to sign in';
   return row.detail || 'Connecting…';
 }
 
 function dotClass(row) {
   if (!row.enabled) return '';
   if (row.connected) return 'ok';
-  if (row.error || row.needsLogin) return 'bad';
-  return 'warn';
+  if (row.error) return 'bad';
+  return 'warn'; // connecting, or waiting for a sign-in - neither is a fault
 }
 
 function paintHealth() {

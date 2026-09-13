@@ -163,7 +163,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
           return;
         }
         if (msg.event?.endsWith('ChatMessageEvent')) {
-          const event = toChatEvent(msg.data, slug);
+          const event = toChatEvent(pusherData(msg.data), slug);
           if (event) emit(event);
         }
       };
@@ -242,8 +242,21 @@ export function createAdapter({ config, emit, log, saveConfig }) {
   };
 }
 
+/**
+ * Pusher wraps every event's payload as a JSON *string*, not an object. Treating
+ * it as an object silently drops every message, so decode it here, once.
+ */
+export function pusherData(data) {
+  if (typeof data !== 'string') return data;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
 /** Kick chat payload -> normalized event. */
-function toChatEvent(data, channel) {
+export function toChatEvent(data, channel) {
   if (!data?.content) return null;
   const sender = data.sender || {};
   const badges = sender.identity?.badges || [];

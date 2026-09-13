@@ -237,9 +237,11 @@ export function createAdapter({ config, emit, log, saveConfig }) {
 
   return {
     async start() {
-      if (!config.accessToken) throw new Error('not connected yet — press Connect on the setup screen');
       stopped = false;
       idleStreak = 0;
+      // No token yet is not a failure to start - it's a platform waiting for its
+      // one-time sign-in. health() explains that; polling begins once it exists.
+      if (!config.accessToken) return;
       await tick();
     },
 
@@ -251,7 +253,13 @@ export function createAdapter({ config, emit, log, saveConfig }) {
     },
 
     health() {
-      if (!config.accessToken) return { connected: false, detail: 'not connected yet', needsLogin: true };
+      if (!config.accessToken) {
+        return {
+          connected: false,
+          detail: 'YouTube needs you to sign in before it will show chat (Google\u2019s rule)',
+          needsLogin: true,
+        };
+      }
       const pct = Math.round((remaining() / Math.max(1, budget - reserve)) * 100);
       if (lastError) return { connected: false, detail: `${lastError} — quota ${pct}% left` };
       if (!liveChatId) return { connected: false, detail: `waiting for you to go live — quota ${pct}% left` };

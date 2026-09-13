@@ -151,6 +151,7 @@ export class Hub extends EventEmitter {
         authMode: entry.manifest.authMode || 'redirect',
         hasDefaultClientId: !!entry.manifest.defaultClientId,
         anonymousChat: !!entry.manifest.anonymousChat,
+        needsChannel: entry.manifest.needsChannel !== false,
         loginUnlocks: entry.manifest.loginUnlocks || '',
         setupUrl: entry.manifest.setupUrl || '',
         description: entry.manifest.description || '',
