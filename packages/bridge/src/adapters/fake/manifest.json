@@ -1,0 +1,10 @@
+{
+  "id": "fake",
+  "label": "Demo (fake chat)",
+  "color": "#7c5cff",
+  "icon": "icon.svg",
+  "auth": "none",
+  "order": 90,
+  "capabilities": ["chat", "follow", "subscription", "donation", "raid"],
+  "description": "Generates realistic fake chat so you can design overlays without going live."
+}
