@@ -2,7 +2,7 @@
 
 Status: ⬜ not started · 🟨 in progress · ✅ done
 
-Nothing is built yet. This file is the proposal + tracker.
+Items 1-5 are built and tested. This file stays the proposal + tracker.
 
 Every item is judged against the two hard constraints in `introduction.md` §3:
 **near-zero maintenance** and **usable with zero technical knowledge**. Items that fail
@@ -13,19 +13,19 @@ doesn't get re-argued later.
 
 ## Tier 1 — foundation
 
-### ⬜ 1. Bridge + adapter system
+### ✅ 1. Bridge + adapter system
 Adapter auto-discovery, normalized event stream, local WebSocket, HTTP server for overlays.
 **Build the `fake` adapter first** — it powers development, demos and `preview=on`, and it
 means overlay work never requires going live.
 *Constraints:* core holds no platform-specific code, so a platform breaking can't break the toolkit.
 
-### ⬜ 2. Setup wizard
+### ✅ 2. Setup wizard
 Browser page: a **Connect** button per platform (log in → done), an OBS connection check, and
 a status screen with a green/red dot per platform in plain words. Writes
 `config/config.local.json` so the operator never opens a file.
 *This is the feature that makes everything else zero-knowledge.* It ships before any overlay.
 
-### ⬜ 3. Platform adapters — Twitch → Kick → YouTube
+### ✅ 3. Platform adapters — Twitch → Kick → YouTube
 In that order: Twitch is the best-documented, Kick second, YouTube last because its polling
 quota needs the most care (see `docs/architecture.md`). **The chat overlay must need zero
 changes as each is added** — that's the proof the adapter contract is right.
@@ -35,14 +35,14 @@ changes as each is added** — that's the proof the adapter contract is right.
 
 ## Tier 2 — must-have streamer tools
 
-### ⬜ 4. Unified chat overlay — vertical
+### ✅ 4. Unified chat overlay — vertical
 One merged chat from all platforms, platform-tinted and badged. Fully restylable: borders,
 background transparency, platform icons, per-platform message backgrounds, sizes.
 Full spec: [`overlay-chat.md`](overlay-chat.md).
 *Why it matters:* reading three chat windows while playing is the single biggest tax of
 multi-streaming.
 
-### ⬜ 5. Settings screen (visual, live preview)
+### ✅ 5. Settings screen (visual, live preview)
 Controls for every overlay option, the real overlay live-previewing beside them, one-click
 theme presets, and a **Copy URL** button to paste into OBS.
 *Ships with #4 — the overlay is not "done" until it can be restyled without touching a URL.*
@@ -97,12 +97,20 @@ have to change.
 
 ## Build order
 
-1. Bridge + `fake` adapter.
-2. Setup wizard + status screen.
-3. Twitch adapter.
-4. **Vertical chat overlay + settings screen** — the first thing that's usable on a real stream.
-5. Kick adapter, then YouTube adapter. Overlay should need no changes.
-6. Horizontal chat layout.
+1. ✅ Bridge + `fake` adapter.
+2. ✅ Setup wizard + status screen.
+3. ✅ Twitch adapter.
+4. ✅ **Vertical chat overlay + settings screen** — the first thing usable on a real stream.
+5. ✅ Kick adapter, then YouTube adapter. The overlay needed no changes, which is the
+   evidence that the adapter contract holds.
+6. Horizontal chat layout ← next
 7. Alerts → stats bar → health warning.
 
 A guide (`docs/guides/`) ships with each numbered item. Not after.
+
+## What isn't verified yet
+
+The three real adapters are written against each platform's documented API but have **not
+been run against a live channel** — that needs real credentials and an actual broadcast.
+Expect the first real connection of each to need small fixes. Everything else (bridge,
+overlay, wizard, settings, event flow) is verified end to end against the fake adapter.

@@ -15,9 +15,27 @@ knowledge**: one-click start, a browser setup wizard, and visual settings with l
 
 ## Status
 
-Early setup. Structure and design docs only — no code yet.
+Working. Bridge, setup wizard, settings screen, vertical chat overlay, and Twitch / Kick /
+YouTube adapters are built; see [`docs/roadmap.md`](docs/roadmap.md) for what's next and what
+is deliberately postponed.
+
+The three real platform adapters have not yet been run against a live channel.
+
+## Running it
+
+Double-click **`start.command`**, or:
+
+```bash
+npm start          # normal run
+npm run demo       # force the fake-chat platform on
+npm test           # unit tests
+```
+
+No `npm install` — the toolkit has zero dependencies.
+
+Then open **http://localhost:8778**.
 
 ## Requirements
 
-- [OBS Studio](https://obsproject.com/) 30+ with obs-websocket v5 enabled (Tools ▸ WebSocket Server Settings)
+- [OBS Studio](https://obsproject.com/) 30+ (obs-websocket v5 is only needed for later features)
 - Node.js 20+ (v26 in use)

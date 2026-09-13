@@ -6,9 +6,11 @@ what a terminal is. If a guide needs a technical word, the guide explains it.
 **No feature is done until its guide is written.** Use `_template.md` — the shape is fixed so
 every guide feels the same.
 
-| Guide | Feature | Status |
-|---|---|---|
-| _(none yet)_ | | |
+| Guide | Covers |
+|---|---|
+| [Starting the toolkit](getting-started.md) | Turning it on, the setup page, demo chat |
+| [Connecting your channels](connect-channels.md) | Twitch, Kick and YouTube logins |
+| [Chat overlay](chat-overlay.md) | Adding it to OBS and restyling it |
 
 ## Writing rules
 
