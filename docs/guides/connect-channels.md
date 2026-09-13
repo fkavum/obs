@@ -103,8 +103,13 @@ More than ten minutes passed between pressing Connect and logging in. Press Conn
 The Redirect URL on the platform isn't character-for-character what the toolkit shows. Use the
 **Copy the Redirect URL** button instead of typing it, and check for a trailing slash.
 
+**It says "no Kick channel called …" but that IS my username**
+Update the toolkit — newer versions try Kick's alternative spellings (underscore vs hyphen)
+automatically. If it still can't find it, open your channel in a browser and paste the whole
+address (`https://kick.com/…`) into the channel box instead.
+
 **The dot is orange and says "Connecting…"**
-Give it thirty seconds. If it stays orange, check your channel name is spelled exactly right —
+Give it thirty seconds. If it stays orange, check your channel name is spelled right —
 that's the most common cause.
 
 **Kick says its bot protection blocked the lookup**

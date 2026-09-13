@@ -165,16 +165,33 @@ export function fetchViaBrowser(url, { log, candidates = browserCandidates(), ti
   return tryNext(0);
 }
 
+/**
+ * Kick's channel address ("slug") is not always the username: underscores are
+ * often turned into hyphens (MonkeyD_Dcx -> monkeyd-dcx), and the reverse exists
+ * too. The operator types the name they know; we try the spellings Kick might use.
+ */
+export function slugCandidates(name) {
+  const base = String(name || '').trim().toLowerCase().replace(/^@/, '').replace(/^https?:\/\/(www\.)?kick\.com\//, '').replace(/\/.*$/, '');
+  const out = [base];
+  if (base.includes('_')) out.push(base.replace(/_/g, '-'));
+  if (base.includes('-')) out.push(base.replace(/-/g, '_'));
+  return [...new Set(out)].filter(Boolean);
+}
+
 function blockedError(message) {
   return Object.assign(new Error(message), { retryAfterMs: BLOCKED_RETRY_MS, blocked: true });
 }
 
 export function createAdapter({ config, emit, log, saveConfig }) {
-  const slug = (config.channel || '').toLowerCase().trim();
+  const typed = String(config.channel || '').trim();
+  // Resolved on first lookup; remembered so a restart doesn't redo the guessing.
+  let slug = config.chatroomFor && config.resolvedSlug && config.chatroomFor === slugCandidates(typed)[0]
+    ? config.resolvedSlug
+    : slugCandidates(typed)[0] || '';
   let socket = null;
   // The cached chatroom id is only valid for the channel it was looked up for;
   // switching channels in the wizard must trigger a fresh lookup, not reuse it.
-  let chatroomId = config.chatroomFor === slug ? config.chatroomId || null : null;
+  let chatroomId = config.chatroomFor === slugCandidates(typed)[0] ? config.chatroomId || null : null;
   let connected = false;
   let stopped = false;
   let pingTimer = null;
@@ -203,32 +220,46 @@ export function createAdapter({ config, emit, log, saveConfig }) {
    */
   async function resolveChatroom() {
     if (chatroomId) return chatroomId;
-    const url = `${WEB_API}/channels/${encodeURIComponent(slug)}`;
 
+    // Try each plausible spelling; stop at the first that exists.
     let json = null;
-    const res = await fetch(url, { headers: LOOKUP_HEADERS });
-    if (res.status === 404) {
-      throw Object.assign(new Error(`no Kick channel called "${slug}" — check the spelling`), { noRetry: true });
-    }
-    if (res.ok) {
-      json = await res.json().catch(() => null);
-    } else if (res.status === 403 || res.status === 429 || res.status === 503) {
-      // Bot protection challenged us. A real browser engine passes where Node's
-      // TLS fingerprint doesn't, so borrow one that's already installed.
-      log.warn(`Kick's bot protection refused the lookup (${res.status}); trying through an installed browser`);
-      json = await fetchViaBrowser(url, { log });
-      if (!json) {
-        throw blockedError(
-          "Kick's bot protection blocked the channel lookup. This isn't something you did - it usually clears on its own; retrying every 5 minutes.",
-        );
+    let lastStatus = 404;
+    for (const candidate of slugCandidates(typed)) {
+      const url = `${WEB_API}/channels/${encodeURIComponent(candidate)}`;
+      const res = await fetch(url, { headers: LOOKUP_HEADERS });
+      lastStatus = res.status;
+
+      if (res.status === 404) continue;
+      if (res.ok) {
+        json = await res.json().catch(() => null);
+      } else if (res.status === 403 || res.status === 429 || res.status === 503) {
+        // Bot protection challenged us. A real browser engine passes where Node's
+        // TLS fingerprint doesn't, so borrow one that's already installed.
+        log.warn(`Kick's bot protection refused the lookup (${res.status}); trying through an installed browser`);
+        json = await fetchViaBrowser(url, { log });
+        if (!json) {
+          throw blockedError(
+            "Kick's bot protection blocked the channel lookup. This isn't something you did - it usually clears on its own; retrying every 5 minutes.",
+          );
+        }
+      } else {
+        throw new Error(`Kick channel lookup failed (${res.status})`);
       }
-    } else {
-      throw new Error(`Kick channel lookup failed (${res.status})`);
+      if (json) break;
+    }
+
+    if (!json) {
+      if (lastStatus === 404) {
+        throw Object.assign(new Error(`no Kick channel called "${typed}" — check the spelling`), { noRetry: true });
+      }
+      throw new Error(`Kick channel lookup failed (${lastStatus})`);
     }
 
     chatroomId = json?.chatroom?.id;
     if (!chatroomId) throw new Error('Kick did not return a chatroom for this channel');
-    saveConfig?.({ chatroomId, chatroomFor: slug, channelId: json.id });
+    slug = json.slug || slug;
+    if (slug !== slugCandidates(typed)[0]) log.info(`"${typed}" is at kick.com/${slug}`);
+    saveConfig?.({ chatroomId, chatroomFor: slugCandidates(typed)[0], resolvedSlug: slug, channelId: json.id });
     log.info(`resolved chatroom ${chatroomId} for ${slug}`);
     return chatroomId;
   }
@@ -324,7 +355,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
 
   return {
     async start() {
-      if (!slug) throw new Error('no Kick channel name set');
+      if (!typed) throw new Error('no Kick channel name set');
       stopped = false;
       await conn.start();
       if (config.accessToken) {
@@ -345,7 +376,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
     },
 
     health() {
-      if (!slug) return { connected: false, detail: 'no channel name set' };
+      if (!typed) return { connected: false, detail: 'no channel name set' };
       if (!connected) {
         const detail = lastError?.blocked
           ? `${lastError.message} Chat starts by itself once it gets through.`

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBrowserDump, browserCandidates } from '../src/adapters/kick/index.js';
+import { parseBrowserDump, browserCandidates, slugCandidates } from '../src/adapters/kick/index.js';
 import { createReconnector } from '#core/backoff.js';
 
 test('a browser dump of a JSON endpoint is decoded from its <pre> wrapper', () => {
@@ -65,4 +65,14 @@ test('a permanent error (wrong channel name) is reported once and not retried', 
   assert.equal(warns.length, 1);
   assert.match(warns[0], /stopped: no Kick channel called "typo"/);
   assert.doesNotMatch(warns[0], /retrying/);
+});
+
+test('a typed username expands to the spellings Kick might use as its address', () => {
+  // The real case: username MonkeyD_Dcx lives at kick.com/monkeyd-dcx.
+  assert.deepEqual(slugCandidates('MonkeyD_Dcx'), ['monkeyd_dcx', 'monkeyd-dcx']);
+  assert.deepEqual(slugCandidates('monkeyd-dcx'), ['monkeyd-dcx', 'monkeyd_dcx']);
+  assert.deepEqual(slugCandidates('4head'), ['4head'], 'no separators, no variants');
+  assert.deepEqual(slugCandidates('  @Xqc '), ['xqc'], 'trims and drops a leading @');
+  assert.deepEqual(slugCandidates('https://kick.com/MonkeyD_Dcx/videos'), ['monkeyd_dcx', 'monkeyd-dcx'], 'a pasted URL works too');
+  assert.deepEqual(slugCandidates(''), []);
 });
