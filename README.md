@@ -23,7 +23,7 @@ The three real platform adapters have not yet been run against a live channel.
 
 ## Running it
 
-Double-click **`start.command`**, or:
+Double-click **`start.bat`** on Windows or **`start.command`** on a Mac, or from a terminal:
 
 ```bash
 npm start          # normal run

@@ -69,8 +69,16 @@ function banner() {
 }
 
 function openBrowser(target) {
-  const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-  execFile(cmd, [target], () => {}); // best effort; never fatal
+  // On Windows `start` is a cmd.exe builtin rather than an executable, so it has
+  // to be invoked through cmd; the empty "" is the window title that `start`
+  // otherwise steals from the URL.
+  const [cmd, args] =
+    process.platform === 'darwin'
+      ? ['open', [target]]
+      : process.platform === 'win32'
+        ? ['cmd', ['/c', 'start', '', target]]
+        : ['xdg-open', [target]];
+  execFile(cmd, args, () => {}); // best effort; never fatal
 }
 
 let shuttingDown = false;

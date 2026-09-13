@@ -1,0 +1,5 @@
+# Keep launchers usable on the platform they target, whatever git does.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.command text eol=lf
+*.sh text eol=lf

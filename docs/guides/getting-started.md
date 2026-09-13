@@ -10,15 +10,25 @@
 
 ## Start it
 
-1. Double-click **`start.command`** in the project folder.
-2. A black window opens and stays open. That's the toolkit running — leave it alone.
-3. Your browser opens the setup page by itself the first time.
+**On Windows:** double-click **`start.bat`**.
 
-> If double-clicking does nothing, open the Terminal app, type `cd `, drag the project
-> folder onto the window, press Enter, then type `npm start` and press Enter.
+**On a Mac:** double-click **`start.command`**.
+
+Either way a black window opens and stays open — that's the toolkit running. Leave it alone.
+Your browser opens the setup page by itself the first time.
+
+> **Mac:** if double-clicking does nothing, open the Terminal app, type `cd `, drag the
+> project folder onto the window, press Enter, then type `npm start` and press Enter.
+>
+> **Windows:** if the window flashes and disappears, open the folder, click the address bar,
+> type `cmd` and press Enter, then type `npm start` and press Enter. The message that was
+> flashing past will now stay on screen.
 
 That black window **has to stay open the whole time you stream**. Closing it turns the
-overlays off. To stop the toolkit on purpose, click the window and press `Control` + `C`.
+overlays off. To stop the toolkit on purpose, click the window and press `Ctrl` + `C`
+(`Control` + `C` on a Mac).
+
+> **Windows only:** after `Ctrl` + `C` it asks *"Terminate batch job (Y/N)?"* — press `Y`.
 
 ## Open the toolkit page
 
@@ -40,7 +50,12 @@ Turn it off when you're done, or leave it on — it's harmless.
 ## If something goes wrong
 
 **The black window closed on its own**
-Something crashed. Open it again; if it closes immediately, the message it prints says why.
+Something crashed. Open it again; the window now stays open on Windows so you can read the
+message. On a Mac, start it from Terminal as described above to see it.
+
+**Windows says it can't find `node`**
+Node.js isn't installed, or the computer hasn't picked it up yet. Install it from
+[nodejs.org](https://nodejs.org/), then **restart the computer** and try again.
 
 **"Port 8778 is already in use"**
 The toolkit is already running in another window. Use that one, or close it and start again.
