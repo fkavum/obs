@@ -153,7 +153,13 @@ Every event the bridge emits has this envelope:
 
 ## Settings system
 
-There are exactly two places settings live. Don't invent a third.
+There are exactly three places settings live. Don't invent a fourth.
+
+**0. Install defaults → `config/app.config.json`** (committed, human-edited). Channel names
+and which platforms are switched on. Read underneath everything else at startup. Editing it
+keeps working forever because only *differences* are ever saved: a value the operator changes
+in the setup page overrides it, and anything they haven't touched still follows the file.
+Deleting `config.local.json` falls all the way back to these.
 
 **1. Overlay appearance → the Browser Source URL.**
 `http://127.0.0.1:8778/overlays/chat/?layout=vertical&border=accent-left&bgOpacity=45`
@@ -162,8 +168,9 @@ Why: nothing to back up or corrupt, survives a reinstall, and the same overlay c
 twice with two different looks. The operator never sees the parameters — the settings screen
 writes them and hands over a **Copy URL** button.
 
-**2. Service settings (accounts, ports, OBS connection) → the setup wizard**, stored in
-`config/config.local.json`. The operator never opens that file; the wizard writes it.
+**2. Operator changes (accounts, tokens, overrides, ports) → the setup wizard**, stored in
+`config/config.local.json`. The operator never opens that file; the wizard writes it, and it
+only ever contains what differs from the defaults.
 
 ### Chat needs no login at all (Twitch and Kick)
 

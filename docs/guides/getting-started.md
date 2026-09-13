@@ -30,6 +30,20 @@ overlays off. To stop the toolkit on purpose, click the window and press `Ctrl` 
 
 > **Windows only:** after `Ctrl` + `C` it asks *"Terminate batch job (Y/N)?"* — press `Y`.
 
+## Setting your channels once, for good
+
+Open **`config/app.config.json`** in the project folder with any text editor. It looks like:
+
+```
+"twitch":  { "channel": "s0mcs",    "enabled": true },
+"kick":    { "channel": "4head",    "enabled": true },
+"youtube": { "channel": "NFLonCBS", "enabled": true },
+```
+
+Change the names to your own channels and save. Next time you start the toolkit it uses
+them. Anything you later change on the setup page wins over this file; to go back to the
+file's values, press **Disconnect** on that channel.
+
 ## Open the toolkit page
 
 Go to **http://localhost:8778** in your browser. You'll see:

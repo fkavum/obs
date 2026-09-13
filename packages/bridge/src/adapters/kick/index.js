@@ -82,7 +82,9 @@ const base64url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\
 export function createAdapter({ config, emit, log, saveConfig }) {
   const slug = (config.channel || '').toLowerCase().trim();
   let socket = null;
-  let chatroomId = config.chatroomId || null;
+  // The cached chatroom id is only valid for the channel it was looked up for;
+  // switching channels in the wizard must trigger a fresh lookup, not reuse it.
+  let chatroomId = config.chatroomFor === slug ? config.chatroomId || null : null;
   let connected = false;
   let stopped = false;
   let pingTimer = null;
@@ -114,7 +116,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
     const json = await res.json();
     chatroomId = json?.chatroom?.id;
     if (!chatroomId) throw new Error('Kick did not return a chatroom for this channel');
-    saveConfig?.({ chatroomId, channelId: json.id });
+    saveConfig?.({ chatroomId, chatroomFor: slug, channelId: json.id });
     log.info(`resolved chatroom ${chatroomId} for ${slug}`);
     return chatroomId;
   }

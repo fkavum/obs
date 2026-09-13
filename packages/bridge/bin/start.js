@@ -8,7 +8,7 @@
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { createLogger, setLogLevel } from '#core/index.js';
-import { loadConfig, saveConfig, CONFIG_PATH } from '../src/config.js';
+import { loadConfig, setPlatformConfig, CONFIG_PATH } from '../src/config.js';
 import { Hub } from '../src/hub.js';
 import { startServer } from '../src/server/index.js';
 import { refreshExpiring } from '../src/server/auth.js';
@@ -22,20 +22,20 @@ const log = createLogger('bridge');
 const firstRun = !existsSync(CONFIG_PATH);
 const config = loadConfig();
 
+// --demo is for this run only; it must not be remembered as a saved choice.
 if (has('--demo')) {
   config.platforms.fake = { ...(config.platforms.fake || {}), enabled: true };
 }
-// With nothing configured at all, run the demo platform so the operator sees
-// chat immediately instead of an empty screen they have to debug.
+// With nothing configured or defaulted at all, run the demo platform so the
+// operator sees chat immediately instead of an empty screen to debug.
 if (firstRun && !Object.values(config.platforms).some((p) => p.enabled)) {
-  config.platforms.fake = { ...(config.platforms.fake || {}), enabled: true };
+  setPlatformConfig(config, 'fake', { enabled: true });
 }
 
 const hub = new Hub(config);
 await hub.load();
 const server = startServer({ hub, config });
 await hub.startAll();
-saveConfig(config);
 
 // Keep tokens alive without the operator ever thinking about them.
 const refreshTimer = setInterval(() => {

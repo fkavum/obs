@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
 import { WSServer, createLogger } from '#core/index.js';
-import { ROOT, saveConfig } from '../config.js';
+import { ROOT, saveConfig, setPlatformConfig } from '../config.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
 import {
   beginAuth, completeAuth, callbackPage, redirectUriFor,
@@ -179,8 +179,7 @@ async function api(req, res, url, { hub, config }) {
     }
     if (req.method === 'POST') {
       const body = await readBody(req);
-      config.platforms[id] = { ...(config.platforms[id] || {}), ...body };
-      saveConfig(config);
+      setPlatformConfig(config, id, body);
       return sendJSON(res, 200, {
         ok: true,
         config: publicPlatformConfig(config.platforms[id]),
@@ -193,11 +192,12 @@ async function api(req, res, url, { hub, config }) {
   if (disconnect && req.method === 'POST') {
     const id = disconnect[1];
     await hub.stopPlatform(id);
-    const kept = { ...(config.platforms[id] || {}) };
-    for (const key of ['accessToken', 'refreshToken', 'expiresAt', 'connectedAt', 'userId']) delete kept[key];
-    kept.enabled = false;
-    config.platforms[id] = kept;
-    saveConfig(config);
+    // undefined removes the key from the saved layer, forgetting the login.
+    setPlatformConfig(config, id, {
+      accessToken: undefined, refreshToken: undefined, expiresAt: undefined,
+      connectedAt: undefined, userId: undefined, login: undefined, displayName: undefined,
+      enabled: false,
+    });
     hub.platforms.get(id).enabled = false;
     return sendJSON(res, 200, { ok: true });
   }

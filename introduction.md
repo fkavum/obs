@@ -129,7 +129,9 @@ packages/
     chat/              Unified chat overlay.
 plugins/               Native OBS C++ plugins (only if truly needed; requires CMake).
 scripts/               OBS Lua/Python scripts (Tools ▸ Scripts inside OBS).
-config/                Local configuration and credentials. Git-ignored except examples.
+config/
+  app.config.json      Defaults for this install: channel names, platforms on/off. Committed.
+  config.local.json    Setup-page changes and tokens. Git-ignored; overrides the defaults.
 assets/                Fonts, images, sounds used by overlays.
 ```
 
@@ -149,8 +151,10 @@ assets/                Fonts, images, sounds used by overlays.
 - **Never commit secrets.** Tokens and client secrets live in git-ignored local files. Only
   `*.example.*` files are committed.
 - **No feature ships without its `GUIDE.md`**, written for a non-technical reader.
-- **No new configuration mechanism.** Overlay settings go in the URL; service settings go in
-  the settings screen. Don't invent a third place.
+- **No new configuration mechanism.** Overlay appearance goes in the URL; install defaults
+  (channel names, which platforms are on) go in `config/app.config.json`; what the operator
+  changes in the setup page goes in the git-ignored `config/config.local.json`, which wins.
+  Don't invent a fourth place.
 - **Don't hardcode a platform name in core, bridge or overlay code.** Read it from the
   adapter manifests. This is what keeps platforms removable.
 - **Prefer a new overlay over a new framework.** Vanilla HTML/CSS/JS is the default; a build

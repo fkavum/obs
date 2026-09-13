@@ -1,0 +1,9 @@
+{
+  "$comment": "Defaults for this install. Edit freely - changes apply on the next start. Anything you change in the setup page is saved separately (config.local.json) and wins over what is here; press Disconnect or delete that file to fall back to these.",
+  "platforms": {
+    "twitch":  { "channel": "s0mcs",    "enabled": true },
+    "kick":    { "channel": "4head",    "enabled": true },
+    "youtube": { "channel": "NFLonCBS", "enabled": true },
+    "fake":    { "enabled": false }
+  }
+}
