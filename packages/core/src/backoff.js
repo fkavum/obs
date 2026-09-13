@@ -19,7 +19,11 @@ export function createReconnector({ connect, log, minMs = 1000, maxMs = 60000, l
       attempt = 0; // a clean connect resets the backoff
     } catch (err) {
       if (stopped) return;
-      const delay = Math.min(maxMs, minMs * 2 ** attempt) * (0.7 + Math.random() * 0.6);
+      // An error may ask for a specific wait (e.g. "blocked, come back in 5 min");
+      // otherwise use the exponential curve.
+      const delay = err?.retryAfterMs
+        ? err.retryAfterMs
+        : Math.min(maxMs, minMs * 2 ** attempt) * (0.7 + Math.random() * 0.6);
       attempt++;
       log?.warn(`${label} failed (${err.message}); retrying in ${Math.round(delay / 1000)}s`);
       timer = setTimeout(() => {

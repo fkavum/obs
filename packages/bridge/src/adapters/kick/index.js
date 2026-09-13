@@ -10,6 +10,8 @@
  * directory needs editing, and the other platforms are unaffected.
  */
 import { createHash, randomBytes } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { createReconnector } from '#core/backoff.js';
 import { makeEvent, buildFragments } from '#core/index.js';
 
@@ -79,6 +81,81 @@ async function tokenRequest(body) {
 
 const base64url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
+const BLOCKED_RETRY_MS = 5 * 60 * 1000;
+
+/**
+ * Browsers already on the machine that can fetch a Cloudflare-protected page for
+ * us. Node's TLS fingerprint isn't a browser's, so bot protection sometimes
+ * challenges it; a real browser engine passes. Edge ships with Windows, so a
+ * Windows PC always has a candidate. Overridable with OBS_TOOLKIT_BROWSER.
+ */
+export function browserCandidates(platform = process.platform, env = process.env) {
+  if (env.OBS_TOOLKIT_BROWSER) return [env.OBS_TOOLKIT_BROWSER];
+  if (platform === 'darwin') {
+    return [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    ];
+  }
+  if (platform === 'win32') {
+    const pf = env.ProgramFiles || 'C:\\Program Files';
+    const pf86 = env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+    const local = env.LOCALAPPDATA || '';
+    return [
+      `${pf86}\\Microsoft\\Edge\\Application\\msedge.exe`,
+      `${pf}\\Microsoft\\Edge\\Application\\msedge.exe`,
+      `${pf}\\Google\\Chrome\\Application\\chrome.exe`,
+      `${pf86}\\Google\\Chrome\\Application\\chrome.exe`,
+      local && `${local}\\Google\\Chrome\\Application\\chrome.exe`,
+      `${pf}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+    ].filter(Boolean);
+  }
+  return ['google-chrome', 'chromium', 'chromium-browser', 'microsoft-edge', 'brave-browser'];
+}
+
+/** Chromium renders a JSON response inside <pre>; a challenge page is full HTML. */
+export function parseBrowserDump(html) {
+  const m = /<pre[^>]*>([\s\S]*?)<\/pre>/i.exec(html || '');
+  if (!m) return null;
+  const text = m[1]
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch a URL through an installed browser engine. Resolves null if none works. */
+export function fetchViaBrowser(url, { log, candidates = browserCandidates(), timeoutMs = 20000 } = {}) {
+  const found = candidates.filter((c) => c.includes('/') || c.includes('\\') ? existsSync(c) : true);
+  const tryNext = (i) =>
+    new Promise((resolve) => {
+      if (i >= found.length) return resolve(null);
+      const bin = found[i];
+      execFile(
+        bin,
+        ['--headless=new', '--disable-gpu', '--no-first-run', '--virtual-time-budget=8000', '--dump-dom', url],
+        { timeout: timeoutMs, maxBuffer: 4 * 1024 * 1024, windowsHide: true },
+        (err, stdout) => {
+          const json = err ? null : parseBrowserDump(String(stdout));
+          if (json) {
+            log?.info(`fetched via browser (${bin.split(/[\\/]/).pop()})`);
+            return resolve(json);
+          }
+          resolve(tryNext(i + 1));
+        },
+      );
+    });
+  return tryNext(0);
+}
+
+function blockedError(message) {
+  return Object.assign(new Error(message), { retryAfterMs: BLOCKED_RETRY_MS, blocked: true });
+}
+
 export function createAdapter({ config, emit, log, saveConfig }) {
   const slug = (config.channel || '').toLowerCase().trim();
   let socket = null;
@@ -89,8 +166,21 @@ export function createAdapter({ config, emit, log, saveConfig }) {
   let stopped = false;
   let pingTimer = null;
   let viewerTimer = null;
+  let lastError = null;
 
-  const conn = createReconnector({ label: 'kick chat', log, connect: connectChat });
+  const conn = createReconnector({
+    label: 'kick chat',
+    log,
+    connect: async () => {
+      try {
+        await connectChat();
+        lastError = null;
+      } catch (err) {
+        lastError = err;
+        throw err;
+      }
+    },
+  });
 
   /**
    * The realtime socket is keyed by chatroom id, which the public API doesn't
@@ -100,20 +190,29 @@ export function createAdapter({ config, emit, log, saveConfig }) {
    */
   async function resolveChatroom() {
     if (chatroomId) return chatroomId;
-    const res = await fetch(`${WEB_API}/channels/${encodeURIComponent(slug)}`, {
-      headers: {
-        accept: 'application/json',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36',
-        'accept-language': 'en-US,en;q=0.9',
-      },
-    });
-    if (res.status === 403 || res.status === 429) {
-      throw new Error('Kick blocked the lookup for this channel; try again in a few minutes');
-    }
-    if (res.status === 404) throw new Error(`no Kick channel called "${slug}"`);
-    if (!res.ok) throw new Error(`Kick channel lookup failed (${res.status})`);
+    const url = `${WEB_API}/channels/${encodeURIComponent(slug)}`;
 
-    const json = await res.json();
+    let json = null;
+    const res = await fetch(url, {
+      headers: { accept: 'application/json', 'accept-language': 'en-US,en;q=0.9' },
+    });
+    if (res.status === 404) throw new Error(`no Kick channel called "${slug}"`);
+    if (res.ok) {
+      json = await res.json().catch(() => null);
+    } else if (res.status === 403 || res.status === 429 || res.status === 503) {
+      // Bot protection challenged us. A real browser engine passes where Node's
+      // TLS fingerprint doesn't, so borrow one that's already installed.
+      log.warn(`Kick's bot protection refused the lookup (${res.status}); trying through an installed browser`);
+      json = await fetchViaBrowser(url, { log });
+      if (!json) {
+        throw blockedError(
+          "Kick's bot protection blocked the channel lookup. This isn't something you did - it usually clears on its own; retrying every 5 minutes.",
+        );
+      }
+    } else {
+      throw new Error(`Kick channel lookup failed (${res.status})`);
+    }
+
     chatroomId = json?.chatroom?.id;
     if (!chatroomId) throw new Error('Kick did not return a chatroom for this channel');
     saveConfig?.({ chatroomId, chatroomFor: slug, channelId: json.id });
@@ -234,7 +333,14 @@ export function createAdapter({ config, emit, log, saveConfig }) {
 
     health() {
       if (!slug) return { connected: false, detail: 'no channel name set' };
-      if (!connected) return { connected: false, detail: 'connecting…', signedIn: !!config.accessToken };
+      if (!connected) {
+        const detail = lastError?.blocked
+          ? `${lastError.message} Chat starts by itself once it gets through.`
+          : lastError
+            ? `${lastError.message} — retrying`
+            : 'connecting…';
+        return { connected: false, detail, signedIn: !!config.accessToken };
+      }
       // Kick chat needs no login at all; signing in only adds viewer counts.
       if (!config.accessToken) {
         return { connected: true, detail: `chat — ${slug} (not signed in)`, canSignIn: true, signedIn: false };

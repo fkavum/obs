@@ -107,8 +107,23 @@ The Redirect URL on the platform isn't character-for-character what the toolkit 
 Give it thirty seconds. If it stays orange, check your channel name is spelled exactly right —
 that's the most common cause.
 
-**Kick says it blocked the lookup**
-Kick sometimes refuses automated requests for a few minutes. It reconnects by itself.
+**Kick says its bot protection blocked the lookup**
+Not something you did. Kick's website sits behind a bot filter that sometimes challenges
+programs the way it challenges suspicious visitors — it depends on your connection, not on
+how often you asked. The toolkit handles it in this order, all by itself:
+
+1. It asks again through a browser already on your computer (Edge on Windows, Chrome on a
+   Mac), which passes the filter because it *is* a browser.
+2. If that also fails, it waits 5 minutes and tries again, and keeps doing so. Chat starts by
+   itself the moment it gets through — you don't need to touch anything.
+
+It only ever has to get through **once** per channel; after that the answer is remembered.
+
+If it stays blocked for a long time, there is a manual way round: open
+`https://kick.com/api/v2/channels/YOUR-CHANNEL` in your own browser, find the number after
+`"chatroom":{"id":`, and add it to `config/app.config.json` like this:
+`"kick": { "channel": "yourname", "chatroomId": 1234567, "chatroomFor": "yourname", "enabled": true }`.
+Then restart the toolkit.
 
 **The dot says "Needs you to log in"**
 Sign in again. If it keeps happening, press **Disconnect** first, then set it up again.
