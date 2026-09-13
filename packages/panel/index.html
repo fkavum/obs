@@ -1,1 +1,52 @@
-<!doctype html><meta charset=utf-8><title>placeholder</title>panel coming next
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OBS Streaming Toolkit</title>
+<link rel="stylesheet" href="/panel.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Your streaming toolkit</h1>
+    <p>Connect your channels once, then drop the overlay into OBS. Leave the black terminal window open while you stream.</p>
+  </header>
+
+  <nav class="tabs">
+    <a href="/" aria-current="page">Setup</a>
+    <a href="/settings/">Chat overlay style</a>
+  </nav>
+
+  <section class="card">
+    <div class="row between">
+      <div>
+        <h2>Chat overlay</h2>
+        <p class="sub">Copy this link and add it to OBS as a <strong>Browser Source</strong>.</p>
+      </div>
+      <a class="btn" href="/settings/">Change how it looks</a>
+    </div>
+    <div class="urlbar">
+      <input id="overlayUrl" class="grow" type="text" readonly>
+      <button class="primary" id="copyOverlay">Copy</button>
+    </div>
+    <div class="note">
+      In OBS: <strong>Sources</strong> → <strong>+</strong> → <strong>Browser</strong> → paste the link →
+      set Width <code class="inline">400</code> and Height <code class="inline">1080</code> → OK.
+    </div>
+  </section>
+
+  <h2 style="font-size:17px;margin:26px 0 12px">Your channels</h2>
+  <div id="platforms"></div>
+
+  <section class="card">
+    <h2>Is everything working?</h2>
+    <p class="sub">A green dot means that channel is connected and chat is coming through.</p>
+    <div id="health" class="row"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="/wizard.js"></script>
+</body>
+</html>

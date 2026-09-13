@@ -16,7 +16,8 @@ const root = document.getElementById('chat');
 /** platform id -> { color, icon, label } from GET /api/platforms */
 let platforms = new Map();
 const seen = new Map(); // dedupe: text -> { el, count }
-let queueTail = Promise.resolve();
+let retryDelay = 1000;
+let retryTimer = null;
 
 applyStaticStyles();
 main();
@@ -131,8 +132,6 @@ function connect() {
   socket.onerror = () => socket.close();
 }
 
-let retryDelay = 1000;
-let retryTimer = null;
 function scheduleReconnect() {
   if (retryTimer) return;
   retryTimer = setTimeout(() => {

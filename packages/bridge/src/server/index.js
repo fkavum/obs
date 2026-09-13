@@ -126,7 +126,9 @@ async function api(req, res, url, { hub, config }) {
         url: `http://${config.bridge.host}:${config.bridge.httpPort}`,
         uptimeSec: Math.round(process.uptime()),
       },
-      platforms: hub.status(),
+      // The redirect URI must match what the platform has registered exactly, so
+      // it is computed here rather than guessed from the browser's address bar.
+      platforms: hub.status().map((row) => ({ ...row, redirectUri: redirectUriFor(config, row.id) })),
       obs: { enabled: config.obs.enabled, url: config.obs.url },
     });
   }

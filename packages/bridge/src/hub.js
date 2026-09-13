@@ -127,6 +127,8 @@ export class Hub extends EventEmitter {
         label: entry.manifest.label,
         color: entry.manifest.color,
         auth: entry.manifest.auth || 'none',
+        setupUrl: entry.manifest.setupUrl || '',
+        description: entry.manifest.description || '',
         needs: entry.oauth?.needs || [],
         capabilities: entry.manifest.capabilities || [],
         enabled: entry.enabled,

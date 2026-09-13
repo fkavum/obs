@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat overlay style</title>
+<link rel="stylesheet" href="/panel.css">
+</head>
+<body>
+<div class="wrap wide">
+  <header class="top">
+    <h1>Chat overlay style</h1>
+    <p>Change anything on the left and watch it update on the right. When you like it, press <strong>Copy link for OBS</strong>.</p>
+  </header>
+
+  <nav class="tabs">
+    <a href="/">Setup</a>
+    <a href="/settings/" aria-current="page">Chat overlay style</a>
+  </nav>
+
+  <div class="themes" id="themes"></div>
+
+  <div class="editor">
+    <div class="controls" id="controls"></div>
+
+    <div class="preview-pane">
+      <div class="stage">
+        <iframe id="preview" title="Live preview of your chat overlay"></iframe>
+        <span class="stage-label">Live preview</span>
+      </div>
+      <div class="urlbar">
+        <input id="url" class="grow" type="text" readonly>
+        <button class="primary" id="copy">Copy link for OBS</button>
+      </div>
+      <div class="row" style="margin-top:12px;justify-content:space-between">
+        <label class="switch"><input type="checkbox" id="fakeToggle" checked><span>Use fake messages in this preview</span></label>
+        <button class="ghost" id="reset">Reset everything</button>
+      </div>
+      <div class="note">
+        Already added the overlay to OBS? Double-click the source, delete the old link and paste the new one.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="/settings/settings.js"></script>
+</body>
+</html>
