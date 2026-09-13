@@ -123,6 +123,9 @@ async function helixUser(clientId, accessToken) {
 
 export function createAdapter({ config, emit, log }) {
   const channel = (config.channel || config.login || '').toLowerCase().replace(/^#/, '');
+  // Reading chat needs no account at all. Signing in only adds the things that
+  // genuinely require permission: follows, subs, cheers, raids, viewer counts.
+  const signedIn = !!config.accessToken;
   let irc = null;
   let eventsub = null;
   let sessionId = null;
@@ -154,8 +157,14 @@ export function createAdapter({ config, emit, log }) {
 
       socket.onopen = () => {
         socket.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
-        socket.send(`PASS oauth:${config.accessToken}`);
-        socket.send(`NICK ${config.login || 'justinfan12345'}`);
+        if (signedIn) {
+          socket.send(`PASS oauth:${config.accessToken}`);
+          socket.send(`NICK ${config.login || 'justinfan12345'}`);
+        } else {
+          // Anonymous read-only login. Any justinfan<number> nick works and no
+          // PASS is sent; tags still arrive, so nothing is lost for chat.
+          socket.send(`NICK justinfan${Math.floor(Math.random() * 90000 + 10000)}`);
+        }
         socket.send(`JOIN #${channel}`);
       };
 
@@ -351,14 +360,15 @@ export function createAdapter({ config, emit, log }) {
 
   return {
     async start() {
-      if (!config.accessToken) throw new Error('not connected yet — press Connect on the setup screen');
       if (!channel) throw new Error('no channel name set');
       stopped = false;
       await ircConn.start();
-      esConn.start(); // events are a bonus; chat must not wait on them
-      pollViewers();
-      viewerTimer = setInterval(pollViewers, 60000);
-      viewerTimer.unref?.();
+      if (signedIn) {
+        esConn.start(); // events are a bonus; chat must not wait on them
+        pollViewers();
+        viewerTimer = setInterval(pollViewers, 60000);
+        viewerTimer.unref?.();
+      }
     },
 
     async stop() {
@@ -374,12 +384,19 @@ export function createAdapter({ config, emit, log }) {
     },
 
     health() {
-      if (!config.accessToken) return { connected: false, detail: 'not connected yet', needsLogin: true };
-      const bits = [ircReady ? 'chat' : null, esReady ? 'events' : null].filter(Boolean);
-      return {
-        connected: ircReady,
-        detail: bits.length ? `${bits.join(' + ')} — #${channel}` : 'connecting…',
-      };
+      if (!channel) return { connected: false, detail: 'no channel name set' };
+      if (!ircReady) return { connected: false, detail: 'connecting…', signedIn };
+      if (!signedIn) {
+        return {
+          connected: true,
+          detail: `chat — #${channel} (not signed in)`,
+          // Not an error: chat is working. Signing in only adds alerts.
+          canSignIn: true,
+          signedIn: false,
+        };
+      }
+      const bits = ['chat', esReady ? 'alerts' : null].filter(Boolean);
+      return { connected: true, detail: `${bits.join(' + ')} — #${channel}`, signedIn: true };
     },
   };
 }

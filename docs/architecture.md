@@ -165,6 +165,21 @@ writes them and hands over a **Copy URL** button.
 **2. Service settings (accounts, ports, OBS connection) → the setup wizard**, stored in
 `config/config.local.json`. The operator never opens that file; the wizard writes it.
 
+### Chat needs no login at all (Twitch and Kick)
+
+Verified empirically, not assumed: Twitch accepts an anonymous IRC connection — a
+`justinfan<random>` nick with no `PASS` — and still ACKs `twitch.tv/tags`, so display names,
+colours, badges, emote positions and user ids all arrive. Kick's realtime chat socket is
+likewise public; the adapter only needs the chatroom id, which comes from a public endpoint.
+
+So the default path is: type a channel name, chat works. **Signing in is optional and only
+unlocks what genuinely requires permission** — follows, subs, cheers, raids and viewer counts
+on Twitch, viewer counts on Kick. An adapter declares this with `anonymousChat` in its
+manifest, and the wizard builds itself from that.
+
+YouTube is the exception: Google rejects unauthenticated callers outright
+("Method doesn't allow unregistered callers"), so it needs credentials even to read chat.
+
 ### Login (two modes, both supported everywhere)
 
 The shared auth layer handles both, and an adapter declares which it wants with

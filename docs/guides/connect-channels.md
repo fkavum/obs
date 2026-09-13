@@ -9,44 +9,49 @@
 
 ---
 
-## Twitch — the quick way
+## Twitch and Kick — just type your channel name
 
-1. On **http://localhost:8778**, find the Twitch box.
+1. On **http://localhost:8778**, find the Twitch (or Kick) box.
 2. Type your channel name.
-3. Press **Sign in with Twitch**.
-4. A short code appears, like `WXYZ-1234`. Press **Open the page**, and type the code there.
-5. The toolkit notices by itself and the dot turns green.
+3. That's it. Chat starts arriving.
 
-That's it. No developer page, no secret, no Redirect URL.
+**No account, no login, no developer page.** Reading chat on both of these is public, so the
+toolkit simply listens the way any viewer's browser does.
+
+### Signing in (optional)
+
+Signing in to Twitch adds the things that genuinely need permission: **follower, subscriber,
+cheer and raid alerts, and viewer counts**. On Kick it adds **viewer counts**. Chat itself
+works either way.
+
+To do it: press **Sign in with Twitch (optional)**, and a short code appears like
+`WXYZ-1234`. Press **Open the page** and type the code there. The toolkit notices by itself.
+No secret, no Redirect URL.
 
 > If it says *"No application set up yet"*, open **Use your own Twitch application** below the
-> button and follow the four steps there. You need the **Client ID** only — there is no secret.
+> button and follow the four steps. You need the **Client ID** only — there is no secret.
+
+Kick's sign-in needs the developer-page route below, because Kick requires a secret.
 
 ---
 
-## Kick and YouTube — the developer page way
+## YouTube — the developer page way
 
-These two don't offer the quick sign-in, so you create a small "application" once so the
-platform knows which program is asking. It sounds technical; it's four boxes and a button,
-and the toolkit gives you the exact values to paste.
+YouTube is the one that does need setting up, because Google requires an account even to read
+a live chat.
 
-In the platform's box on the setup page:
-
-1. Click the developer page link — it opens the right page.
-2. Create an application. Call it anything, e.g. "My overlay".
-3. When it asks for a **Redirect URL**, press **Copy the Redirect URL** in the toolkit and
+1. Click the developer page link in the YouTube box — it opens Google Cloud Console.
+2. Create a project, then go to *Credentials* → *OAuth client ID* → *Web application*.
+3. Enable the **YouTube Data API v3** for that project.
+4. When it asks for a **Redirect URL**, press **Copy the Redirect URL** in the toolkit and
    paste it in. It has to match *exactly* — no extra slash, no `https`.
-4. Copy the **ID** and **Secret** back into the toolkit, press **Save**, then press **Connect**.
+5. Copy the **ID** and **Secret** back into the toolkit, press **Save**, then press **Connect**.
 
-A tab opens, you log in, and it closes itself.
+Google warns that the app is unverified, which is expected for something only you use — click
+*Advanced* → *Go to (your app)*.
 
-**Kick** — the developer settings are in your Kick account settings. Type your channel name
-exactly as it appears in your Kick address (the part after `kick.com/`).
-
-**YouTube** — create the app in Google Cloud Console under *Credentials* → *OAuth client ID*
-→ *Web application*, and enable the **YouTube Data API v3** for the project. Google warns that
-the app is unverified, which is expected for something only you use — click *Advanced* →
-*Go to (your app)*.
+The same developer-page route is available for Twitch and Kick too, if you'd rather use your
+own application on those.
 
 ---
 
@@ -54,15 +59,18 @@ the app is unverified, which is expected for something only you use — click *A
 
 Not out of inconsistency — each platform allows something different:
 
-- **Twitch** permits a "public" sign-in that needs no secret, so the toolkit can ship one
-  built in and you just press a button.
-- **Kick** requires a secret for every login. A secret can't be shipped inside an app that
-  runs on your computer — anyone could read it — so you make your own.
-- **YouTube** *could* work like Twitch, but Google counts chat usage **per application, not
-  per person**. If everyone shared one built-in app, you'd all be sharing one daily allowance
-  and would run out faster. Your own app means your own allowance.
+- **Twitch and Kick let anyone read chat without an account.** So the toolkit does exactly
+  that, and you set nothing up. Signing in is only for alerts and viewer counts, which do
+  need permission.
+- **Twitch's optional sign-in** uses a code you type on their site, which needs no secret —
+  so the toolkit can ship the application built in.
+- **Kick's sign-in requires a secret**, and a secret can't be shipped inside an app that runs
+  on your computer — anyone could read it out — so you make your own.
+- **YouTube needs an account even to read chat**, and Google counts usage **per application,
+  not per person**. If everyone shared one built-in app you'd share one daily allowance and
+  run out faster. Your own app means your own allowance.
 
-You can always use your own application on any platform, including Twitch, if you'd rather.
+You can always use your own application on any platform if you'd rather.
 
 > **About YouTube's allowance:** Google limits how often the toolkit may fetch new chat
 > messages each day. The toolkit spreads this across the day by itself and shows how much is

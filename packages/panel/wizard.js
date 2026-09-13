@@ -81,9 +81,27 @@ function card(row) {
   channelField.wrap.style.marginTop = '18px';
   el.append(channelField.wrap);
 
-  const saveChannel = () =>
-    post(`/api/platforms/${row.id}/config`, { channel: channelField.input.value.trim() });
+  const saveChannel = async () => {
+    const channel = channelField.input.value.trim();
+    await post(`/api/platforms/${row.id}/config`, { channel });
+    // Typing a channel name is the whole setup for platforms whose chat is
+    // public, so switch it on rather than making them find the toggle.
+    if (channel && !row.enabled && row.anonymousChat) {
+      await post(`/api/platforms/${row.id}/enabled`, { enabled: true });
+      await refresh();
+    }
+  };
   channelField.input.addEventListener('change', saveChannel);
+
+  if (row.anonymousChat) {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.style.marginBottom = '16px';
+    note.innerHTML = `<strong>Chat works as soon as you type your channel name above.</strong>
+      Reading ${escape(row.label)} chat needs no account. Signing in is optional \u2014 it adds
+      ${escape(row.loginUnlocks || 'extra features')}.`;
+    el.append(note);
+  }
 
   const keyFields = {};
 
@@ -91,7 +109,12 @@ function card(row) {
     // ---- One-click sign in -------------------------------------------------
     const connectBtn = document.createElement('button');
     connectBtn.className = 'primary';
-    connectBtn.textContent = connected ? `Sign in to ${row.label} again` : `Sign in with ${row.label}`;
+    connectBtn.className = row.anonymousChat ? '' : 'primary';
+    connectBtn.textContent = row.connected && row.signedIn
+      ? `Sign in to ${row.label} again`
+      : row.anonymousChat
+        ? `Sign in with ${row.label} (optional)`
+        : `Sign in with ${row.label}`;
 
     const hint = document.createElement('span');
     hint.style.cssText = 'font-size:13px;color:var(--muted)';
@@ -335,8 +358,8 @@ function demoCard(row) {
 function plainStatus(row) {
   if (!row.enabled) return 'Off';
   if (row.connected) return row.detail || 'Working';
-  if (row.needsLogin) return 'Needs you to log in';
   if (row.error) return row.error;
+  if (row.needsLogin) return 'Needs you to sign in';
   return row.detail || 'Connecting…';
 }
 

@@ -232,12 +232,12 @@ export function createAdapter({ config, emit, log, saveConfig }) {
 
     health() {
       if (!slug) return { connected: false, detail: 'no channel name set' };
-      return {
-        connected,
-        detail: connected ? `chat — ${slug}` : 'connecting…',
-        // Kick chat works without a login; the token only adds viewer counts.
-        needsLogin: !config.accessToken,
-      };
+      if (!connected) return { connected: false, detail: 'connecting…', signedIn: !!config.accessToken };
+      // Kick chat needs no login at all; signing in only adds viewer counts.
+      if (!config.accessToken) {
+        return { connected: true, detail: `chat — ${slug} (not signed in)`, canSignIn: true, signedIn: false };
+      }
+      return { connected: true, detail: `chat + viewers — ${slug}`, signedIn: true };
     },
   };
 }

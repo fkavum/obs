@@ -5,7 +5,12 @@
   "icon": "icon.svg",
   "auth": "oauth2",
   "order": 20,
-  "capabilities": ["chat", "viewers"],
+  "capabilities": [
+    "chat",
+    "viewers"
+  ],
   "setupUrl": "https://kick.com/settings/developer",
-  "description": "Live chat and channel info. Kick's API moves fastest of the three, so everything Kick-shaped is sealed inside this folder."
+  "description": "Live chat and channel info. Kick's API moves fastest of the three, so everything Kick-shaped is sealed inside this folder.",
+  "anonymousChat": true,
+  "loginUnlocks": "viewer counts"
 }

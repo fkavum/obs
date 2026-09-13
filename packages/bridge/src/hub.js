@@ -150,6 +150,8 @@ export class Hub extends EventEmitter {
         auth: entry.manifest.auth || 'none',
         authMode: entry.manifest.authMode || 'redirect',
         hasDefaultClientId: !!entry.manifest.defaultClientId,
+        anonymousChat: !!entry.manifest.anonymousChat,
+        loginUnlocks: entry.manifest.loginUnlocks || '',
         setupUrl: entry.manifest.setupUrl || '',
         description: entry.manifest.description || '',
         needs: entry.oauth?.needs || [],
@@ -159,6 +161,8 @@ export class Hub extends EventEmitter {
         connected: !!health.connected,
         detail: health.detail || '',
         needsLogin: !!health.needsLogin,
+        signedIn: !!health.signedIn,
+        canSignIn: !!health.canSignIn,
         error: entry.error,
       });
     }

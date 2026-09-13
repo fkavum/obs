@@ -16,5 +16,7 @@
   "setupUrl": "https://dev.twitch.tv/console/apps/create",
   "description": "Chat over IRC, plus follows, subs, cheers and raids over EventSub. Logs in with a short code - no redirect URL, no client secret.",
   "authMode": "device",
-  "defaultClientId": ""
+  "defaultClientId": "",
+  "anonymousChat": true,
+  "loginUnlocks": "follower, sub, cheer and raid alerts, plus viewer counts"
 }
