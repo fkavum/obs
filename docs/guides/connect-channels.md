@@ -47,8 +47,15 @@ a live chat.
    paste it in. It has to match *exactly* — no extra slash, no `https`.
 5. Copy the **ID** and **Secret** back into the toolkit, press **Save**, then press **Connect**.
 
+6. On the **OAuth consent screen** page, set **Publishing status** to **In production** (press
+   *Publish app*). Leaving it on *Testing* makes Google forget your login **every 7 days**,
+   which means signing in again each week — the whole point is to sign in once.
+
 Google warns that the app is unverified, which is expected for something only you use — click
 *Advanced* → *Go to (your app)*.
+
+**It's free.** The YouTube Data API has no price and no billing; you don't add a card. What it
+has is a daily allowance (see below).
 
 The same developer-page route is available for Twitch and Kick too, if you'd rather use your
 own application on those.
