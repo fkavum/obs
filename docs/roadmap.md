@@ -111,9 +111,27 @@ have to change.
 
 A guide (`docs/guides/`) ships with each numbered item. Not after.
 
-## What isn't verified yet
+## Verified against real channels (2026-09-14)
 
-The three real adapters are written against each platform's documented API but have **not
-been run against a live channel** — that needs real credentials and an actual broadcast.
-Expect the first real connection of each to need small fixes. Everything else (bridge,
-overlay, wizard, settings, event flow) is verified end to end against the fake adapter.
+Chat is proven end to end on all three platforms, on macOS and Windows:
+
+- **Twitch** — anonymous chat (no login) against live channels.
+- **Kick** — no login, including Cloudflare-blocked lookups (browser fallback), username→address
+  resolution (`MonkeyD_Dcx` → `monkeyd-dcx`), and the operator's own channel.
+- **YouTube** — signed in, live broadcast found, chat polled at the configured rate.
+
+First-contact fixes each platform needed are in the git log; none required a design change.
+
+## Not yet exercised live
+
+These are written to the documented APIs but have never run against the real thing.
+Expect small first-contact fixes, as with chat:
+
+- **Twitch sign-in** (device code flow) and everything it unlocks — **EventSub alerts**
+  (follows, subs, cheers, raids) and viewer counts.
+- **Kick sign-in** (viewer counts only; chat needs none).
+- **YouTube Super Chats / memberships** as events (chat itself is proven).
+- **Token refresh** over a multi-day period (the code path exists; time hasn't passed yet).
+
+Alerts (item 7) is the first roadmap item that depends on the untested sign-in path, so it
+will surface those fixes.
