@@ -106,8 +106,8 @@ have to change.
 4. ✅ **Vertical chat overlay + settings screen** — the first thing usable on a real stream.
 5. ✅ Kick adapter, then YouTube adapter. The overlay needed no changes, which is the
    evidence that the adapter contract holds.
-6. Horizontal chat layout ← next
-7. Alerts → stats bar → health warning.
+6. Horizontal chat layout
+7. **Alerts** ← next (decided 2026-09-14; it also exercises the untested Twitch sign-in) → stats bar → health warning.
 
 A guide (`docs/guides/`) ships with each numbered item. Not after.
 

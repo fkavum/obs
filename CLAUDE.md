@@ -17,6 +17,11 @@ status markers when work completes.
 A feature that fails either one gets **postponed with the reason recorded** in the roadmap's
 Postponed table — not built anyway.
 
+## Branches
+
+`main` = what the owner streams with, must always work. Build on `dev`; merge to `main` only
+after verifying against a live stream. Docs-only changes may go straight to `main`.
+
 ## Reminders
 
 - **Every feature ships a `GUIDE.md`** for a non-technical reader. Shape: `docs/guides/_template.md`.

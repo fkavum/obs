@@ -80,7 +80,14 @@ rewrite. So:
 - **Don't take a shortcut that would have to be undone to share it** — e.g. hardcoding the
   owner's channel name, or a path under `/Users/fkavum/`.
 
-## 5. Design principles
+## 5. Branches
+
+**Decided 2026-09-14.** `main` is what the owner streams with; it must always work.
+New features are built on `dev` and merged into `main` only once verified against a live
+stream. Docs-only changes may go straight to `main`. This is the "never break the live
+stream" principle applied to git.
+
+## 6. Design principles
 
 | Principle | Meaning in practice |
 |---|---|
@@ -91,7 +98,7 @@ rewrite. So:
 | **Browser sources over native plugins** | An overlay that is a plain web page works in OBS on every OS with zero compilation and can be hot-reloaded while live. Native C++ plugins are only for what a browser source genuinely cannot do. |
 | **Never break the live stream** | Any component may crash; nothing may take OBS down with it. Reconnect loops, timeouts and safe defaults everywhere. |
 
-## 6. Architecture in one paragraph
+## 7. Architecture in one paragraph
 
 A **bridge** service (Node.js) loads one **adapter** per platform, normalizes everything into
 a common event stream, and republishes it on a local WebSocket. **Overlays** are static web
@@ -110,7 +117,7 @@ adapters/kick    ─┘         │                                        ▲
 
 Full detail: `docs/architecture.md`.
 
-## 7. Repository layout
+## 8. Repository layout
 
 ```
 introduction.md        This file — project context, read first.
@@ -135,7 +142,7 @@ config/
 assets/                Fonts, images, sounds used by overlays.
 ```
 
-## 8. Environment (as of 2026-09-13)
+## 9. Environment (as of 2026-09-13)
 
 - macOS (darwin), zsh
 - Node.js v26, npm 11
@@ -144,8 +151,10 @@ assets/                Fonts, images, sounds used by overlays.
 - **OBS not installed at `/Applications/OBS.app`** — install OBS Studio before testing
   overlays or obs-websocket integration.
 
-## 9. Ground rules for future sessions
+## 10. Ground rules for future sessions
 
+- **Work on `dev`; merge to `main` only after a live-stream check.** `main` is the streaming
+  branch (§5). Docs-only commits may go to `main` directly.
 - **Check both hard constraints (§3) before proposing a feature.** If it fails one, propose
   it as postponed with the reason, rather than building it.
 - **Never commit secrets.** Tokens and client secrets live in git-ignored local files. Only
