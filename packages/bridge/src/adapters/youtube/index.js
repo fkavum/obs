@@ -78,6 +78,50 @@ async function tokenRequest(body) {
   };
 }
 
+export const DEFAULT_REFRESH_SECONDS = 10;
+const MIN_REFRESH_SECONDS = 3;
+const MAX_REFRESH_SECONDS = 300;
+
+/** The operator's refresh rate in ms: clamped to sane bounds, default when absent or junk. */
+export function refreshMsFrom(config = {}) {
+  const n = Number(config.refreshSeconds);
+  const seconds = Number.isFinite(n) && n > 0 ? n : DEFAULT_REFRESH_SECONDS;
+  return Math.min(MAX_REFRESH_SECONDS, Math.max(MIN_REFRESH_SECONDS, seconds)) * 1000;
+}
+
+/** Below this share of the day's budget, polling stretches to last until the reset. */
+export const LOW_WATER = 0.25;
+
+/**
+ * How long to wait before the next chat poll. Pure, so it can be tested.
+ *
+ *   refreshMs      what the operator asked for (app.config.json refreshSeconds)
+ *   apiMinMs       the interval YouTube itself demanded in its last response
+ *   idleStreak     consecutive empty polls; quiet chat is checked less often
+ *   remainingUnits quota left today after the reserve
+ *   budgetUnits    the day's usable quota, to know what "running low" means
+ *   hoursLeft      hours until the quota resets
+ *
+ * The operator's rate is honoured while budget is healthy - a stream that starts
+ * in the morning must not be throttled on the assumption it will run all day.
+ * YouTube's own minimum can only raise the interval, quiet chat raises it
+ * gradually, and once the budget drops below LOW_WATER the rest is spread over
+ * the hours left so chat slows down instead of stopping.
+ */
+export function computeInterval({ refreshMs, apiMinMs = 0, idleStreak = 0, remainingUnits, budgetUnits = 9500, hoursLeft }) {
+  if (remainingUnits <= 0) return 30 * 60 * 1000; // exhausted: check back in half an hour
+  const quietFactor = 1 + Math.min(idleStreak, 6) * 0.5; // up to 4x slower when nobody is chatting
+  const wanted = Math.max(apiMinMs, refreshMs * quietFactor);
+
+  if (remainingUnits > budgetUnits * LOW_WATER) return wanted;
+
+  // Running low: pace the remainder to last until the reset.
+  const affordable = remainingUnits / COST.liveChatMessages;
+  const evenPace = (Math.max(0.5, hoursLeft) * 3600 * 1000) / affordable;
+  const cap = Math.max(60000, refreshMs); // never slower than a minute unless asked for
+  return Math.min(cap, Math.max(wanted, evenPace));
+}
+
 /** Quota resets at midnight US Pacific. Track spend against that day. */
 function pacificDayKey(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
@@ -85,6 +129,8 @@ function pacificDayKey(now = new Date()) {
 
 export function createAdapter({ config, emit, log, saveConfig }) {
   const budget = config.dailyQuota || 10000;
+  const refreshMs = refreshMsFrom(config);
+  let currentIntervalMs = refreshMs;
   // Leave room for the rest of the project's API use.
   const reserve = config.quotaReserve ?? 500;
 
@@ -192,8 +238,15 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       idleStreak = items.length ? 0 : Math.min(idleStreak + 1, 6);
 
       // YouTube tells us its own minimum; never poll faster than that.
-      const apiMin = Number(json.pollingIntervalMillis) || 5000;
-      nextDelay = Math.max(apiMin, pacedInterval());
+      nextDelay = computeInterval({
+        refreshMs,
+        apiMinMs: Number(json.pollingIntervalMillis) || 0,
+        idleStreak,
+        remainingUnits: remaining(),
+        budgetUnits: budget - reserve,
+        hoursLeft: hoursUntilPacificMidnight(),
+      });
+      currentIntervalMs = nextDelay;
     } catch (err) {
       connected = false;
       lastError = err.message;
@@ -212,20 +265,6 @@ export function createAdapter({ config, emit, log, saveConfig }) {
     }
 
     schedule(nextDelay);
-  }
-
-  /**
-   * Pace polling against the remaining budget so an 8-hour stream doesn't run dry
-   * at hour three. Quiet chat is polled more slowly than busy chat.
-   */
-  function pacedInterval() {
-    const hoursLeftToday = hoursUntilPacificMidnight();
-    const pollsAffordable = remaining() / COST.liveChatMessages;
-    if (pollsAffordable <= 0) return 30 * 60 * 1000;
-    const evenPace = (hoursLeftToday * 3600 * 1000) / pollsAffordable;
-    // Idle chat backs off up to 4x; busy chat stays at the API minimum.
-    const idleFactor = 1 + idleStreak * 0.5;
-    return Math.min(60000, Math.max(5000, evenPace * idleFactor));
   }
 
   function schedule(ms) {
@@ -263,7 +302,8 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       const pct = Math.round((remaining() / Math.max(1, budget - reserve)) * 100);
       if (lastError) return { connected: false, detail: `${lastError} — quota ${pct}% left` };
       if (!liveChatId) return { connected: false, detail: `waiting for you to go live — quota ${pct}% left` };
-      return { connected, detail: `live chat — quota ${pct}% left today` };
+      const every = Math.round(currentIntervalMs / 1000);
+      return { connected, detail: `live chat — refreshing every ${every}s — quota ${pct}% left today` };
     },
   };
 }

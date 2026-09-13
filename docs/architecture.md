@@ -235,9 +235,12 @@ adapter so churn can't leak out.
 **YouTube** — the highest-maintenance platform of the three, and the risk to be designed
 around. Live chat comes from Data API v3 `liveChatMessages.list`, which is **polled** and
 **quota-limited**, and the chat ID changes with every broadcast. Naive polling can exhaust a
-day's quota in a few hours of streaming. Mitigations, all inside the adapter: honour the
-API's own `pollingIntervalMillis`, back off when chat is quiet, and surface remaining quota on
-the status screen rather than dying silently mid-stream. Do not let this complexity reach the
+day's quota in a few hours of streaming. Mitigations, all inside the adapter: the operator sets a
+target rate (`refreshSeconds`, default 10) in `app.config.json`; the adapter honours the API's
+own `pollingIntervalMillis` as a floor, backs off when chat is quiet, slows further only when
+the day's budget would otherwise run out, and shows the live cadence and remaining quota on
+the status screen rather than dying silently mid-stream. `computeInterval()` is pure and
+tested. Do not let this complexity reach the
 core.
 
 ---

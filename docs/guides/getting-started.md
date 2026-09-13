@@ -44,6 +44,21 @@ Change the names to your own channels and save. Next time you start the toolkit 
 them. Anything you later change on the setup page wins over this file; to go back to the
 file's values, press **Disconnect** on that channel.
 
+**`refreshSeconds`** (YouTube only) is how often it checks for new chat — **10** by default.
+Twitch and Kick don't need one: they push messages the instant they're sent. YouTube has to
+be asked, and every ask spends a little of a free daily allowance, so:
+
+| refreshSeconds | Feels like | Full speed for about |
+|---|---|---|
+| 5 | live | 2 hours of busy chat, then it eases off |
+| **10** (default) | a short beat behind | 4 hours |
+| 20 | noticeably delayed | 8 hours |
+
+It runs at the speed you set until about a quarter of the day's allowance is left, then
+stretches what remains so chat slows down rather than stopping. It never goes faster than
+YouTube allows, and checks less often when nobody is chatting. The setup page shows the
+current rate next to the YouTube dot, so you can see when it's pacing itself.
+
 ## Open the toolkit page
 
 Go to **http://localhost:8778** in your browser. You'll see:
