@@ -10,6 +10,7 @@ every guide feels the same.
 |---|---|
 | [Starting the toolkit](getting-started.md) | Turning it on, the setup page, demo chat |
 | [Connecting your channels](connect-channels.md) | Twitch, Kick and YouTube logins |
+| [Google Cloud App Setup](how-to-add-google-cloud-app.md) | Step-by-step setup for YouTube chat API credentials |
 | [Chat overlay](chat-overlay.md) | Adding it to OBS and restyling it |
 
 ## Writing rules

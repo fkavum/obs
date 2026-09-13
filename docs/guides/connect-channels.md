@@ -38,7 +38,7 @@ Kick's sign-in needs the developer-page route below, because Kick requires a sec
 ## YouTube — the developer page way
 
 YouTube is the one that does need setting up, because Google requires an account even to read
-a live chat.
+a live chat. See the detailed step-by-step guide at [Google Cloud App Setup](how-to-add-google-cloud-app.md).
 
 1. Click the developer page link in the YouTube box — it opens Google Cloud Console.
 2. Create a project, then go to *Credentials* → *OAuth client ID* → *Web application*.
