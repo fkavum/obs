@@ -1,0 +1,214 @@
+/*
+ * All sizing comes from custom properties that chat.js computes from the URL
+ * settings (already multiplied by `scale`), so there is exactly one place that
+ * decides how big anything is.
+ */
+:root {
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-size: 18px;
+  --gap: 8px;
+  --padding: 10px;
+  --radius: 10px;
+  --border-width: 3px;
+  --icon-size: 18px;
+  --avatar-size: 0px;
+  --text-color: #fff;
+  --name-weight: 700;
+  --name-case: none;
+  --card-width: 320px;
+  --card-lines: 3;
+  --anim-shift: -14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;   /* OBS composites this over your scene */
+  overflow: hidden;
+  font-family: var(--font);
+  /* Browser sources don't need selection or a cursor. */
+  user-select: none;
+  cursor: default;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  height: 100%;
+  width: 100%;
+  padding: var(--gap);
+  overflow: hidden;
+}
+
+/* ---- Vertical -------------------------------------------------------- */
+.chat[data-layout="vertical"][data-flow="newest-bottom"] { justify-content: flex-end; }
+.chat[data-layout="vertical"][data-flow="newest-top"]    { justify-content: flex-start; flex-direction: column; }
+.chat[data-layout="vertical"][data-anchor="right"] .msg  { text-align: right; }
+
+/* ---- Horizontal (layout=horizontal ships next; the CSS is already shared) -- */
+.chat[data-layout="horizontal"] {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--gap);
+}
+.chat[data-layout="horizontal"][data-flow="newest-right"] { justify-content: flex-end; }
+.chat[data-layout="horizontal"][data-anchor="top"]        { align-items: flex-start; }
+.chat[data-layout="horizontal"] .msg {
+  width: var(--card-width);
+  flex: 0 0 var(--card-width);
+}
+.chat[data-layout="horizontal"] .body {
+  display: -webkit-box;
+  -webkit-line-clamp: var(--card-lines);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- Message --------------------------------------------------------- */
+.msg {
+  --platform-color: #888;
+  flex: 0 0 auto;
+  /* Never let a long word size the box past the OBS source width. */
+  max-width: 100%;
+  padding: var(--padding);
+  border-radius: var(--radius);
+  color: var(--text-color);
+  font-size: var(--font-size);
+  line-height: 1.35;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  background: var(--msg-bg, transparent);
+  animation: msg-in 220ms ease-out both;
+  transition: opacity 400ms ease, transform 400ms ease;
+}
+.chat[data-anim="none"] .msg { animation: none; }
+.chat[data-anim="fade"] .msg { animation-name: msg-fade; }
+.chat[data-anim="pop"]  .msg { animation-name: msg-pop; }
+
+.msg.leaving { opacity: 0; transform: translateY(-6px); }
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--padding) * 0.5);
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+.chat[data-anchor="right"] .head { justify-content: flex-end; }
+
+.name {
+  font-weight: var(--name-weight);
+  text-transform: var(--name-case);
+  color: var(--name-color, var(--platform-color));
+}
+.name::after { content: ""; }
+
+.body { display: block; }
+.msg[data-compact="on"] .head { display: inline-flex; margin: 0 6px 0 0; }
+.msg[data-compact="on"] .body { display: inline; }
+
+/* ---- Platform icon --------------------------------------------------- */
+.picon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: 0 0 auto;
+  display: inline-block;
+  vertical-align: -0.12em;
+}
+.picon.mono {
+  background-color: var(--platform-color);
+  -webkit-mask: var(--icon-url) no-repeat center / contain;
+  mask: var(--icon-url) no-repeat center / contain;
+}
+.picon.badge-chip {
+  width: auto;
+  height: auto;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--platform-color);
+  display: inline-flex;
+  align-items: center;
+}
+.picon.badge-chip > i {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: block;
+  background-color: #fff;
+  -webkit-mask: var(--icon-url) no-repeat center / contain;
+  mask: var(--icon-url) no-repeat center / contain;
+}
+.msg[data-iconpos="corner"] { position: relative; }
+.msg[data-iconpos="corner"] .picon {
+  position: absolute;
+  top: calc(var(--padding) * 0.5);
+  right: calc(var(--padding) * 0.5);
+  opacity: 0.85;
+}
+.chat[data-anchor="right"] .msg[data-iconpos="corner"] .picon { right: auto; left: calc(var(--padding) * 0.5); }
+
+.avatar {
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+/* ---- Badges ---------------------------------------------------------- */
+.badge {
+  font-size: calc(var(--font-size) * 0.62);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--platform-color) 65%, #000);
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.dupe {
+  font-size: calc(var(--font-size) * 0.7);
+  font-weight: 700;
+  opacity: 0.75;
+  margin-left: 6px;
+}
+
+.emote {
+  height: calc(var(--font-size) * 1.5);
+  vertical-align: -0.35em;
+}
+
+/* ---- Text legibility over video -------------------------------------- */
+.chat[data-shadow="soft"] .msg    { text-shadow: 0 1px 3px rgba(0,0,0,0.65); }
+.chat[data-shadow="hard"] .msg    { text-shadow: 0 2px 0 rgba(0,0,0,0.9); }
+.chat[data-shadow="outline"] .msg {
+  text-shadow:
+    -1px -1px 0 rgba(0,0,0,0.85),  1px -1px 0 rgba(0,0,0,0.85),
+    -1px  1px 0 rgba(0,0,0,0.85),  1px  1px 0 rgba(0,0,0,0.85),
+     0    2px 4px rgba(0,0,0,0.55);
+}
+
+/* ---- Borders --------------------------------------------------------- */
+.msg[data-border="solid"]   { border: var(--border-width) solid var(--border-color); }
+.msg[data-border="pill"]    { border: var(--border-width) solid var(--border-color); border-radius: 999px; }
+.msg[data-border="outline"] { box-shadow: 0 0 0 var(--border-width) var(--border-color) inset; }
+.msg[data-border="glow"]    { box-shadow: 0 0 calc(var(--border-width) * 3) var(--border-color),
+                                          0 0 calc(var(--border-width) * 1.2) var(--border-color) inset; }
+.msg[data-border="accent-left"]  { border-left:  var(--border-width) solid var(--border-color); }
+.msg[data-border="accent-top"]   { border-top:   var(--border-width) solid var(--border-color); }
+.chat[data-anchor="right"] .msg[data-border="accent-left"] {
+  border-left: 0;
+  border-right: var(--border-width) solid var(--border-color);
+}
+
+@keyframes msg-in   { from { opacity: 0; transform: translateX(var(--anim-shift)); } to { opacity: 1; transform: none; } }
+@keyframes msg-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes msg-pop  { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: none; } }
+
+/* Respect reduced-motion for anyone viewing the overlay directly in a browser. */
+@media (prefers-reduced-motion: reduce) {
+  .msg { animation-duration: 1ms; transition-duration: 1ms; }
+}

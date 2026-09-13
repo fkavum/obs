@@ -15,8 +15,9 @@ const pending = new Map(); // state -> { platformId, createdAt }
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 export function redirectUriFor(config, platformId) {
-  const { host, httpPort } = config.bridge;
-  return `http://${host === '0.0.0.0' ? '127.0.0.1' : host}:${httpPort}/auth/${platformId}/callback`;
+  const { httpPort } = config.bridge;
+  // Platforms accept http:// redirects only for localhost, so always use that name.
+  return `http://localhost:${httpPort}/auth/${platformId}/callback`;
 }
 
 export function beginAuth(hub, config, platformId) {
@@ -31,14 +32,20 @@ export function beginAuth(hub, config, platformId) {
   }
 
   const state = randomBytes(16).toString('hex');
-  pending.set(state, { platformId, createdAt: Date.now() });
   sweepStates();
 
-  return oauth.authorizeUrl({
+  // An adapter may need to remember something between the redirect out and the
+  // callback back (PKCE verifiers, for instance). It returns { url, stash } and
+  // we hand the stash back to exchange() -- it never touches disk or the browser.
+  const result = oauth.authorizeUrl({
     ...saved,
     redirectUri: redirectUriFor(config, platformId),
     state,
   });
+  const url = typeof result === 'string' ? result : result.url;
+  const stash = typeof result === 'string' ? {} : result.stash || {};
+  pending.set(state, { platformId, createdAt: Date.now(), stash });
+  return url;
 }
 
 export async function completeAuth(hub, config, platformId, query) {
@@ -59,6 +66,7 @@ export async function completeAuth(hub, config, platformId, query) {
   const oauth = entry.oauth;
   const tokens = await oauth.exchange({
     ...(config.platforms[platformId] || {}),
+    ...record.stash,
     code,
     redirectUri: redirectUriFor(config, platformId),
   });

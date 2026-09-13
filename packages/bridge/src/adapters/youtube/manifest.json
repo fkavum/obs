@@ -1,0 +1,11 @@
+{
+  "id": "youtube",
+  "label": "YouTube",
+  "color": "#FF0033",
+  "icon": "icon.svg",
+  "auth": "oauth2",
+  "order": 30,
+  "capabilities": ["chat", "donation", "subscription", "viewers"],
+  "setupUrl": "https://console.cloud.google.com/apis/credentials",
+  "description": "Live chat and Super Chats. YouTube charges API quota per poll, so this adapter paces itself and reports how much budget is left."
+}
