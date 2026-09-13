@@ -43,7 +43,14 @@
 
 ## Step 4: Define Test Users & Set Status to Testing (Optional Alternative)
 
-If you prefer to keep your app in **Testing** status instead of publishing to production, you must manually grant permission to your own email address:
+> ⚠️ **Read this before choosing Testing.** While an app is in *Testing* status, Google
+> **forgets your login every 7 days** — you would have to press *Connect* and sign in again
+> every week, and YouTube chat silently stops until you do. The whole point of the toolkit is
+> to sign in once, so **Publish App** (Step 3, item 7) is the recommended path. Publishing
+> does *not* require Google's verification review for an app only you use; you'll just see the
+> "unverified app" warning once. Use *Testing* only if you need it temporarily.
+
+If you still prefer to keep your app in **Testing** status instead of publishing to production, you must manually grant permission to your own email address:
 
 1. **Navigate to Audience Configuration**:
    In the left-hand navigation menu of the Google Auth Platform / OAuth Consent Screen, click on the **Audience** (or OAuth consent screen) tab.
