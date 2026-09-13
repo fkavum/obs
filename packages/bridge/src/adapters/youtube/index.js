@@ -171,7 +171,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
         throw Object.assign(new Error('YouTube quota exceeded for today'), { quota: true });
       }
       if (res.status === 401) throw Object.assign(new Error('YouTube login expired'), { auth: true });
-      throw new Error(json.error?.message || `YouTube API error ${res.status}`);
+      throw new Error(json.error?.message || `YouTube API error ${res.status} from ${path}`);
     }
     return json;
   }
@@ -217,7 +217,9 @@ export function createAdapter({ config, emit, log, saveConfig }) {
         log.info(`found live chat for "${broadcastTitle}"`);
       }
 
-      const json = await call('liveChatMessages', {
+      // The resource is named liveChatMessages but its URL is liveChat/messages;
+      // the un-slashed spelling is an unknown route and returns a bare 404.
+      const json = await call('liveChat/messages', {
         liveChatId,
         part: 'snippet,authorDetails',
         maxResults: '200',
