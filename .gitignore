@@ -1,0 +1,36 @@
+# Secrets and local config
+.env
+.env.*
+!.env.example
+config/*.local.json
+config/tokens/
+*.pem
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+.cache/
+
+# Native plugin builds
+plugins/**/build/
+CMakeCache.txt
+CMakeFiles/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Runtime artifacts
+logs/
+*.log
+recordings/
+clips/
