@@ -178,11 +178,13 @@ export function createAdapter({ config, emit, log, saveConfig }) {
 
   /** Find the currently active broadcast and its chat id. */
   async function findLiveChat() {
+    // liveBroadcasts.list takes exactly ONE filter (id | mine | broadcastStatus);
+    // sending both is rejected as "Incompatible parameters". The endpoint only
+    // ever returns the signed-in channel's broadcasts, so `mine` was redundant.
     const json = await call('liveBroadcasts', {
       part: 'snippet,status',
       broadcastStatus: 'active',
       broadcastType: 'all',
-      mine: 'true',
       maxResults: '1',
     }, COST.liveBroadcasts);
 
