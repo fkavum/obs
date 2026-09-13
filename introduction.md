@@ -64,7 +64,23 @@ Once it's set up, it keeps working without anyone touching it. Concretely:
 If a feature can't meet both, it goes to the Postponed list in `docs/roadmap.md` with the
 reason written down — so the decision doesn't get re-litigated later.
 
-## 4. Design principles
+## 4. Distribution
+
+**Decided 2026-09-13: build for the owner's machine now, keep it shareable later.**
+
+The toolkit is for the owner's own streams today. But the setup wizard and the guides are
+built to a standard where handing it to another streamer is only a packaging job — not a
+rewrite. So:
+
+- **Assume one user, but never assume it's a developer.** No step may require reading code.
+- **The owner registers their own platform apps**, once, through the wizard. There is no
+  shared/hosted OAuth application to maintain.
+- **Not building yet:** signed installers, auto-update, multi-user support, a support
+  channel. These are the packaging work deferred until distribution actually happens.
+- **Don't take a shortcut that would have to be undone to share it** — e.g. hardcoding the
+  owner's channel name, or a path under `/Users/fkavum/`.
+
+## 5. Design principles
 
 | Principle | Meaning in practice |
 |---|---|
@@ -75,7 +91,7 @@ reason written down — so the decision doesn't get re-litigated later.
 | **Browser sources over native plugins** | An overlay that is a plain web page works in OBS on every OS with zero compilation and can be hot-reloaded while live. Native C++ plugins are only for what a browser source genuinely cannot do. |
 | **Never break the live stream** | Any component may crash; nothing may take OBS down with it. Reconnect loops, timeouts and safe defaults everywhere. |
 
-## 5. Architecture in one paragraph
+## 6. Architecture in one paragraph
 
 A **bridge** service (Node.js) loads one **adapter** per platform, normalizes everything into
 a common event stream, and republishes it on a local WebSocket. **Overlays** are static web
@@ -94,7 +110,7 @@ adapters/kick    ─┘         │                                        ▲
 
 Full detail: `docs/architecture.md`.
 
-## 6. Repository layout
+## 7. Repository layout
 
 ```
 introduction.md        This file — project context, read first.
@@ -117,7 +133,7 @@ config/                Local configuration and credentials. Git-ignored except e
 assets/                Fonts, images, sounds used by overlays.
 ```
 
-## 7. Environment (as of 2026-09-13)
+## 8. Environment (as of 2026-09-13)
 
 - macOS (darwin), zsh
 - Node.js v26, npm 11
@@ -126,7 +142,7 @@ assets/                Fonts, images, sounds used by overlays.
 - **OBS not installed at `/Applications/OBS.app`** — install OBS Studio before testing
   overlays or obs-websocket integration.
 
-## 8. Ground rules for future sessions
+## 9. Ground rules for future sessions
 
 - **Check both hard constraints (§3) before proposing a feature.** If it fails one, propose
   it as postponed with the reason, rather than building it.
