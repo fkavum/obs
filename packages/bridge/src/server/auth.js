@@ -8,7 +8,6 @@
  */
 import { randomBytes } from 'node:crypto';
 import { createLogger } from '#core/index.js';
-import { setPlatformConfig } from '../config.js';
 
 const log = createLogger('auth');
 const pending = new Map(); // state -> { platformId, createdAt }
@@ -71,11 +70,7 @@ export async function completeAuth(hub, config, platformId, query) {
     redirectUri: redirectUriFor(config, platformId),
   });
 
-  setPlatformConfig(config, platformId, {
-    ...tokens,
-    connectedAt: Date.now(),
-    enabled: true,
-  });
+  hub.saveTokens(platformId, { ...tokens, connectedAt: Date.now(), enabled: true });
   log.info(`${platformId}: connected`);
 
   await hub.stopPlatform(platformId);
@@ -96,7 +91,7 @@ export async function refreshExpiring(hub, config, { windowMs = 15 * 60 * 1000 }
 
     try {
       const tokens = await oauth.refresh({ ...saved });
-      setPlatformConfig(config, id, tokens);
+      hub.saveTokens(id, tokens);
       log.info(`${id}: token refreshed`);
     } catch (err) {
       // Don't wipe credentials on a transient failure -- the status screen will
@@ -141,4 +136,94 @@ function escapeHtml(s) {
 function sweepStates() {
   const cutoff = Date.now() - STATE_TTL_MS;
   for (const [state, rec] of pending) if (rec.createdAt < cutoff) pending.delete(state);
+}
+
+// ---------------------------------------------------------------------------
+// Device Code flow
+//
+// Used by platforms that support public clients (Twitch). The browser asks us to
+// start a login, we poll the platform in the background, and the page just reads
+// the status. Keeping the polling here means the UI can't get the timing wrong,
+// and a closed tab doesn't abandon a login in progress.
+// ---------------------------------------------------------------------------
+
+/** platformId -> live device login */
+const deviceSessions = new Map();
+
+export async function startDeviceLogin(hub, config, platformId) {
+  const entry = hub.platforms.get(platformId);
+  if (!entry) throw new Error(`unknown platform: ${platformId}`);
+  const oauth = entry.oauth;
+  if (oauth?.mode !== 'device') throw new Error(`${platformId} does not use code login`);
+
+  const effective = hub.effectiveConfig(platformId);
+  for (const field of oauth.needs || []) {
+    if (!effective[field]) throw new Error(`missing ${field}`);
+  }
+
+  cancelDeviceLogin(platformId);
+
+  const started = await oauth.startDevice(effective);
+  const session = {
+    userCode: started.userCode,
+    verificationUri: started.verificationUri,
+    expiresAt: started.expiresAt,
+    status: 'pending',
+    error: null,
+    timer: null,
+  };
+  deviceSessions.set(platformId, session);
+
+  const poll = async () => {
+    if (deviceSessions.get(platformId) !== session) return; // superseded
+    if (Date.now() > session.expiresAt) {
+      session.status = 'expired';
+      clearInterval(session.timer);
+      return;
+    }
+    try {
+      const tokens = await oauth.pollDevice({ ...effective, deviceCode: started.deviceCode });
+      if (!tokens) return; // still waiting on the operator
+      clearInterval(session.timer);
+      hub.saveTokens(platformId, { ...tokens, connectedAt: Date.now(), enabled: true });
+      session.status = 'done';
+      log.info(`${platformId}: connected`);
+      await hub.stopPlatform(platformId);
+      await hub.startPlatform(platformId);
+    } catch (err) {
+      clearInterval(session.timer);
+      session.status = 'error';
+      session.error = err.message;
+      log.warn(`${platformId}: device login failed (${err.message})`);
+    }
+  };
+
+  session.timer = setInterval(poll, started.intervalMs);
+  session.timer.unref?.();
+
+  return publicSession(session);
+}
+
+export function deviceLoginStatus(platformId) {
+  const session = deviceSessions.get(platformId);
+  if (!session) return { status: 'none' };
+  return publicSession(session);
+}
+
+export function cancelDeviceLogin(platformId) {
+  const session = deviceSessions.get(platformId);
+  if (session) {
+    clearInterval(session.timer);
+    deviceSessions.delete(platformId);
+  }
+}
+
+function publicSession(session) {
+  return {
+    status: session.status,
+    userCode: session.userCode,
+    verificationUri: session.verificationUri,
+    secondsLeft: Math.max(0, Math.round((session.expiresAt - Date.now()) / 1000)),
+    error: session.error,
+  };
 }

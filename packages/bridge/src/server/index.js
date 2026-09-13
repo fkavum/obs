@@ -11,7 +11,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { WSServer, createLogger } from '#core/index.js';
 import { ROOT, saveConfig } from '../config.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
-import { beginAuth, completeAuth, callbackPage, redirectUriFor } from './auth.js';
+import {
+  beginAuth, completeAuth, callbackPage, redirectUriFor,
+  startDeviceLogin, deviceLoginStatus, cancelDeviceLogin,
+} from './auth.js';
 
 const log = createLogger('server');
 
@@ -142,6 +145,22 @@ async function api(req, res, url, { hub, config }) {
       return res.end(readFileSync(file));
     }
     return sendJSON(res, 404, { error: 'no icon' });
+  }
+
+  // ---- device code login (one-click Connect) ----
+  const device = /^\/api\/platforms\/([a-z0-9_-]+)\/device\/(start|status|cancel)$/i.exec(path);
+  if (device) {
+    const [, id, action] = device;
+    if (action === 'status') return sendJSON(res, 200, deviceLoginStatus(id));
+    if (action === 'cancel') {
+      cancelDeviceLogin(id);
+      return sendJSON(res, 200, { ok: true });
+    }
+    try {
+      return sendJSON(res, 200, await startDeviceLogin(hub, config, id));
+    } catch (err) {
+      return sendJSON(res, 400, { status: 'error', error: err.message });
+    }
   }
 
   const enable = /^\/api\/platforms\/([a-z0-9_-]+)\/enabled$/i.exec(path);

@@ -165,6 +165,32 @@ writes them and hands over a **Copy URL** button.
 **2. Service settings (accounts, ports, OBS connection) → the setup wizard**, stored in
 `config/config.local.json`. The operator never opens that file; the wizard writes it.
 
+### Login (two modes, both supported everywhere)
+
+The shared auth layer handles both, and an adapter declares which it wants with
+`oauth.mode`. Every platform also keeps the manual "register your own application" path, so
+the built-in option is a convenience rather than a lock-in.
+
+**`device`** — the operator presses Connect, gets a short code, and types it on the
+platform's activation page. This is a *public client*: client id only, **no secret**, and
+**no redirect URL**. That matters for a local-first tool for three reasons: there is no
+server to hold a secret on; a secret shipped inside a distributed app is not a secret; and
+with no redirect URL, changing the HTTP port cannot break logins. The bridge polls the
+platform in the background and the browser just reads status, so a closed tab doesn't
+abandon a login in progress. **Twitch** uses this.
+
+**`redirect`** — the classic authorization-code flow with a client secret and a registered
+redirect URL. **Kick** requires it: its token endpoint mandates `client_secret` and it has no
+public-client option. **YouTube** uses it deliberately even though Google could support
+otherwise, because **Google's quota is charged per application, not per user** — one shipped
+client id would mean every operator sharing a single 10,000 unit day. A per-operator app is
+a per-operator allowance.
+
+A platform ships a ready-to-use public client id in its manifest as `defaultClientId`. A
+client id is public by design — it travels in plain OAuth requests — so committing one is
+safe in a way that committing a secret never is. An operator's own saved id always wins over
+the shipped default.
+
 ### Settings screen
 
 Served at `http://127.0.0.1:8778/settings`. For each overlay: visual controls on the left

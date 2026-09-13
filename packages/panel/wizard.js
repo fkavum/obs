@@ -56,8 +56,8 @@ function render() {
 function card(row) {
   const el = document.createElement('section');
   el.className = 'card';
+  el.dataset.platform = row.id;
 
-  const connected = row.connected;
   const head = document.createElement('div');
   head.className = 'row between';
   head.innerHTML = `
@@ -74,28 +74,73 @@ function card(row) {
   head.append(actions);
   el.append(head);
 
-  const needsKeys = (row.needs || []).length > 0;
-  const hasKeys = row.enabled || connected;
+  const connected = row.connected || row.enabled;
 
-  // ---- credential + channel form ----
-  const form = document.createElement('div');
-  form.style.marginTop = '18px';
+  // Channel name is needed whichever way you log in.
+  const channelField = field('Your channel name', 'text', `${row.id}-channel`, '');
+  channelField.wrap.style.marginTop = '18px';
+  el.append(channelField.wrap);
 
+  const saveChannel = () =>
+    post(`/api/platforms/${row.id}/config`, { channel: channelField.input.value.trim() });
+  channelField.input.addEventListener('change', saveChannel);
+
+  const keyFields = {};
+
+  if (row.authMode === 'device') {
+    // ---- One-click sign in -------------------------------------------------
+    const connectBtn = document.createElement('button');
+    connectBtn.className = 'primary';
+    connectBtn.textContent = connected ? `Sign in to ${row.label} again` : `Sign in with ${row.label}`;
+
+    const hint = document.createElement('span');
+    hint.style.cssText = 'font-size:13px;color:var(--muted)';
+
+    const panel = document.createElement('div');
+    panel.hidden = true;
+
+    connectBtn.addEventListener('click', async () => {
+      await saveChannel();
+      connectBtn.disabled = true;
+      connectBtn.textContent = 'Starting…';
+      const session = await post(`/api/platforms/${row.id}/device/start`, {});
+      connectBtn.disabled = false;
+      connectBtn.textContent = `Sign in with ${row.label}`;
+      if (session.status === 'error' || !session.userCode) {
+        hint.textContent = session.error === `missing clientId`
+          ? 'No application set up yet — open “Use your own application” below.'
+          : session.error || 'Could not start the sign in.';
+        return;
+      }
+      showDeviceCode(row, panel, session);
+    });
+
+    const connectRow = document.createElement('div');
+    connectRow.className = 'row';
+    connectRow.append(connectBtn, hint);
+    el.append(connectRow, panel);
+
+    if (!row.hasDefaultClientId) {
+      hint.textContent = 'Uses your own application (set up below).';
+    }
+  }
+
+  // ---- Developer application path (available for every platform) -----------
   const details = document.createElement('details');
   details.className = 'group';
-  details.open = !connected;
-  details.innerHTML = `<summary>${connected ? 'Change settings' : `Set up ${escape(row.label)}`}</summary>`;
+  details.style.marginTop = '16px';
+  // For one-click platforms this is the optional advanced path, so start closed.
+  details.open = row.authMode !== 'device' && !connected;
+  const summary = document.createElement('summary');
+  summary.textContent =
+    row.authMode === 'device'
+      ? `Use your own ${row.label} application (optional)`
+      : `Set up ${row.label}`;
   const body = document.createElement('div');
   body.className = 'body';
 
-  if (needsKeys) {
-    body.append(setupSteps(row));
-  }
+  if ((row.needs || []).length) body.append(setupSteps(row));
 
-  const channelField = field('Your channel name', 'text', `${row.id}-channel`, '');
-  body.append(channelField.wrap);
-
-  const keyFields = {};
   for (const key of row.needs || []) {
     const f = field(labelFor(key), key.toLowerCase().includes('secret') ? 'password' : 'text', `${row.id}-${key}`, '');
     keyFields[key] = f;
@@ -117,19 +162,20 @@ function card(row) {
   });
   saveRow.append(saveBtn);
 
-  if (needsKeys) {
-    const connectBtn = document.createElement('a');
-    connectBtn.className = 'btn primary';
-    connectBtn.href = `/auth/${row.id}/start`;
-    connectBtn.target = '_blank';
-    connectBtn.rel = 'noopener';
-    connectBtn.textContent = connected || row.enabled ? `Log in to ${row.label} again` : `Connect ${row.label}`;
-    saveRow.append(connectBtn);
+  // Redirect-style platforms log in from here; device-style ones use the button above.
+  if (row.authMode !== 'device' && (row.needs || []).length) {
+    const connectLink = document.createElement('a');
+    connectLink.className = 'btn primary';
+    connectLink.href = `/auth/${row.id}/start`;
+    connectLink.target = '_blank';
+    connectLink.rel = 'noopener';
+    connectLink.textContent = connected ? `Log in to ${row.label} again` : `Connect ${row.label}`;
+    saveRow.append(connectLink);
   }
+
   body.append(saveRow);
-  details.append(body);
-  form.append(details);
-  el.append(form);
+  details.append(summary, body);
+  el.append(details);
 
   // ---- on/off + disconnect ----
   const toggle = document.createElement('label');
@@ -141,7 +187,7 @@ function card(row) {
   });
   actions.append(toggle);
 
-  if (hasKeys) {
+  if (connected) {
     const dis = document.createElement('button');
     dis.className = 'ghost danger';
     dis.textContent = 'Disconnect';
@@ -172,11 +218,75 @@ function card(row) {
   return el;
 }
 
-/** The one genuinely fiddly part: registering an app on the platform. */
+/** Show the short code and poll until the operator has typed it in. */
+function showDeviceCode(row, panel, session) {
+  panel.hidden = false;
+  panel.innerHTML = `
+    <div class="card" style="background:var(--surface-2);margin:16px 0 0">
+      <p class="sub" style="margin:0 0 10px">Two steps, then you're done:</p>
+      <ol class="steps">
+        <li>Open <a href="${escape(session.verificationUri)}" target="_blank" rel="noopener">${escape(session.verificationUri)}</a></li>
+        <li>Type this code:</li>
+      </ol>
+      <div class="row" style="gap:10px">
+        <code class="inline" style="font-size:28px;letter-spacing:0.16em;padding:10px 18px">${escape(session.userCode)}</code>
+        <button class="ghost" data-copy>Copy code</button>
+        <a class="btn primary" href="${escape(session.verificationUri)}" target="_blank" rel="noopener">Open the page</a>
+      </div>
+      <p class="sub" data-state style="margin:14px 0 0">Waiting for you to finish on ${escape(row.label)}…</p>
+    </div>`;
+
+  panel.querySelector('[data-copy]').addEventListener('click', () => copy(session.userCode, 'Code copied'));
+  const state = panel.querySelector('[data-state]');
+
+  const poll = setInterval(async () => {
+    let status;
+    try {
+      status = await (await fetch(`/api/platforms/${row.id}/device/status`)).json();
+    } catch {
+      return;
+    }
+    if (status.status === 'pending') {
+      state.textContent = `Waiting for you to finish on ${row.label}… (${formatLeft(status.secondsLeft)} left)`;
+      return;
+    }
+    clearInterval(poll);
+    if (status.status === 'done') {
+      state.textContent = 'Connected.';
+      toast(`${row.label} connected`);
+      panel.hidden = true;
+      await refresh();
+    } else if (status.status === 'expired') {
+      state.textContent = 'That code ran out. Press sign in again for a fresh one.';
+    } else {
+      state.textContent = status.error || 'That did not work. Try again.';
+    }
+  }, 2000);
+}
+
+function formatLeft(seconds) {
+  const m = Math.floor(seconds / 60);
+  return m > 0 ? `${m} min` : `${seconds}s`;
+}
+
+/** Registering your own application on the platform. Optional for one-click platforms. */
 function setupSteps(row) {
   const box = document.createElement('div');
-  // Comes from the bridge: it must match the registered URL character for
-  // character, and the browser's address bar is not a reliable source for it.
+
+  if (row.authMode === 'device') {
+    // This flow has no redirect URL and no client secret, so the steps are shorter.
+    box.innerHTML = `
+      <p class="sub">You only need this if you'd rather use your own ${escape(row.label)}
+      application than the built-in one. You do it once.</p>
+      <ol class="steps">
+        <li>Open <a href="${escape(row.setupUrl || '#')}" target="_blank" rel="noopener">the ${escape(row.label)} developer page</a> and create an application.</li>
+        <li>Set <strong>Client Type</strong> to <strong>Public</strong>. If it insists on an OAuth Redirect URL, put <code class="inline">http://localhost</code> — this kind of login never uses it.</li>
+        <li>Copy the <strong>Client ID</strong> into the box below and press <strong>Save</strong>. There is no secret to copy.</li>
+        <li>Then press <strong>Sign in with ${escape(row.label)}</strong> above.</li>
+      </ol>`;
+    return box;
+  }
+
   const redirect = row.redirectUri || `${location.origin}/auth/${row.id}/callback`;
   box.innerHTML = `
     <p class="sub">You only do this once.</p>

@@ -21,62 +21,96 @@ const SCOPES = [
   'bits:read',
 ];
 
-/** The shared OAuth plumbing in server/auth.js drives these. */
+/**
+ * Twitch uses the Device Code flow: the operator presses Connect, gets a short
+ * code, and types it on twitch.tv/activate.
+ *
+ * Why this rather than the usual redirect flow:
+ *   - it is a PUBLIC client, so there is no client secret to hold. A local-first
+ *     tool has no server to keep a secret on, and a secret shipped inside an app
+ *     is not a secret;
+ *   - there is no redirect URL, so the whole class of "registered URL doesn't
+ *     match" failures disappears, and changing the port can't break logins;
+ *   - with a client id shipped in the manifest, Connect is genuinely one click.
+ */
 export const oauth = {
-  needs: ['clientId', 'clientSecret'],
+  mode: 'device',
+  needs: ['clientId'],
   setupUrl: 'https://dev.twitch.tv/console/apps/create',
 
-  authorizeUrl({ clientId, redirectUri, state }) {
-    const p = new URLSearchParams({
-      response_type: 'code',
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      scope: SCOPES.join(' '),
-      state,
-      force_verify: 'true',
+  /** Ask Twitch for a code pair. */
+  async startDevice({ clientId }) {
+    const res = await fetch(`${ID}/device`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: clientId, scopes: SCOPES.join(' ') }),
     });
-    return `${ID}/authorize?${p}`;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || `Twitch would not start the login (${res.status})`);
+    return {
+      deviceCode: json.device_code,
+      userCode: json.user_code,
+      verificationUri: json.verification_uri,
+      intervalMs: (json.interval || 5) * 1000,
+      expiresAt: Date.now() + (json.expires_in || 1800) * 1000,
+    };
   },
 
-  async exchange({ clientId, clientSecret, code, redirectUri }) {
-    const body = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
+  /**
+   * One poll. Returns null while the operator hasn't finished on twitch.tv yet;
+   * the shared auth layer keeps calling until it gets tokens or the code expires.
+   */
+  async pollDevice({ clientId, deviceCode }) {
+    const res = await fetch(`${ID}/token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        scopes: SCOPES.join(' '),
+        device_code: deviceCode,
+        grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+      }),
     });
-    const tokens = await tokenRequest(body);
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const message = String(json.message || '');
+      // Expected while the operator is still typing the code on twitch.tv.
+      if (/authorization_pending/i.test(message)) return null;
+      if (/slow_?down/i.test(message)) return null;
+      throw new Error(message || `Twitch rejected the login (${res.status})`);
+    }
+
+    const tokens = {
+      accessToken: json.access_token,
+      refreshToken: json.refresh_token,
+      expiresAt: Date.now() + (json.expires_in || 14400) * 1000,
+    };
     const me = await helixUser(clientId, tokens.accessToken);
     return { ...tokens, userId: me.id, login: me.login, displayName: me.display_name };
   },
 
-  async refresh({ clientId, clientSecret, refreshToken }) {
-    return tokenRequest(
-      new URLSearchParams({
+  /** Public clients refresh with the client id alone -- no secret involved. */
+  async refresh({ clientId, refreshToken }) {
+    const res = await fetch(`${ID}/token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
         client_id: clientId,
-        client_secret: clientSecret,
         refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }),
-    );
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.message || `could not refresh the Twitch login (${res.status})`);
+    return {
+      accessToken: json.access_token,
+      // Twitch refresh tokens are single use: always store the new one.
+      refreshToken: json.refresh_token || refreshToken,
+      expiresAt: Date.now() + (json.expires_in || 14400) * 1000,
+    };
   },
 };
-
-async function tokenRequest(body) {
-  const res = await fetch(`${ID}/token`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || `Twitch rejected the login (${res.status})`);
-  return {
-    accessToken: json.access_token,
-    refreshToken: json.refresh_token,
-    expiresAt: Date.now() + (json.expires_in || 3600) * 1000,
-  };
-}
 
 async function helixUser(clientId, accessToken) {
   const res = await fetch(`${HELIX}/users`, {

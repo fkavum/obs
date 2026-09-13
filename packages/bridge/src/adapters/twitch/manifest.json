@@ -5,7 +5,16 @@
   "icon": "icon.svg",
   "auth": "oauth2",
   "order": 10,
-  "capabilities": ["chat", "follow", "subscription", "donation", "raid", "viewers"],
+  "capabilities": [
+    "chat",
+    "follow",
+    "subscription",
+    "donation",
+    "raid",
+    "viewers"
+  ],
   "setupUrl": "https://dev.twitch.tv/console/apps/create",
-  "description": "Chat over IRC, plus follows, subs, cheers and raids over EventSub."
+  "description": "Chat over IRC, plus follows, subs, cheers and raids over EventSub. Logs in with a short code - no redirect URL, no client secret.",
+  "authMode": "device",
+  "defaultClientId": ""
 }

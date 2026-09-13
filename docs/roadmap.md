@@ -20,6 +20,9 @@ means overlay work never requires going live.
 *Constraints:* core holds no platform-specific code, so a platform breaking can't break the toolkit.
 
 ### ✅ 2. Setup wizard
+Includes both login paths: one-click code sign-in where the platform allows a public client
+(Twitch), and register-your-own-application on every platform including Twitch. See the Login
+section of [`architecture.md`](architecture.md) for why the three platforms differ.
 Browser page: a **Connect** button per platform (log in → done), an OBS connection check, and
 a status screen with a green/red dot per platform in plain words. Writes
 `config/config.local.json` so the operator never opens a file.

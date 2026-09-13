@@ -38,6 +38,27 @@ export class Hub extends EventEmitter {
     }
   }
 
+  /**
+   * The config an adapter actually runs with: saved values on top of anything
+   * the manifest ships (such as a public client id). An empty saved value never
+   * masks a shipped default.
+   */
+  effectiveConfig(id) {
+    const entry = this.platforms.get(id);
+    if (!entry) return {};
+    const saved = this.config.platforms[id] || {};
+    const merged = { ...saved };
+    if (entry.manifest.defaultClientId && !saved.clientId) {
+      merged.clientId = entry.manifest.defaultClientId;
+    }
+    return merged;
+  }
+
+  /** Persist credentials for a platform. The only writer of token material. */
+  saveTokens(id, patch) {
+    return setPlatformConfig(this.config, id, patch);
+  }
+
   /** Manifests of every discovered platform, for GET /api/platforms. */
   manifests({ enabledOnly = false } = {}) {
     return [...this.platforms.values()]
@@ -66,7 +87,7 @@ export class Hub extends EventEmitter {
 
     try {
       entry.adapter = entry.createAdapter({
-        config: this.config.platforms[id] || {},
+        config: this.effectiveConfig(id),
         emit,
         log: platformLog,
         peers,
@@ -127,6 +148,8 @@ export class Hub extends EventEmitter {
         label: entry.manifest.label,
         color: entry.manifest.color,
         auth: entry.manifest.auth || 'none',
+        authMode: entry.manifest.authMode || 'redirect',
+        hasDefaultClientId: !!entry.manifest.defaultClientId,
         setupUrl: entry.manifest.setupUrl || '',
         description: entry.manifest.description || '',
         needs: entry.oauth?.needs || [],
