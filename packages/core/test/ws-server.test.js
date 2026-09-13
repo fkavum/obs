@@ -91,3 +91,24 @@ test('requests outside the configured path are refused', async () => {
     await assert.rejects(open(port, '/somewhere-else'));
   });
 });
+
+test('attach() serves the same socket from a second http server (dual loopback)', async () => {
+  const a = createServer((_req, res) => res.end('a'));
+  const b = createServer((_req, res) => res.end('b'));
+  const ws = new WSServer(a, { path: '/events', heartbeatMs: 100000 }).attach(b);
+  await new Promise((r) => a.listen(0, '127.0.0.1', r));
+  await new Promise((r) => b.listen(0, '127.0.0.1', r));
+  try {
+    const viaA = await open(a.address().port);
+    const viaB = await open(b.address().port);
+    const got = [viaA, viaB].map((c) => new Promise((r) => (c.onmessage = (m) => r(m.data))));
+    assert.equal(ws.broadcast('both'), 2, 'one client set spans both listeners');
+    assert.deepEqual(await Promise.all(got), ['both', 'both']);
+    viaA.close();
+    viaB.close();
+  } finally {
+    ws.close();
+    a.close();
+    b.close();
+  }
+});

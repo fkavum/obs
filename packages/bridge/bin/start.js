@@ -43,7 +43,7 @@ if (firstRun && !Object.values(config.platforms).some((p) => p.enabled)) {
 
 const hub = new Hub(config);
 await hub.load();
-const server = startServer({ hub, config });
+const server = startServer({ hub, config, onQuit: () => shutdown('Stopped from the setup page.') });
 await hub.startAll();
 
 // Keep tokens alive without the operator ever thinking about them.
@@ -67,13 +67,15 @@ function banner() {
  ${line}
   Open this to set up and style everything:
     \x1b[36m${url}/\x1b[0m
+    (if that page won't load, use \x1b[36m${server.altUrl}/\x1b[0m)
 
   Chat overlay URL for OBS (Browser Source):
     \x1b[36m${url}/overlays/chat/\x1b[0m
  ${line}
   Platforms: ${on.length ? on.map((r) => `${r.label}${r.connected ? ' \x1b[32m●\x1b[0m' : ' \x1b[33m○\x1b[0m'}`).join('  ') : '\x1b[33mnone connected yet — open the link above\x1b[0m'}
 
-  Leave this window open while you stream. Press Ctrl+C to stop.
+  Leave this window open while you stream.
+  To stop: press "Stop the toolkit" on the setup page, or just close this window.
 `);
 }
 
@@ -91,15 +93,20 @@ function openBrowser(target) {
 }
 
 let shuttingDown = false;
+async function shutdown(reason = 'Shutting down…') {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`\n${reason}`);
+  clearInterval(refreshTimer);
+  // Never hang on a stuck socket: give adapters a moment, then leave regardless.
+  await Promise.race([hub.shutdown(), new Promise((r) => setTimeout(r, 3000))]);
+  server.close();
+  process.exit(0);
+}
 for (const signal of ['SIGINT', 'SIGTERM']) {
-  process.on(signal, async () => {
+  process.on(signal, () => {
     if (shuttingDown) process.exit(1);
-    shuttingDown = true;
-    console.log('\nShutting down…');
-    clearInterval(refreshTimer);
-    await hub.shutdown();
-    server.close();
-    process.exit(0);
+    shutdown();
   });
 }
 

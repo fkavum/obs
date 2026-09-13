@@ -155,7 +155,28 @@ export class WSServer extends EventEmitter {
     super();
     this.clients = new Set();
     this.path = path;
+    if (httpServer) this.attach(httpServer);
 
+    // Drop connections that stopped answering, so a crashed OBS source doesn't
+    // leave a dead client accumulating broadcasts forever.
+    this.heartbeat = setInterval(() => {
+      for (const c of this.clients) {
+        if (!c.alive) {
+          c.close(1001, 'no response');
+          continue;
+        }
+        c.alive = false;
+        c.ping();
+      }
+    }, heartbeatMs);
+    this.heartbeat.unref?.();
+  }
+
+  /**
+   * Accept upgrades from another http server too. Used to serve the same
+   * socket on both loopback addresses (127.0.0.1 and ::1).
+   */
+  attach(httpServer) {
     httpServer.on('upgrade', (req, socket) => {
       if (this.path && new URL(req.url, 'http://x').pathname !== this.path) {
         socket.destroy();
@@ -179,20 +200,7 @@ export class WSServer extends EventEmitter {
       conn.on('close', () => this.clients.delete(conn));
       this.emit('connection', conn, req);
     });
-
-    // Drop connections that stopped answering, so a crashed OBS source doesn't
-    // leave a dead client accumulating broadcasts forever.
-    this.heartbeat = setInterval(() => {
-      for (const c of this.clients) {
-        if (!c.alive) {
-          c.close(1001, 'no response');
-          continue;
-        }
-        c.alive = false;
-        c.ping();
-      }
-    }, heartbeatMs);
-    this.heartbeat.unref?.();
+    return this;
   }
 
   /** Send to every connected client. Returns how many received it. */

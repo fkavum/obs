@@ -19,6 +19,13 @@ export function createReconnector({ connect, log, minMs = 1000, maxMs = 60000, l
       attempt = 0; // a clean connect resets the backoff
     } catch (err) {
       if (stopped) return;
+      // A permanent condition (wrong channel name) must not be retried forever;
+      // the adapter reports it and a config change restarts it.
+      if (err?.noRetry) {
+        running = false;
+        log?.warn(`${label} stopped: ${err.message}`);
+        return;
+      }
       // An error may ask for a specific wait (e.g. "blocked, come back in 5 min");
       // otherwise use the exponential curve.
       const delay = err?.retryAfterMs

@@ -44,3 +44,25 @@ test('a blocked lookup waits the time it asks for instead of the fast retry curv
   assert.equal(calls, 1, 'attempted once');
   assert.match(waits[0], /retrying in 300s/, 'waited the requested 5 minutes, not 10ms');
 });
+
+test('a permanent error (wrong channel name) is reported once and not retried', async () => {
+  const warns = [];
+  let calls = 0;
+  const conn = createReconnector({
+    label: 'kick chat',
+    log: { warn: (m) => warns.push(m) },
+    minMs: 5,
+    maxMs: 20,
+    connect: async () => {
+      calls++;
+      throw Object.assign(new Error('no Kick channel called "typo"'), { noRetry: true });
+    },
+  });
+  await conn.start();
+  await new Promise((r) => setTimeout(r, 80)); // long enough for several 5ms retries, had there been any
+  conn.stop();
+  assert.equal(calls, 1, 'tried exactly once');
+  assert.equal(warns.length, 1);
+  assert.match(warns[0], /stopped: no Kick channel called "typo"/);
+  assert.doesNotMatch(warns[0], /retrying/);
+});

@@ -25,10 +25,11 @@ Your browser opens the setup page by itself the first time.
 > flashing past will now stay on screen.
 
 That black window **has to stay open the whole time you stream**. Closing it turns the
-overlays off. To stop the toolkit on purpose, click the window and press `Ctrl` + `C`
-(`Control` + `C` on a Mac).
+overlays off.
 
-> **Windows only:** after `Ctrl` + `C` it asks *"Terminate batch job (Y/N)?"* — press `Y`.
+**To stop the toolkit**, press **Stop the toolkit** at the bottom of the setup page, or
+simply close the black window. (`Ctrl` + `C` in the window works too. On Windows it then asks
+*"Terminate batch job (Y/N)?"* and closes when you press `Y` — that's normal, not a crash.)
 
 ## Setting your channels once, for good
 
@@ -61,7 +62,8 @@ current rate next to the YouTube dot, so you can see when it's pacing itself.
 
 ## Open the toolkit page
 
-Go to **http://localhost:8778** in your browser. You'll see:
+Go to **http://localhost:8778** in your browser. If that sits on "loading" (it can on some
+Windows PCs), use **http://127.0.0.1:8778** instead — same page. You'll see:
 
 - **Setup** — connect Twitch, Kick and YouTube, and check they're working
 - **Chat overlay style** — change how your chat looks
@@ -91,3 +93,11 @@ The toolkit is already running in another window. Use that one, or close it and 
 
 **The browser says it can't connect**
 The toolkit isn't running. Start it again and wait about five seconds.
+
+**The page just spins on "loading" (Windows)**
+Use **http://127.0.0.1:8778** instead of `localhost`. Newer versions of the toolkit listen on
+both, so if you still see this, update.
+
+**I fixed a channel name but nothing changed**
+Update the toolkit: changing a name on the setup page now applies straight away. On older
+versions, switch the channel off and on again.

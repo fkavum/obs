@@ -16,6 +16,19 @@ document.getElementById('copyOverlay').addEventListener('click', () => {
 });
 
 let statusRows = [];
+
+document.getElementById('quit').addEventListener('click', async () => {
+  const btn = document.getElementById('quit');
+  btn.disabled = true;
+  btn.textContent = 'Stopping…';
+  await post('/api/quit', {}).catch(() => {});
+  document.body.innerHTML = `
+    <div class="wrap" style="text-align:center;padding-top:80px">
+      <h1 style="font-size:24px">The toolkit has stopped.</h1>
+      <p class="sub">Your overlays are off until you start it again \u2014 double-click <code class="inline">start.bat</code>
+      (Windows) or <code class="inline">start.command</code> (Mac). You can close this tab.</p>
+    </div>`;
+});
 let toastTimer;
 
 await refresh();
@@ -34,7 +47,8 @@ async function refreshStatus() {
     paintHealth();
     paintDots();
   } catch {
-    healthEl.innerHTML = '<span class="pill"><span class="dot bad"></span>The toolkit stopped running — restart it in the terminal</span>';
+    if (!document.getElementById('health')) return; // we quit on purpose
+    healthEl.innerHTML = '<span class="pill"><span class="dot bad"></span>The toolkit stopped running — start it again with start.bat / start.command</span>';
   }
 }
 

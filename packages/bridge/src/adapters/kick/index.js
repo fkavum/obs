@@ -207,7 +207,9 @@ export function createAdapter({ config, emit, log, saveConfig }) {
 
     let json = null;
     const res = await fetch(url, { headers: LOOKUP_HEADERS });
-    if (res.status === 404) throw new Error(`no Kick channel called "${slug}"`);
+    if (res.status === 404) {
+      throw Object.assign(new Error(`no Kick channel called "${slug}" — check the spelling`), { noRetry: true });
+    }
     if (res.ok) {
       json = await res.json().catch(() => null);
     } else if (res.status === 403 || res.status === 429 || res.status === 503) {
@@ -347,9 +349,11 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       if (!connected) {
         const detail = lastError?.blocked
           ? `${lastError.message} Chat starts by itself once it gets through.`
-          : lastError
-            ? `${lastError.message} — retrying`
-            : 'connecting…';
+          : lastError?.noRetry
+            ? lastError.message
+            : lastError
+              ? `${lastError.message} — retrying`
+              : 'connecting…';
         return { connected: false, detail, signedIn: !!config.accessToken };
       }
       // Kick chat needs no login at all; signing in only adds viewer counts.

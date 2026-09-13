@@ -23,16 +23,22 @@ const PANEL_DIR = join(ROOT, 'packages', 'panel');
 const CORE_DIR = join(ROOT, 'packages', 'core', 'src');
 const ASSETS_DIR = join(ROOT, 'assets');
 
-export function startServer({ hub, config }) {
-  const http = createServer((req, res) => {
-    handle(req, res, { hub, config }).catch((err) => {
+export function startServer({ hub, config, onQuit = null }) {
+  const requestHandler = (req, res) => {
+    handle(req, res, { hub, config, onQuit }).catch((err) => {
       log.error(`${req.method} ${req.url}: ${err.message}`);
       if (!res.headersSent) sendJSON(res, 500, { error: err.message });
       else res.end();
     });
-  });
-
+  };
+  const http = createServer(requestHandler);
   const ws = new WSServer(http, { path: '/events' });
+
+  // Windows resolves "localhost" to ::1 before 127.0.0.1, and on some setups a
+  // connection to an unbound ::1 hangs instead of failing fast, so the browser
+  // sits on "loading". Serve both loopback addresses; still nothing off-machine.
+  const http6 = createServer(requestHandler);
+  ws.attach(http6);
 
   ws.on('connection', (conn, req) => {
     const params = new URL(req.url, 'http://x').searchParams;
@@ -60,16 +66,32 @@ export function startServer({ hub, config }) {
   hub.on('status', () => ws.broadcast({ type: 'status', platforms: hub.status(), ts: Date.now() }));
 
   const { host, httpPort } = config.bridge;
+  http.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n  Port ${httpPort} is already in use. The toolkit is probably already running\n  in another window - use that one, or close it and start again.\n`);
+    } else {
+      console.error(`\n  Could not start the local server: ${err.message}\n`);
+    }
+    process.exit(1);
+  });
   http.listen(httpPort, host);
+
+  if (host === '127.0.0.1') {
+    // No IPv6 loopback on this machine is fine; the IPv4 listener already works.
+    http6.on('error', (err) => log.debug(`no ::1 listener (${err.code})`));
+    http6.listen(httpPort, '::1');
+  }
 
   return {
     http,
     ws,
-    url: `http://${host}:${httpPort}`,
+    url: `http://localhost:${httpPort}`,
+    altUrl: `http://${host}:${httpPort}`,
     close() {
       hub.off('event', onEvent);
       ws.close();
       http.close();
+      http6.close();
     },
   };
 }
@@ -113,7 +135,7 @@ async function handle(req, res, ctx) {
   sendHTML(res, 404, '<!doctype html><meta charset="utf-8"><title>Not found</title><body style="font:16px system-ui;padding:40px">Nothing here. <a href="/">Go back to the toolkit</a>.');
 }
 
-async function api(req, res, url, { hub, config }) {
+async function api(req, res, url, { hub, config, onQuit }) {
   const path = url.pathname;
 
   if (path === '/api/platforms' && req.method === 'GET') {
@@ -180,6 +202,12 @@ async function api(req, res, url, { hub, config }) {
     if (req.method === 'POST') {
       const body = await readBody(req);
       setPlatformConfig(config, id, body);
+      // Apply immediately: a corrected channel name must not wait for a toggle.
+      const entry = hub.platforms.get(id);
+      if (entry.enabled) {
+        await hub.stopPlatform(id);
+        await hub.startPlatform(id);
+      }
       return sendJSON(res, 200, {
         ok: true,
         config: publicPlatformConfig(config.platforms[id]),
@@ -206,6 +234,13 @@ async function api(req, res, url, { hub, config }) {
     const limit = Math.min(100, Number(url.searchParams.get('limit')) || 25);
     const platforms = (url.searchParams.get('platforms') || '').split(',').filter(Boolean);
     return sendJSON(res, 200, { events: hub.backlog(limit, platforms.length ? platforms : null) });
+  }
+
+  if (path === '/api/quit' && req.method === 'POST') {
+    sendJSON(res, 200, { ok: true });
+    // Reply first, then shut down on the next tick so the response gets out.
+    setTimeout(() => onQuit?.(), 50);
+    return;
   }
 
   if (path === '/api/bridge' && req.method === 'POST') {
