@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Local-first multi-platform streaming toolkit for OBS (Twitch, YouTube, Kick)",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "imports": {
     "#core/*": "./packages/core/src/*"
   },
@@ -12,6 +14,7 @@
   "scripts": {
     "start": "node packages/bridge/bin/start.js",
     "demo": "node packages/bridge/bin/start.js --demo",
-    "test": "node --test packages/**/test/*.test.js"
+    "test": "node --test packages/**/test/*.test.js",
+    "diagnose": "node packages/bridge/bin/diagnose.js"
   }
 }

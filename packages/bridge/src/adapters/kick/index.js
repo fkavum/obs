@@ -84,6 +84,19 @@ const base64url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\
 const BLOCKED_RETRY_MS = 5 * 60 * 1000;
 
 /**
+ * Exactly what the chatroom lookup sends. Exported so the diagnostic can send
+ * the identical request - a probe that differs from the real thing (say, no
+ * User-Agent, which many WAF rules refuse outright) measures nothing useful.
+ * The agent string is honest on purpose; pretending to be a browser while
+ * having Node's TLS fingerprint is a mismatch bot filters look for.
+ */
+export const LOOKUP_HEADERS = Object.freeze({
+  accept: 'application/json',
+  'accept-language': 'en-US,en;q=0.9',
+  'user-agent': 'obs-toolkit/0.1 (local stream overlay)',
+});
+
+/**
  * Browsers already on the machine that can fetch a Cloudflare-protected page for
  * us. Node's TLS fingerprint isn't a browser's, so bot protection sometimes
  * challenges it; a real browser engine passes. Edge ships with Windows, so a
@@ -193,9 +206,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
     const url = `${WEB_API}/channels/${encodeURIComponent(slug)}`;
 
     let json = null;
-    const res = await fetch(url, {
-      headers: { accept: 'application/json', 'accept-language': 'en-US,en;q=0.9' },
-    });
+    const res = await fetch(url, { headers: LOOKUP_HEADERS });
     if (res.status === 404) throw new Error(`no Kick channel called "${slug}"`);
     if (res.ok) {
       json = await res.json().catch(() => null);

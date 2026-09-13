@@ -119,6 +119,28 @@ how often you asked. The toolkit handles it in this order, all by itself:
 
 It only ever has to get through **once** per channel; after that the answer is remembered.
 
+**Works on one computer but not another on the same Wi-Fi?** The two machines look
+different to Kick's filter even though they share a connection. The usual reasons, in order:
+
+- **Something on the PC is inspecting HTTPS** — an antivirus "web shield", parental
+  controls, or a work proxy. Kick's filter then sees *that* program, not the toolkit, and
+  refuses it. Add an exception for `node.exe` in that software, or switch off its web/HTTPS
+  scanning, and try again. Windows PCs with third-party antivirus are the classic case.
+- **One machine is using IPv6 and the other IPv4**, so they have different public addresses
+  and are scored separately. The toolkit prefers IPv4 by default to avoid this.
+- **The Windows copy is out of date.** The message *"Kick blocked the lookup for this
+  channel"* (without "bot protection") is from before the fix; update it.
+
+To find out which, run the diagnostic on the machine that fails and send the output:
+
+```
+npm run diagnose
+```
+
+(Open the project folder, click the address bar, type `cmd`, press Enter, then type that.)
+It reports which address it connected over, whether the security certificate came from
+Cloudflare or from something on your PC, and whether the browser fallback works.
+
 If it stays blocked for a long time, there is a manual way round: open
 `https://kick.com/api/v2/channels/YOUR-CHANNEL` in your own browser, find the number after
 `"chatroom":{"id":`, and add it to `config/app.config.json` like this:

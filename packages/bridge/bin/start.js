@@ -7,11 +7,20 @@
  */
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
+import dns from 'node:dns';
 import { createLogger, setLogLevel } from '#core/index.js';
 import { loadConfig, setPlatformConfig, CONFIG_PATH } from '../src/config.js';
 import { Hub } from '../src/hub.js';
 import { startServer } from '../src/server/index.js';
 import { refreshExpiring } from '../src/server/auth.js';
+
+// Prefer IPv4 for outbound connections. Two machines on one Wi-Fi can present
+// different public addresses (one over IPv6, one over IPv4), and bot filters
+// score them separately; IPv4 is the better-known one and IPv6 buys nothing here.
+// Override with OBS_TOOLKIT_IP_FAMILY=6 or =auto.
+const ipFamily = process.env.OBS_TOOLKIT_IP_FAMILY;
+if (ipFamily !== '6' && ipFamily !== 'auto') dns.setDefaultResultOrder('ipv4first');
+else if (ipFamily === '6') dns.setDefaultResultOrder('verbatim');
 
 const args = process.argv.slice(2);
 const has = (flag) => args.includes(flag);
