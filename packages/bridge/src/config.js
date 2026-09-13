@@ -1,13 +1,13 @@
 /**
  * Configuration is two layers read together:
  *
- *   config/app.config.json    defaults for this install - channel names, which
- *                             platforms are on. Committed, human-edited.
+ *   config/initial.config.json  starting values for this install - channel names, which
+ *                              platforms are on. Committed, human-edited.
  *   config/config.local.json  what the setup page saved - tokens, overrides.
  *                             Git-ignored, machine-written. Wins over defaults.
  *
  * The layers are merged at read time and only the local layer is ever written,
- * so editing app.config.json keeps working after the wizard has saved things:
+ * so editing initial.config.json keeps working after the wizard has saved things:
  * a value you set in the wizard overrides it; everything else still follows it.
  */
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync } from 'node:fs';
@@ -18,7 +18,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, '..', '..', '..');
 // Overridable so tests can point at a scratch directory.
 export const CONFIG_DIR = process.env.OBS_TOOLKIT_CONFIG_DIR || join(ROOT, 'config');
-export const DEFAULTS_PATH = join(CONFIG_DIR, 'app.config.json');
+export const DEFAULTS_PATH = join(CONFIG_DIR, 'initial.config.json');
 export const CONFIG_PATH = join(CONFIG_DIR, 'config.local.json');
 
 export const DEFAULT_CONFIG = {
@@ -59,7 +59,7 @@ export function mergeConfig(defaults = {}, local = {}) {
 }
 
 export function loadConfig() {
-  const defaults = readJSON(DEFAULTS_PATH, 'app.config.json');
+  const defaults = readJSON(DEFAULTS_PATH, 'initial.config.json');
   const local = readJSON(CONFIG_PATH, 'config.local.json');
   if (!local.platforms) local.platforms = {};
   return mergeConfig(defaults, local);

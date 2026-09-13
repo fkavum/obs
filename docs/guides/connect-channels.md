@@ -148,7 +148,7 @@ Cloudflare or from something on your PC, and whether the browser fallback works.
 
 If it stays blocked for a long time, there is a manual way round: open
 `https://kick.com/api/v2/channels/YOUR-CHANNEL` in your own browser, find the number after
-`"chatroom":{"id":`, and add it to `config/app.config.json` like this:
+`"chatroom":{"id":`, and add it to `config/initial.config.json` like this:
 `"kick": { "channel": "yourname", "chatroomId": 1234567, "chatroomFor": "yourname", "enabled": true }`.
 Then restart the toolkit.
 

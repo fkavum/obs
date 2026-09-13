@@ -33,7 +33,7 @@ npm test           # unit tests
 
 No `npm install` — the toolkit has zero dependencies.
 
-Put your channel names in `config/app.config.json` (or type them on the setup page), then
+Put your channel names in `config/initial.config.json` (or type them on the setup page), then
 open **http://localhost:8778**. Twitch and Kick chat work
 with no account at all; signing in is optional and only adds alerts and viewer counts.
 

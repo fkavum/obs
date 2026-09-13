@@ -93,33 +93,46 @@ export function refreshMsFrom(config = {}) {
 export const LOW_WATER = 0.25;
 
 /**
- * How long to wait before the next chat poll. Pure, so it can be tested.
+ * How long to wait before the next chat poll, and WHY. Pure, so it can be tested.
  *
- *   refreshMs      what the operator asked for (app.config.json refreshSeconds)
+ *   refreshMs      what the operator asked for (initial.config.json refreshSeconds)
  *   apiMinMs       the interval YouTube itself demanded in its last response
- *   idleStreak     consecutive empty polls; quiet chat is checked less often
  *   remainingUnits quota left today after the reserve
  *   budgetUnits    the day's usable quota, to know what "running low" means
  *   hoursLeft      hours until the quota resets
  *
- * The operator's rate is honoured while budget is healthy - a stream that starts
- * in the morning must not be throttled on the assumption it will run all day.
- * YouTube's own minimum can only raise the interval, quiet chat raises it
- * gradually, and once the budget drops below LOW_WATER the rest is spread over
- * the hours left so chat slows down instead of stopping.
+ * The operator's rate is honoured exactly while budget is healthy - "10 means 10".
+ * Only two things may slow it, and the reason is reported so a slower cadence on
+ * the status screen is never a mystery: YouTube's own minimum (it raises this
+ * itself when chat is quiet, so we don't add a back-off of our own), and running
+ * below LOW_WATER, when the remainder is spread over the hours left.
  */
-export function computeInterval({ refreshMs, apiMinMs = 0, idleStreak = 0, remainingUnits, budgetUnits = 9500, hoursLeft }) {
-  if (remainingUnits <= 0) return 30 * 60 * 1000; // exhausted: check back in half an hour
-  const quietFactor = 1 + Math.min(idleStreak, 6) * 0.5; // up to 4x slower when nobody is chatting
-  const wanted = Math.max(apiMinMs, refreshMs * quietFactor);
+export function intervalDetail({ refreshMs, apiMinMs = 0, remainingUnits, budgetUnits = 9500, hoursLeft }) {
+  if (remainingUnits <= 0) return { ms: 30 * 60 * 1000, reason: 'quota used up for today' };
 
-  if (remainingUnits > budgetUnits * LOW_WATER) return wanted;
+  let ms = refreshMs;
+  let reason = 'as configured';
+  if (apiMinMs > ms) {
+    ms = apiMinMs;
+    reason = "YouTube's minimum";
+  }
 
-  // Running low: pace the remainder to last until the reset.
-  const affordable = remainingUnits / COST.liveChatMessages;
-  const evenPace = (Math.max(0.5, hoursLeft) * 3600 * 1000) / affordable;
-  const cap = Math.max(60000, refreshMs); // never slower than a minute unless asked for
-  return Math.min(cap, Math.max(wanted, evenPace));
+  if (remainingUnits <= budgetUnits * LOW_WATER) {
+    const affordable = remainingUnits / COST.liveChatMessages;
+    const evenPace = (Math.max(0.5, hoursLeft) * 3600 * 1000) / affordable;
+    const cap = Math.max(60000, refreshMs); // never slower than a minute unless asked for
+    const paced = Math.min(cap, evenPace);
+    if (paced > ms) {
+      ms = paced;
+      reason = 'saving quota';
+    }
+  }
+  return { ms, reason };
+}
+
+/** Milliseconds only; see intervalDetail() for the reason. */
+export function computeInterval(args) {
+  return intervalDetail(args).ms;
 }
 
 /** Quota resets at midnight US Pacific. Track spend against that day. */
@@ -131,6 +144,7 @@ export function createAdapter({ config, emit, log, saveConfig }) {
   const budget = config.dailyQuota || 10000;
   const refreshMs = refreshMsFrom(config);
   let currentIntervalMs = refreshMs;
+  let currentReason = 'as configured';
   // Leave room for the rest of the project's API use.
   const reserve = config.quotaReserve ?? 500;
 
@@ -242,15 +256,16 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       idleStreak = items.length ? 0 : Math.min(idleStreak + 1, 6);
 
       // YouTube tells us its own minimum; never poll faster than that.
-      nextDelay = computeInterval({
+      const next = intervalDetail({
         refreshMs,
         apiMinMs: Number(json.pollingIntervalMillis) || 0,
-        idleStreak,
         remainingUnits: remaining(),
         budgetUnits: budget - reserve,
         hoursLeft: hoursUntilPacificMidnight(),
       });
-      currentIntervalMs = nextDelay;
+      nextDelay = next.ms;
+      currentIntervalMs = next.ms;
+      currentReason = next.reason;
     } catch (err) {
       connected = false;
       lastError = err.message;
@@ -307,7 +322,8 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       if (lastError) return { connected: false, detail: `${lastError} — quota ${pct}% left` };
       if (!liveChatId) return { connected: false, detail: `waiting for you to go live — quota ${pct}% left` };
       const every = Math.round(currentIntervalMs / 1000);
-      return { connected, detail: `live chat — refreshing every ${every}s — quota ${pct}% left today` };
+      const why = currentReason === 'as configured' ? '' : ` (${currentReason})`;
+      return { connected, detail: `live chat — refreshing every ${every}s${why} — quota ${pct}% left today` };
     },
   };
 }

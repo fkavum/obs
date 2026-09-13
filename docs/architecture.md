@@ -155,7 +155,7 @@ Every event the bridge emits has this envelope:
 
 There are exactly three places settings live. Don't invent a fourth.
 
-**0. Install defaults → `config/app.config.json`** (committed, human-edited). Channel names
+**0. Install defaults → `config/initial.config.json`** (committed, human-edited). Channel names
 and which platforms are switched on. Read underneath everything else at startup. Editing it
 keeps working forever because only *differences* are ever saved: a value the operator changes
 in the setup page overrides it, and anything they haven't touched still follows the file.
@@ -236,7 +236,7 @@ adapter so churn can't leak out.
 around. Live chat comes from Data API v3 `liveChatMessages.list`, which is **polled** and
 **quota-limited**, and the chat ID changes with every broadcast. Naive polling can exhaust a
 day's quota in a few hours of streaming. Mitigations, all inside the adapter: the operator sets a
-target rate (`refreshSeconds`, default 10) in `app.config.json`; the adapter honours the API's
+target rate (`refreshSeconds`, default 10) in `initial.config.json`; the adapter honours the API's
 own `pollingIntervalMillis` as a floor, backs off when chat is quiet, slows further only when
 the day's budget would otherwise run out, and shows the live cadence and remaining quota on
 the status screen rather than dying silently mid-stream. `computeInterval()` is pure and

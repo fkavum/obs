@@ -33,7 +33,7 @@ simply close the black window. (`Ctrl` + `C` in the window works too. On Windows
 
 ## Setting your channels once, for good
 
-Open **`config/app.config.json`** in the project folder with any text editor. It looks like:
+Open **`config/initial.config.json`** in the project folder with any text editor. It looks like:
 
 ```
 "twitch":  { "channel": "s0mcs",    "enabled": true },
@@ -55,10 +55,15 @@ be asked, and every ask spends a little of a free daily allowance, so:
 | **10** (default) | a short beat behind | 4 hours |
 | 20 | noticeably delayed | 8 hours |
 
-It runs at the speed you set until about a quarter of the day's allowance is left, then
-stretches what remains so chat slows down rather than stopping. It never goes faster than
-YouTube allows, and checks less often when nobody is chatting. The setup page shows the
-current rate next to the YouTube dot, so you can see when it's pacing itself.
+**The number you set is the number you get.** Only two things can make it slower, and the
+setup page tells you which one is happening, next to the YouTube dot:
+
+- *(YouTube's minimum)* — YouTube itself sets a shortest allowed wait, which it raises when
+  chat is quiet. The toolkit can't go faster than that.
+- *(saving quota)* — once about a quarter of the day's free allowance is left, it stretches
+  what remains over the hours until reset, so chat slows down instead of stopping.
+
+If you see neither, it's running at exactly your setting.
 
 ## Open the toolkit page
 

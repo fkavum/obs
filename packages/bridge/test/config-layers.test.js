@@ -11,14 +11,14 @@ const { loadConfig, setPlatformConfig, saveConfig, mergeConfig, CONFIG_PATH } = 
 process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
 
 // Each test starts from no saved state, so they can't leak overrides into each other.
-const editDefaults = (obj) => writeFileSync(join(dir, 'app.config.json'), JSON.stringify(obj));
+const editDefaults = (obj) => writeFileSync(join(dir, 'initial.config.json'), JSON.stringify(obj));
 const writeDefaults = (obj) => {
   rmSync(CONFIG_PATH, { force: true });
   editDefaults(obj);
 };
 const readLocal = () => JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 
-test('defaults from app.config.json apply when nothing is saved', () => {
+test('defaults from initial.config.json apply when nothing is saved', () => {
   writeDefaults({ platforms: { twitch: { channel: 's0mcs', enabled: true }, kick: { channel: '4head', enabled: true } } });
   const cfg = loadConfig();
   assert.equal(cfg.platforms.twitch.channel, 's0mcs');
@@ -37,7 +37,7 @@ test('a saved value wins over the default, and only the difference is persisted'
   assert.deepEqual(local.platforms.twitch, { channel: 'someone_else' }, 'the default was NOT baked into the saved file');
 });
 
-test('editing app.config.json later still takes effect for anything not overridden', () => {
+test('editing initial.config.json later still takes effect for anything not overridden', () => {
   writeDefaults({ platforms: { twitch: { channel: 'old', enabled: true } } });
   const first = loadConfig();
   setPlatformConfig(first, 'twitch', { enabled: false }); // operator switched it off
@@ -65,7 +65,7 @@ test('the local layer never leaks into JSON output', () => {
 });
 
 test('a corrupt defaults file is ignored rather than fatal', () => {
-  writeFileSync(join(dir, 'app.config.json'), '{ this is not json');
+  writeFileSync(join(dir, 'initial.config.json'), '{ this is not json');
   const cfg = loadConfig();
   assert.ok(cfg.platforms, 'still returns a usable config');
   saveConfig(cfg); // and saving still works

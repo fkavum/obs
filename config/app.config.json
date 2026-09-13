@@ -1,9 +1,0 @@
-{
-  "$comment": "Defaults for this install. Edit freely - changes apply on the next start. Anything you change in the setup page is saved separately (config.local.json) and wins over what is here; press Disconnect or delete that file to fall back to these. refreshSeconds (YouTube only): how often to check for new chat. Twitch and Kick push messages instantly and need no setting. YouTube is polled, and each check spends daily allowance, so lower = more responsive but shorter streams before it slows itself down.",
-  "platforms": {
-    "twitch":   { "channel": "s0mcs", "enabled": true },
-    "kick":     { "channel": "4head", "enabled": true },
-    "youtube":  { "channel": "NFLonCBS", "enabled": true, "refreshSeconds": 10 },
-    "fake":     { "enabled": false }
-  }
-}
