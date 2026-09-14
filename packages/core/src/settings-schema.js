@@ -157,7 +157,7 @@ function coerce(spec, raw) {
         .filter(Boolean);
     case 'text':
     default:
-      return String(raw).slice(0, 120);
+      return String(raw).slice(0, spec.maxLength ?? 120);
   }
 }
 
@@ -167,13 +167,13 @@ function coerce(spec, raw) {
  * @param {string|URLSearchParams} query
  * @param {object} [schema]
  */
-export function parseSettings(query, schema = CHAT_SETTINGS) {
+export function parseSettings(query, schema = CHAT_SETTINGS, themes = THEMES) {
   const params = query instanceof URLSearchParams ? query : new URLSearchParams(query || '');
   const out = {};
 
   // A theme preset is applied first so explicit parameters win over it.
   const themeName = params.get('theme');
-  const preset = (themeName && THEMES[themeName]) || {};
+  const preset = (themeName && themes[themeName]) || {};
 
   for (const [key, spec] of Object.entries(schema)) {
     out[key] = key in preset ? preset[key] : structuredCloneish(spec.default);
@@ -190,13 +190,15 @@ export function parseSettings(query, schema = CHAT_SETTINGS) {
     if (m && /^#[0-9a-fA-F]{3,8}$/.test(value)) out.platformBg[m[1].toLowerCase()] = value;
   }
 
-  // Defaults differ per layout; only correct them when not explicitly set.
-  if (out.layout === 'horizontal') {
+  // Chat-only: defaults differ per layout; only correct them when not explicitly set.
+  if ('layout' in schema && out.layout === 'horizontal') {
     if (!params.has('anchor') && !('anchor' in preset)) out.anchor = 'bottom';
     if (!params.has('flow') && !('flow' in preset)) out.flow = 'newest-right';
   }
-  if (out.layout === 'vertical' && !['left', 'right'].includes(out.anchor)) out.anchor = 'left';
-  if (out.layout === 'horizontal' && !['top', 'bottom'].includes(out.anchor)) out.anchor = 'bottom';
+  if ('layout' in schema) {
+    if (out.layout === 'vertical' && !['left', 'right'].includes(out.anchor)) out.anchor = 'left';
+    if (out.layout === 'horizontal' && !['top', 'bottom'].includes(out.anchor)) out.anchor = 'bottom';
+  }
 
   return out;
 }
@@ -231,3 +233,127 @@ export function isVisible(spec, settings) {
 function structuredCloneish(v) {
   return Array.isArray(v) ? [...v] : v;
 }
+
+// ===========================================================================
+// Alerts overlay
+// ===========================================================================
+
+export const ALERT_GROUPS = [
+  { id: 'layout', label: 'Position' },
+  { id: 'size', label: 'Size' },
+  { id: 'look', label: 'Look' },
+  { id: 'timing', label: 'Timing & animation' },
+  { id: 'events', label: 'Which alerts' },
+  { id: 'text', label: 'Wording' },
+  { id: 'sound', label: 'Sound' },
+  { id: 'behaviour', label: 'Behaviour' },
+];
+
+/**
+ * Wording uses placeholders, filled from the event:
+ *   {name} {platform} {amount} {currency} {tier} {months} {count} {viewers} {message}
+ */
+export const ALERT_SETTINGS = {
+  // ---- Position -----------------------------------------------------------
+  position: { group: 'layout', kind: 'select', default: 'top', options: ['top', 'center', 'bottom'], label: 'Where on the screen', help: 'Add the source at full screen size (1920×1080) and let this place the alert.' },
+  align: { group: 'layout', kind: 'select', default: 'center', options: ['left', 'center', 'right'], label: 'Left / centre / right' },
+  offset: { group: 'layout', kind: 'number', default: 48, min: 0, max: 400, step: 4, label: 'Distance from the edge', unit: 'px' },
+  width: { group: 'layout', kind: 'number', default: 520, min: 240, max: 1200, step: 10, label: 'Alert width', unit: 'px' },
+
+  // ---- Size ---------------------------------------------------------------
+  scale: { group: 'size', kind: 'number', default: 100, min: 50, max: 200, step: 5, label: 'Overall size', unit: '%' },
+  fontSize: { group: 'size', kind: 'number', default: 22, min: 12, max: 64, step: 1, label: 'Text size', unit: 'px' },
+  font: { group: 'size', kind: 'text', default: 'Inter', label: 'Font' },
+  padding: { group: 'size', kind: 'number', default: 18, min: 4, max: 60, step: 1, label: 'Space inside', unit: 'px' },
+  iconSize: { group: 'size', kind: 'number', default: 30, min: 0, max: 96, step: 2, label: 'Platform icon size', unit: 'px', help: '0 hides the icon.' },
+
+  // ---- Look ---------------------------------------------------------------
+  bg: { group: 'look', kind: 'select', default: 'platform', options: ['platform', 'flat', 'none'], label: 'Background', help: 'Platform tints the alert by where it came from.' },
+  bgOpacity: { group: 'look', kind: 'number', default: 88, min: 0, max: 100, step: 1, label: 'Background transparency', unit: '%' },
+  bgColor: { group: 'look', kind: 'color', default: '#101018', label: 'Background colour', showIf: { bg: 'flat' } },
+  bgTint: { group: 'look', kind: 'number', default: 45, min: 0, max: 100, step: 1, label: 'Platform tint strength', unit: '%', showIf: { bg: 'platform' } },
+  textColor: { group: 'look', kind: 'color', default: '#ffffff', label: 'Text colour' },
+  accent: { group: 'look', kind: 'color', default: 'platform', label: 'Highlight colour', allowPlatform: true, help: 'Used for the name, the amount and the border.' },
+  border: { group: 'look', kind: 'select', default: 'glow', options: ['none', 'solid', 'glow', 'accent-left', 'accent-top'], label: 'Border style' },
+  borderWidth: { group: 'look', kind: 'number', default: 2, min: 0, max: 16, step: 1, label: 'Border thickness', unit: 'px' },
+  radius: { group: 'look', kind: 'number', default: 18, min: 0, max: 48, step: 1, label: 'Corner rounding', unit: 'px' },
+  shadow: { group: 'look', kind: 'select', default: 'soft', options: ['none', 'soft', 'hard', 'outline'], label: 'Text edge' },
+
+  // ---- Timing -------------------------------------------------------------
+  duration: { group: 'timing', kind: 'number', default: 6, min: 2, max: 30, step: 0.5, label: 'Show each alert for', unit: 'sec' },
+  pause: { group: 'timing', kind: 'number', default: 0.6, min: 0, max: 5, step: 0.1, label: 'Pause between alerts', unit: 'sec' },
+  animIn: { group: 'timing', kind: 'select', default: 'pop', options: ['pop', 'slide-down', 'slide-up', 'fade'], label: 'Entrance' },
+  maxQueue: { group: 'timing', kind: 'number', default: 20, min: 1, max: 100, step: 1, label: 'Most alerts waiting in line', help: 'If more pile up than this, the oldest are skipped so you never fall minutes behind.' },
+
+  // ---- Which alerts -------------------------------------------------------
+  follows: { group: 'events', kind: 'toggle', default: true, label: 'New followers' },
+  subs: { group: 'events', kind: 'toggle', default: true, label: 'Subscriptions & memberships' },
+  donations: { group: 'events', kind: 'toggle', default: true, label: 'Tips, bits & Super Chats' },
+  raids: { group: 'events', kind: 'toggle', default: true, label: 'Raids & hosts' },
+  minDonation: { group: 'events', kind: 'number', default: 0, min: 0, max: 1000, step: 1, label: 'Only show tips of at least', help: 'In the tip’s own currency; bits count as 1 each. 0 shows all.', showIf: { donations: true } },
+  minRaid: { group: 'events', kind: 'number', default: 0, min: 0, max: 10000, step: 1, label: 'Only show raids of at least', unit: 'viewers', showIf: { raids: true } },
+  showMessage: { group: 'events', kind: 'toggle', default: true, label: 'Show the message attached to tips and subs' },
+  platforms: { group: 'events', kind: 'list', default: [], label: 'Show only these platforms', help: 'Leave empty for all.' },
+
+  // ---- Wording ------------------------------------------------------------
+  followText: { group: 'text', kind: 'text', default: '{name} just followed!', label: 'New follower', maxLength: 200 },
+  subText: { group: 'text', kind: 'text', default: '{name} just subscribed!', label: 'New subscriber', maxLength: 200 },
+  resubText: { group: 'text', kind: 'text', default: '{name} resubscribed for {months} months!', label: 'Returning subscriber', maxLength: 200 },
+  giftText: { group: 'text', kind: 'text', default: '{name} gifted {count} subs!', label: 'Gifted subs', maxLength: 200 },
+  donationText: { group: 'text', kind: 'text', default: '{name} tipped {amount}!', label: 'Tip / bits / Super Chat', maxLength: 200 },
+  raidText: { group: 'text', kind: 'text', default: '{name} is raiding with {viewers} viewers!', label: 'Raid', maxLength: 200 },
+
+  // ---- Sound --------------------------------------------------------------
+  sound: { group: 'sound', kind: 'toggle', default: true, label: 'Play a sound', help: 'A built-in chime; nothing to download. Tips get a brighter one, raids a bigger one.' },
+  volume: { group: 'sound', kind: 'number', default: 60, min: 0, max: 100, step: 5, label: 'Volume', unit: '%', showIf: { sound: true } },
+  soundUrl: { group: 'sound', kind: 'text', default: '', label: 'Or use your own sound file (web address)', maxLength: 500, showIf: { sound: true } },
+
+  // ---- Behaviour ----------------------------------------------------------
+  preview: { group: 'behaviour', kind: 'toggle', default: false, label: 'Preview mode', help: 'Fires fake alerts so you can style it without being live.' },
+  theme: { group: 'behaviour', kind: 'text', default: 'default', label: 'Theme preset' },
+};
+
+export const ALERT_THEMES = {
+  default: {},
+  minimal: { bg: 'none', border: 'none', shadow: 'outline', iconSize: 22, animIn: 'fade' },
+  neon: { bg: 'flat', bgColor: '#0b0b16', bgOpacity: 90, border: 'glow', borderWidth: 3, accent: 'platform', animIn: 'pop' },
+  clean: { bg: 'flat', bgColor: '#ffffff', bgOpacity: 94, textColor: '#14141c', border: 'accent-left', borderWidth: 5, shadow: 'none', radius: 12 },
+  bold: { fontSize: 30, padding: 24, border: 'solid', borderWidth: 3, animIn: 'slide-down', duration: 7 },
+  banner: { position: 'top', offset: 0, width: 1200, radius: 0, border: 'accent-top', borderWidth: 6, animIn: 'slide-down' },
+};
+
+/**
+ * Every overlay the settings screen knows about. Adding an overlay here gives it
+ * a tab, a live preview, a Copy URL button and per-platform colour controls -
+ * the screen is built from this table, not from per-overlay code.
+ */
+export const OVERLAYS = {
+  chat: {
+    id: 'chat',
+    label: 'Chat overlay',
+    path: '/overlays/chat/',
+    schema: CHAT_SETTINGS,
+    groups: GROUPS,
+    themes: THEMES,
+    openGroups: ['layout', 'background', 'border'],
+    obsSize: { width: 400, height: 1080 },
+    fakeLabel: 'Use fake messages in this preview',
+  },
+  alerts: {
+    id: 'alerts',
+    label: 'Alerts',
+    path: '/overlays/alerts/',
+    schema: ALERT_SETTINGS,
+    groups: ALERT_GROUPS,
+    themes: ALERT_THEMES,
+    openGroups: ['layout', 'look', 'events'],
+    obsSize: { width: 1920, height: 1080 },
+    fakeLabel: 'Fire fake alerts in this preview',
+    testEvents: [
+      { type: 'follow', label: 'Follow' },
+      { type: 'subscription', label: 'Sub' },
+      { type: 'donation', label: 'Tip' },
+      { type: 'raid', label: 'Raid' },
+    ],
+  },
+};

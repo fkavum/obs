@@ -12,6 +12,7 @@ every guide feels the same.
 | [Connecting your channels](connect-channels.md) | Twitch, Kick and YouTube logins |
 | [Google Cloud App Setup](how-to-add-google-cloud-app.md) | Step-by-step setup for YouTube chat API credentials |
 | [Chat overlay](chat-overlay.md) | Adding it to OBS and restyling it |
+| [Alerts](alerts.md) | Follow / sub / tip / raid pop-ups, test buttons, sound |
 
 ## Writing rules
 

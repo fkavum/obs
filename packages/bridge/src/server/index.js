@@ -9,6 +9,7 @@ import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
 import { WSServer, createLogger } from '#core/index.js';
+import { makePreviewEvent } from '#core/preview-feed.js';
 import { ROOT, saveConfig, setPlatformConfig } from '../config.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
 import {
@@ -234,6 +235,18 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const limit = Math.min(100, Number(url.searchParams.get('limit')) || 25);
     const platforms = (url.searchParams.get('platforms') || '').split(',').filter(Boolean);
     return sendJSON(res, 200, { events: hub.backlog(limit, platforms.length ? platforms : null) });
+  }
+
+  // Fire one fake alert through the real pipeline so the OBS source shows it.
+  if (path === '/api/test-event' && req.method === 'POST') {
+    const body = await readBody(req);
+    const allowed = ['follow', 'subscription', 'donation', 'raid', 'chat'];
+    const type = allowed.includes(body.type) ? body.type : 'follow';
+    const enabled = hub.status().filter((r) => r.enabled && r.id !== 'fake').map((r) => r.id);
+    const platform = hub.platforms.has(body.platform) ? body.platform : enabled[0] || 'fake';
+    const event = makePreviewEvent([platform], type);
+    hub.inject(event);
+    return sendJSON(res, 200, { ok: true, event });
   }
 
   if (path === '/api/quit' && req.method === 'POST') {

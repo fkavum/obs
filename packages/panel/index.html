@@ -17,6 +17,7 @@
   <nav class="tabs">
     <a href="/" aria-current="page">Setup</a>
     <a href="/settings/">Chat overlay style</a>
+    <a href="/settings/?overlay=alerts">Alerts style</a>
   </nav>
 
   <section class="card">
@@ -34,6 +35,24 @@
     <div class="note">
       In OBS: <strong>Sources</strong> → <strong>+</strong> → <strong>Browser</strong> → paste the link →
       set Width <code class="inline">400</code> and Height <code class="inline">1080</code> → OK.
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row between">
+      <div>
+        <h2>Alerts overlay</h2>
+        <p class="sub">Follows, subs, tips and raids from every channel, one at a time. Add as a second <strong>Browser Source</strong>.</p>
+      </div>
+      <a class="btn" href="/settings/?overlay=alerts">Change how it looks</a>
+    </div>
+    <div class="urlbar">
+      <input id="alertsUrl" class="grow" type="text" readonly>
+      <button class="primary" id="copyAlerts">Copy</button>
+    </div>
+    <div class="note">
+      Set Width <code class="inline">1920</code> and Height <code class="inline">1080</code> (full screen) and let the
+      style page decide where on the screen alerts appear. Alerts need a channel to be <strong>signed in</strong> — chat works without, alerts don't.
     </div>
   </section>
 

@@ -1,11 +1,18 @@
 /**
  * Visual settings screen for the chat overlay.
  *
- * Every control here is generated from CHAT_SETTINGS -- the same schema the
- * overlay parses. Adding an option to the schema makes a control appear here
- * with no edit to this file, which is what keeps the two from drifting apart.
+ * Every control here is generated from the selected overlay's schema in the
+ * OVERLAYS registry -- the same schema that overlay parses. Adding an option to
+ * a schema makes a control appear here, and adding an overlay to the registry
+ * gives it a tab, a preview and a Copy URL button, with no edit to this file.
  */
-import { CHAT_SETTINGS, GROUPS, THEMES, parseSettings, toQuery, isVisible } from '/core/settings-schema.js';
+import { OVERLAYS, parseSettings, toQuery, isVisible } from '/core/settings-schema.js';
+
+// Which overlay this screen is editing: /settings/?overlay=alerts. Everything
+// below reads from the registry entry, so a new overlay needs no code here.
+const overlayId = new URLSearchParams(location.search).get('overlay') || 'chat';
+const overlay = OVERLAYS[overlayId] || OVERLAYS.chat;
+const STORAGE_KEY = `${overlay.id}-overlay-query`;
 
 const controlsEl = document.getElementById('controls');
 const themesEl = document.getElementById('themes');
@@ -18,22 +25,24 @@ const fakeToggle = document.getElementById('fakeToggle');
 // further down the file would still be in its temporal dead zone.
 let debounce;
 let toastTimer;
-let settings = parseSettings(location.search.slice(1));
+let settings = parseSettings(location.search.slice(1), overlay.schema, overlay.themes);
 let activeTheme = new URLSearchParams(location.search).get('theme') || 'default';
 let platforms = [];
 
 // Remember the last look between visits; the URL still wins if one is given.
-if (!location.search) {
+// (the overlay= param alone doesn't count as "settings were given")
+if (![...new URLSearchParams(location.search).keys()].some((k) => k !== 'overlay')) {
   try {
-    const saved = localStorage.getItem('chat-overlay-query');
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      settings = parseSettings(saved);
+      settings = parseSettings(saved, overlay.schema, overlay.themes);
       activeTheme = new URLSearchParams(saved).get('theme') || 'default';
     }
   } catch { /* private window: just use defaults */ }
 }
 
 platforms = await loadPlatforms();
+paintChrome();
 // Nothing connected yet? Then the preview has to fake it to be useful.
 fakeToggle.checked = !platforms.some((p) => p.connected && p.id !== 'fake');
 
@@ -50,7 +59,7 @@ document.getElementById('copy').addEventListener('click', () => {
 });
 
 document.getElementById('reset').addEventListener('click', () => {
-  settings = parseSettings('');
+  settings = parseSettings('', overlay.schema, overlay.themes);
   activeTheme = 'default';
   renderControls();
   update();
@@ -58,6 +67,46 @@ document.getElementById('reset').addEventListener('click', () => {
 });
 
 fakeToggle.addEventListener('change', () => update());
+
+// ------------------------------------------------------------ chrome
+
+function paintChrome() {
+  document.title = `${overlay.label} style`;
+  document.getElementById('title').textContent = `${overlay.label} style`;
+  fakeToggle.parentElement.querySelector('span').textContent = overlay.fakeLabel;
+  document.getElementById('obsSize').textContent = `${overlay.obsSize.width} × ${overlay.obsSize.height}`;
+
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '<a href="/">Setup</a>';
+  for (const o of Object.values(OVERLAYS)) {
+    const a = document.createElement('a');
+    a.href = `/settings/?overlay=${o.id}`;
+    a.textContent = `${o.label} style`;
+    if (o.id === overlay.id) a.setAttribute('aria-current', 'page');
+    tabs.append(a);
+  }
+
+  const testRow = document.getElementById('testRow');
+  if (!overlay.testEvents) {
+    testRow.hidden = true;
+    return;
+  }
+  testRow.hidden = false;
+  testRow.innerHTML = '<span class="pill">Send a test alert to OBS</span>';
+  for (const t of overlay.testEvents) {
+    const btn = document.createElement('button');
+    btn.textContent = t.label;
+    btn.addEventListener('click', async () => {
+      const res = await fetch('/api/test-event', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: t.type }),
+      }).catch(() => null);
+      toast(res?.ok ? `Test ${t.label.toLowerCase()} sent — watch OBS (and the preview if fake alerts are off)` : 'Could not reach the toolkit');
+    });
+    testRow.append(btn);
+  }
+}
 
 // ------------------------------------------------------------ rendering
 
@@ -78,14 +127,14 @@ async function loadPlatforms() {
 
 function renderThemes() {
   themesEl.innerHTML = '<span class="pill" style="margin-right:4px">Quick looks</span>';
-  for (const name of Object.keys(THEMES)) {
+  for (const name of Object.keys(overlay.themes)) {
     const btn = document.createElement('button');
     btn.textContent = name;
     btn.setAttribute('aria-pressed', String(name === activeTheme));
     btn.addEventListener('click', () => {
       activeTheme = name;
       // Apply the preset over a clean slate so switching looks is predictable.
-      settings = parseSettings(`theme=${name}`);
+      settings = parseSettings(`theme=${name}`, overlay.schema, overlay.themes);
       renderThemes();
       renderControls();
       update();
@@ -97,13 +146,13 @@ function renderThemes() {
 function renderControls() {
   controlsEl.innerHTML = '';
 
-  for (const group of GROUPS) {
-    const entries = Object.entries(CHAT_SETTINGS).filter(([, spec]) => spec.group === group.id);
+  for (const group of overlay.groups) {
+    const entries = Object.entries(overlay.schema).filter(([, spec]) => spec.group === group.id);
     if (!entries.length) continue;
 
     const details = document.createElement('details');
     details.className = 'group';
-    details.open = ['layout', 'background', 'border'].includes(group.id);
+    details.open = overlay.openGroups.includes(group.id);
     const summary = document.createElement('summary');
     summary.textContent = group.label;
     const body = document.createElement('div');
@@ -115,7 +164,7 @@ function renderControls() {
       if (ctl) body.append(ctl);
     }
 
-    if (group.id === 'background') body.append(platformColorControls());
+    if (group.id === 'background' || group.id === 'look') body.append(platformColorControls());
 
     details.append(summary, body);
     controlsEl.append(details);
@@ -281,7 +330,7 @@ function platformColorControls() {
   });
 
   wrap.append(row, reset);
-  wrap.append(help('Only used when “Message background” is set to Platform.'));
+  wrap.append(help('Only used when the background is set to Platform.'));
   return wrap;
 }
 
@@ -308,23 +357,23 @@ function set(key, value) {
 /** Hide controls that don't apply to the current choices. */
 function applyVisibility() {
   for (const el of controlsEl.querySelectorAll('.ctl[data-key]')) {
-    const spec = CHAT_SETTINGS[el.dataset.key];
+    const spec = overlay.schema[el.dataset.key];
     if (spec) el.hidden = !isVisible(spec, settings);
   }
 }
 
 function overlayUrl(forPreview) {
-  const query = toQuery(settings);
+  const query = toQuery(settings, overlay.schema);
   const params = new URLSearchParams(query);
   if (forPreview && fakeToggle.checked) params.set('preview', 'on');
   const q = params.toString();
-  return `${location.origin}/overlays/chat/${q ? `?${q}` : ''}`;
+  return `${location.origin}${overlay.path}${q ? `?${q}` : ''}`;
 }
 
 function update() {
   urlEl.value = overlayUrl(false);
   try {
-    localStorage.setItem('chat-overlay-query', toQuery(settings));
+    localStorage.setItem(STORAGE_KEY, toQuery(settings, overlay.schema));
   } catch { /* private window */ }
 
   // Reloading the frame is fine: the overlay pulls recent messages on connect,

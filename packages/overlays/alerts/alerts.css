@@ -1,0 +1,110 @@
+/* Sizes come from custom properties that alerts.js computes from the URL (already scaled). */
+:root {
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-size: 22px;
+  --padding: 18px;
+  --radius: 18px;
+  --border-width: 2px;
+  --icon-size: 30px;
+  --width: 520px;
+  --offset: 48px;
+  --text-color: #fff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--font);
+  user-select: none;
+  cursor: default;
+}
+
+/* The stage fills the source; the alert is positioned inside it. */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  padding: var(--offset);
+  pointer-events: none;
+}
+.stage[data-position="top"]    { align-items: flex-start; }
+.stage[data-position="center"] { align-items: center; }
+.stage[data-position="bottom"] { align-items: flex-end; }
+.stage[data-align="left"]   { justify-content: flex-start; }
+.stage[data-align="center"] { justify-content: center; }
+.stage[data-align="right"]  { justify-content: flex-end; }
+
+.alert {
+  --platform-color: #888;
+  width: var(--width);
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--padding) * 0.8);
+  padding: var(--padding);
+  border-radius: var(--radius);
+  color: var(--text-color);
+  font-size: var(--font-size);
+  line-height: 1.3;
+  background: var(--alert-bg, transparent);
+  animation: in 380ms cubic-bezier(.2,.9,.3,1.2) both;
+}
+.alert.leaving { animation: out 300ms ease-in both; }
+
+.stage[data-anim="fade"]       .alert { animation-name: in-fade; }
+.stage[data-anim="slide-down"] .alert { animation-name: in-down; }
+.stage[data-anim="slide-up"]   .alert { animation-name: in-up; }
+.stage[data-anim="fade"]       .alert.leaving,
+.stage[data-anim="slide-down"] .alert.leaving,
+.stage[data-anim="slide-up"]   .alert.leaving,
+.stage[data-anim="pop"]        .alert.leaving { animation-name: out; }
+
+.picon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: 0 0 auto;
+}
+.body { flex: 1 1 auto; min-width: 0; }
+.headline { font-weight: 700; overflow-wrap: anywhere; }
+.headline .name, .headline .hl { color: var(--accent-color, var(--platform-color)); }
+.message {
+  margin-top: 4px;
+  font-size: calc(var(--font-size) * 0.8);
+  opacity: 0.9;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.highlight {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: calc(var(--font-size) * 1.15);
+  color: var(--accent-color, var(--platform-color));
+  padding-left: calc(var(--padding) * 0.6);
+  white-space: nowrap;
+}
+
+/* text legibility */
+.stage[data-shadow="soft"]    .alert { text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+.stage[data-shadow="hard"]    .alert { text-shadow: 0 2px 0 rgba(0,0,0,0.9); }
+.stage[data-shadow="outline"] .alert { text-shadow: -1px -1px 0 rgba(0,0,0,.85), 1px -1px 0 rgba(0,0,0,.85), -1px 1px 0 rgba(0,0,0,.85), 1px 1px 0 rgba(0,0,0,.85), 0 2px 4px rgba(0,0,0,.55); }
+
+/* borders */
+.alert[data-border="solid"]       { border: var(--border-width) solid var(--accent-color, var(--platform-color)); }
+.alert[data-border="glow"]        { box-shadow: 0 0 calc(var(--border-width) * 6) var(--accent-color, var(--platform-color)), 0 0 0 var(--border-width) var(--accent-color, var(--platform-color)) inset; }
+.alert[data-border="accent-left"] { border-left: calc(var(--border-width) * 2) solid var(--accent-color, var(--platform-color)); }
+.alert[data-border="accent-top"]  { border-top: calc(var(--border-width) * 2) solid var(--accent-color, var(--platform-color)); }
+
+@keyframes in      { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+@keyframes in-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes in-down { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: none; } }
+@keyframes in-up   { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes out     { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.96) translateY(-8px); } }
+
+@media (prefers-reduced-motion: reduce) { .alert { animation-duration: 1ms; } }

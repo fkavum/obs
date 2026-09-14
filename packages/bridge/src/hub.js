@@ -170,6 +170,11 @@ export class Hub extends EventEmitter {
     return only ? rows[0] : rows;
   }
 
+  /** Feed an event in from outside an adapter - used by the test-alert button. */
+  inject(event) {
+    this.#ingest(event?.platform || 'fake', event);
+  }
+
   #ingest(platformId, event) {
     if (!isEvent(event)) {
       log.warn(`${platformId} emitted a malformed event; dropped`);

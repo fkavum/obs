@@ -53,7 +53,7 @@ theme presets, and a **Copy URL** button to paste into OBS.
 ### ⬜ 6. Unified chat overlay — horizontal
 Same overlay, same settings screen, `layout=horizontal`. Card row along the top or bottom.
 
-### ⬜ 7. Alerts (follow / sub / donation / raid)
+### 🟨 7. Alerts (follow / sub / donation / raid)
 Queued so simultaneous events don't overlap, per-event templates, sound, test-fire button.
 Restyled from the same settings screen.
 *Why it matters:* replaces the main paid SaaS widget, and fires for Kick and YouTube with the

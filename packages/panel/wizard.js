@@ -11,6 +11,10 @@ const healthEl = document.getElementById('health');
 const toastEl = document.getElementById('toast');
 
 document.getElementById('overlayUrl').value = `${location.origin}/overlays/chat/`;
+document.getElementById('alertsUrl').value = `${location.origin}/overlays/alerts/`;
+document.getElementById('copyAlerts').addEventListener('click', () => {
+  copy(document.getElementById('alertsUrl').value, 'Alerts link copied — add it to OBS as a full-screen Browser Source');
+});
 document.getElementById('copyOverlay').addEventListener('click', () => {
   copy(document.getElementById('overlayUrl').value, 'Overlay link copied — now paste it into OBS');
 });
