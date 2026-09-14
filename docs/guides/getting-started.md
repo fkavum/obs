@@ -62,6 +62,11 @@ The master file names all of it, so you can move things if you want:
 "files":   { "commands": "commands/commands", "timer": "timer/timer", ... }
 ```
 
+> **Moving to another computer?** Copy the `.local.config` files across — they're plain text
+> and hold no logins, just your looks, commands and timer settings. Do **not** copy
+> `config.local.json`: that one holds your access tokens, and each machine should sign in for
+> itself.
+
 **`.initial.config` never changes; `.local.config` is yours.** The first time the toolkit
 needs your commands it copies the examples into `commands.local.config` and edits only that
 from then on — so you can rewrite every starter command without losing the examples. Press
