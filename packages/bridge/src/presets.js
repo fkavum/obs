@@ -15,6 +15,7 @@
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { CONFIG_DIR } from './config.js';
+import { dataStemsIn } from './store.js';
 
 export const PRESET_KINDS = ['chat', 'alerts', 'stats', 'health', 'timer', 'commands'];
 export const INITIAL_EXT = '.initial.config';
@@ -56,12 +57,16 @@ export function listPresets(config, kind) {
   const out = { initial: [], local: [] };
   if (!existsSync(dir)) return out;
 
+  // A feature's own data file shares this folder and must not appear as a preset.
+  const reserved = dataStemsIn(config, config.presets?.[kind] || kind);
+
   for (const file of readdirSync(dir).sort()) {
     const source = file.endsWith(INITIAL_EXT) ? 'initial' : file.endsWith(LOCAL_EXT) ? 'local' : null;
     if (!source) continue;
+    const id = file.slice(0, -(source === 'initial' ? INITIAL_EXT : LOCAL_EXT).length);
+    if (reserved.has(id)) continue;
     const body = readPresetFile(join(dir, file));
     if (!body) continue;
-    const id = file.slice(0, -(source === 'initial' ? INITIAL_EXT : LOCAL_EXT).length);
     out[source].push({ id, source, name: body.name || id, file, ...body });
   }
   return out;

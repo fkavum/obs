@@ -40,19 +40,33 @@ file — every change you make on the setup pages, and every login, is saved the
 ```
 config/
   initial.config.json        the starting point. Safe to edit; it is only a seed.
-  config.local.json          the working file. Everything lives here. Keep it private.
+  config.local.json          the master file: accounts, logins, ports.
 
-  chat/                      one folder per feature, holding its presets
+  commands/
+    commands.initial.config        the example commands — never changed by the toolkit
+    commands.local.config          yours, copied from the examples. This is what you edit.
+    auto-messages.initial.config   same idea for auto-messages
+    auto-messages.local.config
+    gaming.local.config            a command set you saved
+
+  chat/                      one folder per feature
     neon.initial.config        a look that comes with the toolkit — editable
     my-look.local.config       one you saved yourself
-  alerts/   stats/   health/   timer/   commands/
+  alerts/   stats/   health/   timer/
 ```
 
-The master file names those folders, so you can move them if you want:
+The master file names all of it, so you can move things if you want:
 
 ```json
-"presets": { "chat": "chat", "alerts": "alerts", "commands": "commands", ... }
+"presets": { "chat": "chat", "commands": "commands", ... },
+"files":   { "commands": "commands/commands", "timer": "timer/timer", ... }
 ```
+
+**`.initial.config` never changes; `.local.config` is yours.** The first time the toolkit
+needs your commands it copies the examples into `commands.local.config` and edits only that
+from then on — so you can rewrite every starter command without losing the examples. Press
+**Restore the examples** on the commands page, or just delete the `.local.config` file, and
+they come back.
 
 Open `config/initial.config.json` in any text editor to change what a *fresh* install starts
 with — channel names, the starting chat commands, timer defaults:

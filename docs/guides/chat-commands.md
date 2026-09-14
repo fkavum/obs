@@ -18,8 +18,9 @@ messages that post themselves on a loop.*
 2. Switch **Answer commands** on.
 3. Five commands are there to start with — `!socials`, `!discord`, `!uptime`, `!hello`,
    `!commands`. Click one to open it and change the answer to your own links.
-   (These come from `config/initial.config.json`, so you can change what a fresh install
-   starts with too.)
+   (They're copied from `config/commands/commands.initial.config` the first time, into
+   `commands.local.config` which is what you edit. Rewrite them freely — press **Restore the
+   examples** any time to get the originals back.)
 4. Press **Test** on a command to see exactly what it would say.
 
 That's it. Type `!socials` in your own chat and the bot replies.

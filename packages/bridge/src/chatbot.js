@@ -14,6 +14,7 @@ import {
 } from '#core/command-engine.js';
 import { formatUptime } from '#core/stats-model.js';
 import { saveConfig } from './config.js';
+import { loadData, saveData, resetData } from './store.js';
 
 const log = createLogger('chatbot');
 
@@ -27,9 +28,9 @@ export function createChatbot({ config, hub }) {
   let liveSince = null;
   const viewers = new Map();
 
-  // Both come from the working config, which is seeded from initial.config.json.
-  const commands = () => config.commands ?? [];
-  const autoMessages = () => config.autoMessages ?? [];
+  // Each lives in its own file, copied from the shipped examples on first read.
+  const commands = () => loadData(config, 'commands', []) || [];
+  const autoMessages = () => loadData(config, 'autoMessages', []) || [];
 
   /**
    * Which platforms the bot is allowed AND actually able to talk on.
@@ -136,10 +137,18 @@ export function createChatbot({ config, hub }) {
     getCommands: commands,
     getAutoMessages: autoMessages,
     save({ commands: nextCommands, autoMessages: nextAuto, chatbot }) {
-      if (Array.isArray(nextCommands)) config.commands = nextCommands.map((c) => createCommand(c));
-      if (Array.isArray(nextAuto)) config.autoMessages = nextAuto;
-      if (chatbot) config.chatbot = { ...config.chatbot, ...chatbot };
-      saveConfig(config);
+      if (Array.isArray(nextCommands)) saveData(config, 'commands', nextCommands.map((c) => createCommand(c)));
+      if (Array.isArray(nextAuto)) saveData(config, 'autoMessages', nextAuto);
+      if (chatbot) {
+        config.chatbot = { ...config.chatbot, ...chatbot };
+        saveConfig(config);
+      }
+      return this.status();
+    },
+
+    /** Put the shipped example commands back, losing local edits to them. */
+    restore(which = 'commands') {
+      resetData(config, which === 'autoMessages' ? 'autoMessages' : 'commands');
       return this.status();
     },
     /** One fake run of a command, for the Test button. */

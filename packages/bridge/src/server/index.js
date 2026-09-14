@@ -14,6 +14,7 @@ import { parseClock } from '#core/timer-model.js';
 import { TimerService } from '../timer.js';
 import { ROOT, saveConfig, setPlatformConfig, resetToSeed } from '../config.js';
 import { loadPresets, listPresets, putPreset, deletePreset } from '../presets.js';
+import { loadData, saveData } from '../store.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
 import {
   beginAuth, completeAuth, callbackPage, redirectUriFor,
@@ -30,7 +31,11 @@ const ASSETS_DIR = join(ROOT, 'assets');
 export function startServer({ hub, config, onQuit = null }) {
   // Toolkit state rather than a platform event, so it travels as its own
   // top-level message type instead of being squeezed into the event schema.
-  const timer = new TimerService(config.timer || {});
+  const timer = new TimerService(loadData(config, 'timer', {}) || {});
+  // Remember how the timer is set up, so a restart comes back the same.
+  timer.on('change', (state) => {
+    saveData(config, 'timer', { durationMs: state.durationMs, label: state.label, mode: state.mode, atZero: state.atZero, doneText: state.doneText });
+  });
   hub.timer = timer;
   const requestHandler = (req, res) => {
     handle(req, res, { hub, config, onQuit }).catch((err) => {
@@ -303,6 +308,11 @@ async function api(req, res, url, { hub, config, onQuit }) {
   if (path === '/api/chatbot' && req.method === 'POST') {
     const body = await readBody(req);
     return sendJSON(res, 200, hub.chatbot.save(body));
+  }
+
+  if (path === '/api/chatbot/restore' && req.method === 'POST') {
+    const body = await readBody(req);
+    return sendJSON(res, 200, hub.chatbot.restore(body.which));
   }
 
   if (path === '/api/chatbot/test' && req.method === 'POST') {

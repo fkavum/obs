@@ -30,9 +30,12 @@ export const DEFAULT_CONFIG = {
   obs: { url: 'ws://127.0.0.1:4455', password: '', enabled: false },
   platforms: {},
   chatbot: { enabled: false, sendTo: [] },
-  commands: [],
-  autoMessages: [],
-  timer: { durationMs: 300000, label: 'Starting soon', mode: 'countdown' },
+  // Feature data lives in its own file, seeded from a shipped one - see store.js.
+  files: {
+    commands: 'commands/commands',
+    autoMessages: 'commands/auto-messages',
+    timer: 'timer/timer',
+  },
   // One folder per feature, holding that feature's presets as individual files.
   presets: {
     chat: 'chat',

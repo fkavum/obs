@@ -8,6 +8,11 @@ import { join } from 'node:path';
 const dir = mkdtempSync(join(tmpdir(), 'obs-chatbot-'));
 process.env.OBS_TOOLKIT_CONFIG_DIR = dir;
 const { createChatbot } = await import('../src/chatbot.js');
+const { saveData } = await import('../src/store.js');
+
+// Commands and auto-messages live in their own files now, so the stub config
+// has to say where they are, exactly as the real one does.
+const FILES = { commands: 'commands/commands', autoMessages: 'commands/auto-messages', timer: 'timer/timer' };
 process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
 
 /** A hub with one platform that can talk, recording what it was asked to send. */
@@ -34,12 +39,12 @@ const chat = (text, platform = 'twitch') => ({
 const settle = () => new Promise((r) => setTimeout(r, 20));
 
 function setup(configOverrides = {}) {
-  const config = {
-    chatbot: { enabled: true, sendTo: [] },
-    commands: [{ id: 'c1', trigger: '!socials', response: 'Find me at example.com', enabled: true, permission: 'everyone', cooldownSec: 0, userCooldownSec: 0, aliases: [], platforms: [] }],
-    autoMessages: [],
-    ...configOverrides,
-  };
+  const { commands, autoMessages, ...rest } = configOverrides;
+  const config = { chatbot: { enabled: true, sendTo: [] }, files: FILES, ...rest };
+  saveData(config, 'commands', commands ?? [
+    { id: 'c1', trigger: '!socials', response: 'Find me at example.com', enabled: true, permission: 'everyone', cooldownSec: 0, userCooldownSec: 0, aliases: [], platforms: [] },
+  ]);
+  saveData(config, 'autoMessages', autoMessages ?? []);
   const hub = makeHub(configOverrides.hub || {});
   const bot = createChatbot({ config, hub });
   bot.start();
@@ -112,12 +117,22 @@ test('the test button runs a command without cooldowns getting in the way', () =
   bot.stop();
 });
 
-test('saving replaces the command list and persists it', () => {
-  const { bot, config } = setup();
+test('saving replaces the command list and writes it to its own file', () => {
+  const { bot } = setup();
   bot.save({ commands: [{ trigger: '!new', response: 'hello', enabled: true }] });
-  assert.equal(config.commands.length, 1);
-  assert.equal(config.commands[0].trigger, '!new');
-  assert.ok(config.commands[0].id, 'an id is filled in for new commands');
+  const saved = bot.getCommands();
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].trigger, '!new');
+  assert.ok(saved[0].id, 'an id is filled in for new commands');
+  bot.stop();
+});
+
+test('restoring brings the shipped examples back after editing', () => {
+  const { bot, config } = setup();
+  bot.save({ commands: [{ trigger: '!mine', response: 'x', enabled: true }] });
+  assert.equal(bot.getCommands()[0].trigger, '!mine');
+  bot.restore('commands');
+  assert.notEqual(bot.getCommands()[0]?.trigger, '!mine', 'the edit is gone');
   bot.stop();
 });
 
@@ -129,6 +144,6 @@ test('an adapter that exists but is not signed in is not counted as able to talk
     ['twitch', { adapter: { send: async () => {}, health: () => ({ connected: true, signedIn: false }) } }],
     ['kick', { adapter: { send: async () => {}, health: () => ({ connected: true, signedIn: true }) } }],
   ]);
-  const bot = createChatbot({ config: { chatbot: { enabled: true, sendTo: [] }, commands: [], autoMessages: [] }, hub });
+  const bot = createChatbot({ config: { chatbot: { enabled: true, sendTo: [] }, files: FILES }, hub });
   assert.deepEqual(bot.status().canSendOn, ['kick']);
 });

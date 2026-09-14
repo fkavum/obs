@@ -9,13 +9,14 @@ import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import dns from 'node:dns';
 import { createLogger, setLogLevel } from '#core/index.js';
-import { loadConfig, setPlatformConfig, CONFIG_PATH } from '../src/config.js';
+import { loadConfig, saveConfig, setPlatformConfig, CONFIG_PATH } from '../src/config.js';
 import { Hub } from '../src/hub.js';
 import { startServer } from '../src/server/index.js';
 import { refreshExpiring } from '../src/server/auth.js';
 import { createHealthService } from '../src/obs/health.js';
 import { createChatbot } from '../src/chatbot.js';
 import { seedInitialPresets, migrateLegacyPresets } from '../src/presets.js';
+import { seedInitialData, loadData, saveData } from '../src/store.js';
 import { OVERLAYS } from '#core/settings-schema.js';
 
 // Prefer IPv4 for outbound connections. Two machines on one Wi-Fi can present
@@ -49,6 +50,19 @@ if (firstRun && !Object.values(config.platforms).some((p) => p.enabled)) {
 // and edited; anything already on disk is left exactly as it is.
 migrateLegacyPresets(config);
 seedInitialPresets(config, OVERLAYS);
+
+// Commands, auto-messages and the timer used to sit inside the working config.
+// Move any that are still there into their own files, then stop carrying them.
+for (const key of ['commands', 'autoMessages', 'timer']) {
+  if (config[key] === undefined) continue;
+  seedInitialData(config, key, config[key]);
+  saveData(config, key, config[key]);
+  delete config[key];
+  saveConfig(config);
+  createLogger('config').info(`moved ${key} into its own file`);
+}
+// Create each working copy now, so the files exist before anything reads them.
+for (const key of ['commands', 'autoMessages', 'timer']) loadData(config, key, key === 'timer' ? {} : []);
 
 const hub = new Hub(config);
 await hub.load();

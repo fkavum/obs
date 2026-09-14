@@ -56,7 +56,9 @@ test('defaults cover anything the seed forgot', () => {
   const config = loadConfig();
   assert.equal(config.bridge.httpPort, 8778);
   assert.equal(config.obs.url, 'ws://127.0.0.1:4455');
-  assert.deepEqual(config.commands, []);
+  assert.deepEqual(config.files, {
+    commands: 'commands/commands', autoMessages: 'commands/auto-messages', timer: 'timer/timer',
+  }, 'each feature knows which file holds its data');
   assert.deepEqual(config.presets, {
     chat: 'chat', alerts: 'alerts', stats: 'stats', health: 'health', timer: 'timer', commands: 'commands',
   }, 'every feature knows which folder its presets live in');

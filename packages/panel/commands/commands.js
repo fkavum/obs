@@ -28,6 +28,17 @@ await loadPresets();
 document.getElementById('savePreset').addEventListener('click', savePreset);
 
 document.getElementById('botEnabled').addEventListener('change', (e) => save({ chatbot: { enabled: e.target.checked } }));
+document.getElementById('restoreCommands').addEventListener('click', async () => {
+  // The shipped examples are a separate file, so this can never fail to find them.
+  if (!window.confirm('Put the example commands back? Your current commands are replaced.')) return;
+  state = await (await fetch('/api/chatbot/restore', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ which: 'commands' }),
+  })).json();
+  renderCommands();
+  paintBot();
+  toast('Examples restored');
+});
+
 document.getElementById('addCommand').addEventListener('click', () => {
   state.commands = [...state.commands, { trigger: '!new', response: 'Say something here', enabled: true, permission: 'everyone', cooldownSec: 5, userCooldownSec: 15, aliases: [], platforms: [] }];
   renderCommands();
