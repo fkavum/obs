@@ -16,7 +16,9 @@ const settings = parseSettings(location.search, STATS_SETTINGS, STATS_THEMES);
 const bar = document.getElementById('bar');
 const state = createStatsState();
 let platforms = new Map();
-const lastShown = {}; // key -> last value, to animate changes
+/** key -> { el, n, l } - the elements stay; only their text changes. */
+const nodes = new Map();
+let lastOrder = '';
 
 applyStaticStyles();
 main();
@@ -38,6 +40,7 @@ function applyStaticStyles() {
   bar.dataset.direction = s.direction;
   bar.dataset.align = s.align;
   bar.dataset.shadow = s.shadow;
+  bar.dataset.animate = s.animateChanges ? 'on' : 'off';
   const st = document.documentElement.style;
   st.setProperty('--font', `${s.font}, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`);
   st.setProperty('--font-size', px(s.fontSize));
@@ -118,37 +121,56 @@ function render() {
   const s = settings;
   const opts = { staleMs: s.stale * 1000, only: s.platforms };
   const live = livePlatforms(state, opts);
-  const items = [];
 
-  if (s.showTotal && live.length) items.push(item('total', formatCompact(totalViewers(state, opts)), 'watching', null, '👁'));
-  if (s.showPerPlatform) for (const p of live) items.push(item(`p:${p.id}`, formatCompact(p.viewers), platforms.get(p.id)?.label || p.id, p.id));
-  if (s.showUptime && state.liveSince !== null) items.push(item('uptime', formatUptime(uptimeMs(state)), 'live', null, '⏱'));
-  if (s.showFollows && state.follows) items.push(item('follows', `+${state.follows}`, state.follows === 1 ? 'follower' : 'followers'));
-  if (s.showSubs && state.subs) items.push(item('subs', `+${state.subs}`, state.subs === 1 ? 'sub' : 'subs'));
+  // What should be on screen, in order. Nothing here touches the DOM yet.
+  const want = [];
+  if (s.showTotal && live.length) want.push({ key: 'total', value: formatCompact(totalViewers(state, opts)), label: 'watching', glyph: '👁' });
+  if (s.showPerPlatform) for (const p of live) want.push({ key: `p:${p.id}`, value: formatCompact(p.viewers), label: platforms.get(p.id)?.label || p.id, platformId: p.id });
+  if (s.showUptime && state.liveSince !== null) want.push({ key: 'uptime', value: formatUptime(uptimeMs(state)), label: 'live', glyph: '⏱', quiet: true });
+  if (s.showFollows && state.follows) want.push({ key: 'follows', value: `+${state.follows}`, label: state.follows === 1 ? 'follower' : 'followers' });
+  if (s.showSubs && state.subs) want.push({ key: 'subs', value: `+${state.subs}`, label: state.subs === 1 ? 'sub' : 'subs' });
   if (s.showTips && (state.tips || state.bits)) {
     const money = state.tips ? formatMoney(state.tips, state.tipsCurrency) : '';
     const bits = state.bits ? `${formatCompact(state.bits)} bits` : '';
-    items.push(item('tips', [money, bits].filter(Boolean).join(' + '), 'in tips'));
+    want.push({ key: 'tips', value: [money, bits].filter(Boolean).join(' + '), label: 'in tips' });
   }
-  if (s.showRaids && state.raids) items.push(item('raids', `${state.raids}`, state.raids === 1 ? 'raid' : 'raids'));
-
+  if (s.showRaids && state.raids) want.push({ key: 'raids', value: `${state.raids}`, label: state.raids === 1 ? 'raid' : 'raids' });
   const goal = goalProgress(state, s, opts);
-  if (goal) items.push(goalEl(goal));
+  if (goal) want.push({ key: 'goal', goal });
 
-  bar.replaceChildren(...items);
+  // Update text in place. Elements are created once and kept, so nothing
+  // re-animates and nothing flickers when a number changes.
+  for (const w of want) {
+    let node = nodes.get(w.key);
+    if (!node) {
+      node = w.goal ? createGoal() : createItem(w);
+      nodes.set(w.key, node);
+    }
+    if (w.goal) updateGoal(node, w.goal);
+    else updateItem(node, w);
+  }
+
+  // Only touch the DOM's structure when the set or order of items changed.
+  const order = want.map((w) => w.key).join('|');
+  if (order !== lastOrder) {
+    for (const key of [...nodes.keys()]) if (!want.some((w) => w.key === key)) { nodes.get(key).el.remove(); nodes.delete(key); }
+    bar.replaceChildren(...want.map((w) => nodes.get(w.key).el));
+    lastOrder = order;
+  }
 }
 
-function item(key, value, label, platformId = null, glyph = null) {
+function createItem(w) {
   const el = document.createElement('div');
-  el.className = 'item';
+  el.className = 'item fresh';
+  el.dataset.key = w.key;
   el.dataset.border = settings.border;
-  el.style.setProperty('--item-bg', itemBackground(platformId));
-  if (platformId) {
-    el.style.setProperty('--platform-color', platformColor(platformId));
-    if (settings.accent === 'platform') el.style.setProperty('--item-accent', platformColor(platformId));
+  el.style.setProperty('--item-bg', itemBackground(w.platformId));
+  if (w.platformId) {
+    el.style.setProperty('--platform-color', platformColor(w.platformId));
+    if (settings.accent === 'platform') el.style.setProperty('--item-accent', platformColor(w.platformId));
     if (settings.icons) {
       const img = document.createElement('img');
-      img.src = `/api/platforms/${encodeURIComponent(platformId)}/icon.svg`;
+      img.src = `/api/platforms/${encodeURIComponent(w.platformId)}/icon.svg`;
       img.alt = '';
       img.onerror = () => img.remove();
       el.append(img);
@@ -157,43 +179,60 @@ function item(key, value, label, platformId = null, glyph = null) {
       dot.className = 'dot';
       el.append(dot);
     }
-  } else if (glyph && settings.icons) {
+  } else if (w.glyph && settings.icons) {
     const g = document.createElement('span');
-    g.textContent = glyph;
+    g.textContent = w.glyph;
     g.style.fontSize = '0.9em';
     el.append(g);
   }
   const n = document.createElement('span');
   n.className = 'n';
-  n.textContent = value;
-  if (lastShown[key] !== undefined && lastShown[key] !== value && key !== 'uptime') n.classList.add('bump');
-  lastShown[key] = value;
   const l = document.createElement('span');
   l.className = 'l';
-  l.textContent = label;
   el.append(n, l);
-  return el;
+  // The entrance class is for the first appearance only.
+  el.addEventListener('animationend', () => el.classList.remove('fresh'), { once: true });
+  return { el, n, l };
 }
 
-function goalEl(goal) {
+function updateItem(node, w) {
+  if (node.n.textContent !== w.value) {
+    node.n.textContent = w.value;
+    // Uptime ticks every second; bumping it would be constant motion.
+    if (settings.animateChanges && !w.quiet) {
+      node.n.classList.remove('bump');
+      void node.n.offsetWidth; // restart the animation if it's already playing
+      node.n.classList.add('bump');
+    }
+  }
+  if (node.l.textContent !== w.label) node.l.textContent = w.label;
+}
+
+function createGoal() {
   const el = document.createElement('div');
   el.className = 'goal';
+  el.dataset.key = 'goal';
   const row = document.createElement('div');
   row.className = 'row';
-  const a = document.createElement('span');
-  a.textContent = goal.label;
-  const b = document.createElement('span');
-  b.className = 'n';
-  b.textContent = `${formatCompact(goal.value)} / ${formatCompact(goal.target)}`;
-  row.append(a, b);
+  const label = document.createElement('span');
+  const value = document.createElement('span');
+  value.className = 'n';
+  row.append(label, value);
   const track = document.createElement('div');
   track.className = 'track';
   const fill = document.createElement('div');
   fill.className = 'fill';
-  fill.style.width = `${goal.pct}%`;
   track.append(fill);
   el.append(row, track);
-  return el;
+  return { el, label, value, fill };
+}
+
+function updateGoal(node, goal) {
+  const text = `${formatCompact(goal.value)} / ${formatCompact(goal.target)}`;
+  if (node.label.textContent !== goal.label) node.label.textContent = goal.label;
+  if (node.value.textContent !== text) node.value.textContent = text;
+  const width = `${goal.pct}%`;
+  if (node.fill.style.width !== width) node.fill.style.width = width;
 }
 
 function formatMoney(amount, currency) {

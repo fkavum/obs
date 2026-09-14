@@ -42,8 +42,9 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
   background: var(--item-bg, transparent);
   line-height: 1.2;
   white-space: nowrap;
-  animation: in 260ms ease-out both;
 }
+/* Motion only when the operator asks for it; by default numbers simply change. */
+.bar[data-animate="on"] .item.fresh { animation: in 260ms ease-out both; }
 .item .n { font-weight: 800; color: var(--item-accent, var(--accent)); font-variant-numeric: tabular-nums; }
 .item .l { opacity: 0.85; font-size: 0.8em; }
 .item img { width: var(--icon-size); height: var(--icon-size); }
@@ -55,13 +56,14 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
 .goal { min-width: 220px; flex: 0 1 320px; display: flex; flex-direction: column; gap: 4px; white-space: nowrap; }
 .goal .row { display: flex; justify-content: space-between; gap: 12px; font-size: 0.8em; }
 .goal .track { height: 0.5em; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; }
-.goal .fill { height: 100%; border-radius: 999px; background: var(--item-accent, var(--accent)); transition: width 600ms ease; }
+.goal .fill { height: 100%; border-radius: 999px; background: var(--item-accent, var(--accent)); }
+.bar[data-animate="on"] .goal .fill { transition: width 600ms ease; }
 
 .bar[data-shadow="soft"]    .item, .bar[data-shadow="soft"]    .goal { text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
 .bar[data-shadow="hard"]    .item, .bar[data-shadow="hard"]    .goal { text-shadow: 0 2px 0 rgba(0,0,0,0.9); }
 .bar[data-shadow="outline"] .item, .bar[data-shadow="outline"] .goal { text-shadow: -1px -1px 0 rgba(0,0,0,.85), 1px -1px 0 rgba(0,0,0,.85), -1px 1px 0 rgba(0,0,0,.85), 1px 1px 0 rgba(0,0,0,.85); }
 
-.n.bump { animation: bump 400ms ease-out; }
+.bar[data-animate="on"] .n.bump { animation: bump 400ms ease-out; }
 @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
 @keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .item, .n.bump, .goal .fill { animation-duration: 1ms; transition-duration: 1ms; } }

@@ -414,6 +414,7 @@ export const STATS_SETTINGS = {
   shadow: { group: 'look', kind: 'select', default: 'soft', options: ['none', 'soft', 'hard', 'outline'], label: 'Text edge' },
 
   // ---- Behaviour ----------------------------------------------------------
+  animateChanges: { group: 'behaviour', kind: 'toggle', default: false, label: 'Animate when numbers change', help: 'Off: numbers just change. On: a small bump and a smooth goal bar.' },
   stale: { group: 'behaviour', kind: 'number', default: 90, min: 10, max: 600, step: 5, label: 'Hide a platform after no update for', unit: 'sec', help: 'So a platform that went offline drops out of the total.' },
   preview: { group: 'behaviour', kind: 'toggle', default: false, label: 'Preview mode', help: 'Fake numbers so you can style it without being live.' },
   theme: { group: 'behaviour', kind: 'text', default: 'default', label: 'Theme preset' },
