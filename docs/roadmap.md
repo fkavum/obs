@@ -66,7 +66,7 @@ Combined and per-platform viewer counts, uptime, session goal bar.
 *Why it matters:* when multi-streaming, "how many people am I actually talking to" is a
 number no single platform can tell you.
 
-### ⬜ 9. Stream health warning (read-only)
+### 🟨 9. Stream health warning (read-only)
 Dropped frames, encoder lag and bitrate on a **streamer-only** overlay, not on the broadcast.
 Warns; does not act.
 *The auto-react version is postponed — see below.*
@@ -110,7 +110,8 @@ have to change.
    evidence that the adapter contract holds.
 6. ✅ Horizontal chat layout — verified 2026-09-14 (both edges, both flows).
 7. 🟨 Alerts — built, fake-verified; live check pending Twitch sign-in.
-8. **Live stats bar** ← next (fake-verifiable: the demo feed will emit viewer counts) → health warning.
+8. ✅ Live stats bar — built, fake-verified.
+9. 🟨 **Stream health** — built, fake-verified; needs a live check against real OBS.
 
 A guide (`docs/guides/`) ships with each numbered item. Not after.
 

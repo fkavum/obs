@@ -1,0 +1,47 @@
+:root {
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-size: 16px;
+  --padding: 12px;
+  --gap: 8px;
+  --radius: 12px;
+  --bg: rgba(13,13,19,0.85);
+  --text-color: #fff;
+  --ok: #2fbf71;
+  --warn: #e8b83a;
+  --bad: #e5484d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: var(--font); user-select: none; }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--padding);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-color);
+  font-size: var(--font-size);
+  line-height: 1.35;
+  max-height: 100%;
+  overflow: hidden;
+}
+.panel[data-direction="row"] { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+.panel[data-align="center"] { align-items: center; text-align: center; }
+.panel[data-align="right"]  { align-items: flex-end; text-align: right; }
+.panel[data-empty="yes"] { display: none; } /* nothing to say: show nothing at all */
+
+.headline { flex: 0 0 auto; display: flex; align-items: center; gap: 0.5em; font-weight: 700; }
+.headline .lamp { width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--level-color, var(--ok)); flex: 0 0 auto; }
+.headline .text { color: var(--level-color, var(--ok)); }
+
+.issues { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.7); min-height: 0; overflow: hidden; }
+.issue { border-left: 3px solid var(--issue-color); padding-left: 0.6em; }
+.issue .t { font-weight: 600; }
+.issue .a { font-size: 0.85em; opacity: 0.85; }
+
+.numbers { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: calc(var(--gap) * 0.8) calc(var(--gap) * 1.4); font-size: 0.85em; opacity: 0.9; }
+.numbers .k { opacity: 0.65; }
+.numbers .v { font-variant-numeric: tabular-nums; font-weight: 700; }
+.numbers .v[data-level="warn"] { color: var(--warn); }
+.numbers .v[data-level="bad"]  { color: var(--bad); }

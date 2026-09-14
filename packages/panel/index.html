@@ -78,6 +78,41 @@
   <h2 style="font-size:17px;margin:26px 0 12px">Your channels</h2>
   <div id="platforms"></div>
 
+  <section class="card" id="obsCard">
+    <div class="row between">
+      <div class="platform-head">
+        <div>
+          <h2>OBS connection</h2>
+          <span class="pill" id="obsStatus"><span class="dot"></span>off</span>
+        </div>
+      </div>
+      <label class="switch"><input type="checkbox" id="obsEnabled"><span>Watch OBS</span></label>
+    </div>
+    <p class="sub" style="margin-top:14px">Lets the toolkit see how your stream is doing — dropped frames, encoder lag, bitrate. It only watches; it never changes anything in OBS.</p>
+    <ol class="steps">
+      <li>In OBS: <strong>Tools</strong> → <strong>WebSocket Server Settings</strong>.</li>
+      <li>Tick <strong>Enable WebSocket server</strong>.</li>
+      <li>If <strong>Enable Authentication</strong> is ticked, press <strong>Show Connect Info</strong>, copy the password, and paste it below. If it isn't ticked, leave the box empty.</li>
+      <li>Click <strong>OK</strong> in OBS, then press <strong>Test the connection</strong> here.</li>
+    </ol>
+    <label class="field"><span>Address</span><input type="text" id="obsUrl" placeholder="ws://127.0.0.1:4455"></label>
+    <label class="field"><span>Password (leave empty if authentication is off)</span><input type="password" id="obsPassword" autocomplete="off"></label>
+    <div class="row">
+      <button id="obsSave">Save</button>
+      <button class="primary" id="obsTest">Test the connection</button>
+      <span id="obsTestResult" style="font-size:13px;color:var(--muted)"></span>
+    </div>
+    <div class="urlbar" style="margin-top:16px">
+      <input id="healthUrl" class="grow" type="text" readonly>
+      <button id="copyHealth">Copy</button>
+      <a class="btn" href="/settings/?overlay=health">Style</a>
+    </div>
+    <div class="note warn">
+      This one is <strong>for your eyes only</strong> — don't put it in a scene you stream. In OBS use
+      <strong>View → Docks → Custom Browser Docks</strong>, paste the link, and it becomes a panel inside OBS.
+    </div>
+  </section>
+
   <section class="card">
     <h2>Is everything working?</h2>
     <p class="sub">A green dot means that channel is connected and chat is coming through.</p>

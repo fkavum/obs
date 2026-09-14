@@ -155,7 +155,12 @@ async function api(req, res, url, { hub, config, onQuit }) {
       // The redirect URI must match what the platform has registered exactly, so
       // it is computed here rather than guessed from the browser's address bar.
       platforms: hub.status().map((row) => ({ ...row, redirectUri: redirectUriFor(config, row.id) })),
-      obs: { enabled: config.obs.enabled, url: config.obs.url },
+      obs: {
+        enabled: config.obs.enabled,
+        url: config.obs.url,
+        hasPassword: !!config.obs.password,
+        ...(hub.health?.status() || {}),
+      },
     });
   }
 
@@ -235,6 +240,25 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const limit = Math.min(100, Number(url.searchParams.get('limit')) || 25);
     const platforms = (url.searchParams.get('platforms') || '').split(',').filter(Boolean);
     return sendJSON(res, 200, { events: hub.backlog(limit, platforms.length ? platforms : null) });
+  }
+
+  if (path === '/api/obs/config' && req.method === 'POST') {
+    const body = await readBody(req);
+    const next = { ...config.obs };
+    if (typeof body.url === 'string') next.url = body.url.trim();
+    if (typeof body.password === 'string' && body.password !== '__set__') next.password = body.password;
+    if (typeof body.enabled === 'boolean') next.enabled = body.enabled;
+    config.obs = next;
+    saveConfig(config);
+    // Reconnect with the new details straight away.
+    await hub.health?.stop();
+    await hub.health?.start();
+    return sendJSON(res, 200, { ok: true, obs: { url: next.url, enabled: next.enabled, hasPassword: !!next.password } });
+  }
+
+  if (path === '/api/obs/test' && req.method === 'POST') {
+    if (!hub.health) return sendJSON(res, 200, { ok: false, detail: 'health service not running' });
+    return sendJSON(res, 200, await hub.health.test());
   }
 
   // Fire one fake alert through the real pipeline so the OBS source shows it.

@@ -459,3 +459,74 @@ OVERLAYS.stats = {
   obsSize: { width: 1920, height: 90 },
   fakeLabel: 'Use fake numbers in this preview',
 };
+
+// ===========================================================================
+// Stream health (streamer-only)
+// ===========================================================================
+
+export const HEALTH_GROUPS = [
+  { id: 'show', label: 'What to show' },
+  { id: 'thresholds', label: 'When to warn' },
+  { id: 'layout', label: 'Layout' },
+  { id: 'look', label: 'Look' },
+];
+
+export const HEALTH_SETTINGS = {
+  // ---- What to show -------------------------------------------------------
+  mode: { group: 'show', kind: 'select', default: 'always', options: ['always', 'problems'], label: 'Show', help: 'Always, or only when something is wrong.' },
+  showAdvice: { group: 'show', kind: 'toggle', default: true, label: 'Explain what to do about it' },
+  showNumbers: { group: 'show', kind: 'toggle', default: true, label: 'Show the numbers (bitrate, fps, CPU)' },
+  showWhenOffline: { group: 'show', kind: 'toggle', default: true, label: 'Show while not streaming' },
+  maxIssues: { group: 'show', kind: 'number', default: 4, min: 1, max: 10, step: 1, label: 'Most problems listed at once', help: 'The worst are listed first, so a small panel still shows what matters.' },
+
+  // ---- Thresholds ---------------------------------------------------------
+  droppedWarn: { group: 'thresholds', kind: 'number', default: 1, min: 0, max: 50, step: 0.5, label: 'Dropped frames — warn above', unit: '%' },
+  droppedBad: { group: 'thresholds', kind: 'number', default: 5, min: 0, max: 100, step: 0.5, label: 'Dropped frames — alarm above', unit: '%' },
+  encodeWarn: { group: 'thresholds', kind: 'number', default: 1, min: 0, max: 50, step: 0.5, label: 'Encoder lag — warn above', unit: '%' },
+  encodeBad: { group: 'thresholds', kind: 'number', default: 5, min: 0, max: 100, step: 0.5, label: 'Encoder lag — alarm above', unit: '%' },
+  renderWarn: { group: 'thresholds', kind: 'number', default: 1, min: 0, max: 50, step: 0.5, label: 'Graphics lag — warn above', unit: '%' },
+  renderBad: { group: 'thresholds', kind: 'number', default: 5, min: 0, max: 100, step: 0.5, label: 'Graphics lag — alarm above', unit: '%' },
+  cpuWarn: { group: 'thresholds', kind: 'number', default: 80, min: 10, max: 100, step: 1, label: 'CPU — warn above', unit: '%' },
+  cpuBad: { group: 'thresholds', kind: 'number', default: 92, min: 10, max: 100, step: 1, label: 'CPU — alarm above', unit: '%' },
+
+  // ---- Layout -------------------------------------------------------------
+  direction: { group: 'layout', kind: 'select', default: 'column', options: ['column', 'row'], label: 'Arrangement' },
+  align: { group: 'layout', kind: 'select', default: 'left', options: ['left', 'center', 'right'], label: 'Align' },
+  gap: { group: 'layout', kind: 'number', default: 8, min: 0, max: 40, step: 1, label: 'Space between items', unit: 'px' },
+
+  // ---- Look ---------------------------------------------------------------
+  scale: { group: 'look', kind: 'number', default: 100, min: 50, max: 200, step: 5, label: 'Overall size', unit: '%' },
+  fontSize: { group: 'look', kind: 'number', default: 16, min: 10, max: 48, step: 1, label: 'Text size', unit: 'px' },
+  font: { group: 'look', kind: 'text', default: 'Inter', label: 'Font' },
+  padding: { group: 'look', kind: 'number', default: 12, min: 0, max: 40, step: 1, label: 'Space inside', unit: 'px' },
+  radius: { group: 'look', kind: 'number', default: 12, min: 0, max: 40, step: 1, label: 'Corner rounding', unit: 'px' },
+  bgColor: { group: 'look', kind: 'color', default: '#0d0d13', label: 'Background colour' },
+  bgOpacity: { group: 'look', kind: 'number', default: 85, min: 0, max: 100, step: 1, label: 'Background transparency', unit: '%' },
+  textColor: { group: 'look', kind: 'color', default: '#ffffff', label: 'Text colour' },
+  okColor: { group: 'look', kind: 'color', default: '#2fbf71', label: 'All-good colour' },
+  warnColor: { group: 'look', kind: 'color', default: '#e8b83a', label: 'Warning colour' },
+  badColor: { group: 'look', kind: 'color', default: '#e5484d', label: 'Alarm colour' },
+
+  preview: { group: 'look', kind: 'toggle', default: false, label: 'Preview mode', help: 'Made-up numbers so you can style it without streaming.' },
+  theme: { group: 'look', kind: 'text', default: 'default', label: 'Theme preset' },
+};
+
+export const HEALTH_THEMES = {
+  default: {},
+  compact: { mode: 'problems', showNumbers: false, showAdvice: false, fontSize: 14, padding: 8 },
+  dashboard: { direction: 'row', showNumbers: true, showAdvice: false, fontSize: 15 },
+  quiet: { mode: 'problems', showWhenOffline: false, bgOpacity: 70 },
+};
+
+OVERLAYS.health = {
+  id: 'health',
+  label: 'Stream health',
+  path: '/overlays/health/',
+  schema: HEALTH_SETTINGS,
+  groups: HEALTH_GROUPS,
+  themes: HEALTH_THEMES,
+  openGroups: ['show', 'look'],
+  obsSize: { width: 420, height: 300 },
+  fakeLabel: 'Use made-up numbers in this preview',
+  streamerOnly: true,
+};

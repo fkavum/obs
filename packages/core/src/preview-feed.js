@@ -141,3 +141,59 @@ function hash(s) {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return h;
 }
+
+/**
+ * Made-up OBS health numbers for styling the health overlay without streaming.
+ * Counters are cumulative, like the real ones, and the simulation drifts in and
+ * out of trouble so every warning state can actually be seen.
+ */
+export function startPreviewObsStats(emit, { intervalMs = 2000 } = {}) {
+  let stopped = false;
+  let t = 0;
+  const c = { renderSkipped: 0, renderTotal: 0, encodeSkipped: 0, encodeTotal: 0, dropped: 0, delivered: 0, bytes: 0 };
+
+  const tick = () => {
+    if (stopped) return;
+    t += 1;
+    const frames = 60 * (intervalMs / 1000);
+    // A slow cycle through healthy -> struggling -> bad, so the look can be checked.
+    const phase = Math.sin(t / 8);
+    const trouble = Math.max(0, phase) ** 2;
+
+    c.renderTotal += frames;
+    c.encodeTotal += frames;
+    c.delivered += frames;
+    c.renderSkipped += Math.round(frames * trouble * 0.04);
+    c.encodeSkipped += Math.round(frames * trouble * 0.06);
+    c.dropped += Math.round(frames * trouble * 0.08);
+    c.bytes += Math.round((6000 * 1000 / 8) * (intervalMs / 1000) * (1 - trouble * 0.4));
+
+    emit({
+      id: uuid(), type: 'obs.stats', platform: 'obs', ts: Date.now(), channel: '', user: null,
+      data: {
+        targetFps: 60,
+        stats: {
+          cpuUsage: 35 + trouble * 55,
+          memoryUsage: 1800,
+          activeFps: 60 - trouble * 20,
+          averageFrameRenderTime: 4 + trouble * 9,
+          renderSkippedFrames: c.renderSkipped, renderTotalFrames: c.renderTotal,
+          outputSkippedFrames: c.encodeSkipped, outputTotalFrames: c.encodeTotal,
+        },
+        stream: {
+          outputActive: true, outputReconnecting: false,
+          outputCongestion: trouble * 0.9,
+          outputBytes: c.bytes,
+          outputSkippedFrames: c.dropped, outputTotalFrames: c.delivered,
+          outputDuration: t * intervalMs,
+        },
+      },
+    });
+    timer = setTimeout(tick, intervalMs);
+    timer.unref?.();
+  };
+
+  let timer = setTimeout(tick, 200);
+  timer.unref?.();
+  return () => { stopped = true; clearTimeout(timer); };
+}

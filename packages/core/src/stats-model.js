@@ -23,6 +23,8 @@ export function createStatsState() {
 /** Apply one event. Mutates and returns `state` for convenience. */
 export function applyEvent(state, event, now = Date.now()) {
   if (!event || !event.type) return state;
+  // OBS health and bridge messages are not platforms; ignore them entirely.
+  if (event.type === 'obs.stats' || event.type === 'system') return state;
   const p = (state.platforms[event.platform] ||= { viewers: null, at: 0, live: false });
   const d = event.data || {};
 

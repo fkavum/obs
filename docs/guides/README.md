@@ -14,6 +14,7 @@ every guide feels the same.
 | [Chat overlay](chat-overlay.md) | Adding it to OBS and restyling it |
 | [Alerts](alerts.md) | Follow / sub / tip / raid pop-ups, test buttons, sound |
 | [Stats bar](stats-bar.md) | Viewers across platforms, time live, session counts, goal bar |
+| [Stream health](stream-health.md) | Dropped frames and encoder warnings, for your eyes only |
 
 ## Writing rules
 

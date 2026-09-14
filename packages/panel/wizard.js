@@ -13,6 +13,39 @@ const toastEl = document.getElementById('toast');
 document.getElementById('overlayUrl').value = `${location.origin}/overlays/chat/`;
 document.getElementById('alertsUrl').value = `${location.origin}/overlays/alerts/`;
 document.getElementById('statsUrl').value = `${location.origin}/overlays/stats/`;
+document.getElementById('healthUrl').value = `${location.origin}/overlays/health/`;
+document.getElementById('copyHealth').addEventListener('click', () => {
+  copy(document.getElementById('healthUrl').value, 'Health link copied — add it as a Custom Browser Dock in OBS');
+});
+
+// ---- OBS connection ----
+const obsUrl = document.getElementById('obsUrl');
+const obsPassword = document.getElementById('obsPassword');
+const obsTestResult = document.getElementById('obsTestResult');
+
+async function saveObs(patch) {
+  const body = { url: obsUrl.value.trim() || 'ws://127.0.0.1:4455', ...patch };
+  if (obsPassword.value) body.password = obsPassword.value;
+  await post('/api/obs/config', body);
+  await refreshStatus();
+}
+document.getElementById('obsSave').addEventListener('click', async () => {
+  await saveObs({});
+  toast('Saved');
+});
+document.getElementById('obsEnabled').addEventListener('change', async (e) => {
+  await saveObs({ enabled: e.target.checked });
+});
+document.getElementById('obsTest').addEventListener('click', async () => {
+  const btn = document.getElementById('obsTest');
+  btn.disabled = true;
+  obsTestResult.textContent = 'Testing…';
+  await saveObs({});
+  const result = await post('/api/obs/test', {});
+  btn.disabled = false;
+  obsTestResult.textContent = result.ok ? `Works — ${result.detail}` : result.detail || 'Could not connect';
+  obsTestResult.style.color = result.ok ? 'var(--ok)' : 'var(--bad)';
+});
 document.getElementById('copyStats').addEventListener('click', () => {
   copy(document.getElementById('statsUrl').value, 'Stats bar link copied — add it to OBS as a 1920 × 90 Browser Source');
 });
@@ -52,12 +85,25 @@ async function refreshStatus() {
     const res = await fetch('/api/status');
     const body = await res.json();
     statusRows = body.platforms;
+    paintObs(body.obs);
     paintHealth();
     paintDots();
   } catch {
     if (!document.getElementById('health')) return; // we quit on purpose
     healthEl.innerHTML = '<span class="pill"><span class="dot bad"></span>The toolkit stopped running — start it again with start.bat / start.command</span>';
   }
+}
+
+/** OBS's own row on the setup page. */
+function paintObs(obs) {
+  if (!obs) return;
+  const pill = document.getElementById('obsStatus');
+  const dot = !obs.enabled ? '' : obs.connected ? 'ok' : obs.needsPassword ? 'bad' : 'warn';
+  pill.innerHTML = `<span class="dot ${dot}"></span>${escape(!obs.enabled ? 'off' : obs.detail || 'connecting…')}`;
+  const toggle = document.getElementById('obsEnabled');
+  if (document.activeElement !== toggle) toggle.checked = !!obs.enabled;
+  if (document.activeElement !== obsUrl) obsUrl.value = obs.url || '';
+  if (obs.hasPassword && !obsPassword.value) obsPassword.placeholder = 'Already saved — leave blank to keep it';
 }
 
 function statusOf(id) {

@@ -16,6 +16,7 @@ export const EVENT_TYPES = /** @type {const} */ ([
   'raid',
   'viewers',
   'stream.state',
+  'obs.stats',
   'system',
 ]);
 
