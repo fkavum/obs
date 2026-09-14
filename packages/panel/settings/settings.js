@@ -370,8 +370,16 @@ function overlayUrl(forPreview) {
   return `${location.origin}${overlay.path}${q ? `?${q}` : ''}`;
 }
 
+/** The OBS source size to suggest: a horizontal chat wants a wide, short box. */
+function suggestedObsSize() {
+  if (overlay.id === 'chat' && settings.layout === 'horizontal') return { width: 1920, height: 160 };
+  return overlay.obsSize;
+}
+
 function update() {
   urlEl.value = overlayUrl(false);
+  const size = suggestedObsSize();
+  document.getElementById('obsSize').textContent = `${size.width} × ${size.height}`;
   try {
     localStorage.setItem(STORAGE_KEY, toQuery(settings, overlay.schema));
   } catch { /* private window */ }

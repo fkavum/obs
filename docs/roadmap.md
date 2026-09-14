@@ -50,10 +50,12 @@ Controls for every overlay option, the real overlay live-previewing beside them,
 theme presets, and a **Copy URL** button to paste into OBS.
 *Ships with #4 — the overlay is not "done" until it can be restyled without touching a URL.*
 
-### ⬜ 6. Unified chat overlay — horizontal
+### ✅ 6. Unified chat overlay — horizontal
 Same overlay, same settings screen, `layout=horizontal`. Card row along the top or bottom.
 
 ### 🟨 7. Alerts (follow / sub / donation / raid)
+*Built and verified against fake events (2026-09-14). Stays on `dev` until a real follow has
+been seen on stream, which needs the Twitch sign-in to run live first.*
 Queued so simultaneous events don't overlap, per-event templates, sound, test-fire button.
 Restyled from the same settings screen.
 *Why it matters:* replaces the main paid SaaS widget, and fires for Kick and YouTube with the
@@ -106,8 +108,9 @@ have to change.
 4. ✅ **Vertical chat overlay + settings screen** — the first thing usable on a real stream.
 5. ✅ Kick adapter, then YouTube adapter. The overlay needed no changes, which is the
    evidence that the adapter contract holds.
-6. Horizontal chat layout
-7. **Alerts** ← next (decided 2026-09-14; it also exercises the untested Twitch sign-in) → stats bar → health warning.
+6. ✅ Horizontal chat layout — verified 2026-09-14 (both edges, both flows).
+7. 🟨 Alerts — built, fake-verified; live check pending Twitch sign-in.
+8. **Live stats bar** ← next (fake-verifiable: the demo feed will emit viewer counts) → health warning.
 
 A guide (`docs/guides/`) ships with each numbered item. Not after.
 
@@ -128,7 +131,7 @@ These are written to the documented APIs but have never run against the real thi
 Expect small first-contact fixes, as with chat:
 
 - **Twitch sign-in** (device code flow) and everything it unlocks — **EventSub alerts**
-  (follows, subs, cheers, raids) and viewer counts.
+  (follows, subs, cheers, raids) and viewer counts. The alerts overlay is ready and waiting on this.
 - **Kick sign-in** (viewer counts only; chat needs none).
 - **YouTube Super Chats / memberships** as events (chat itself is proven).
 - **Token refresh** over a multi-day period (the code path exists; time hasn't passed yet).

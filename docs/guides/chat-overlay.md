@@ -41,6 +41,18 @@ Chat now appears in your scene. Drag it where you want it.
 > **Tip:** leave **Use fake messages in this preview** switched on while you're styling, so
 > you can see what it looks like without being live.
 
+## Horizontal chat (a band along the top or bottom)
+
+Prefer the sides of the screen clear for gameplay? In the style page set **Layout** to
+**Horizontal**. Messages become cards in a row along the bottom (or top), newest on the right.
+
+The OBS source needs a different shape for this: **Width `1920`, Height `160`**, then drag it
+to the bottom or top of your scene. The style page's size hint changes to match when you pick
+Horizontal. *Card width* and *Lines before cut off* control how much of a long message shows —
+a band can't grow taller, so long messages are trimmed with "…".
+
+The *Ticker* quick look is a ready-made horizontal setup.
+
 ## Useful things people miss
 
 - **Two chats at once.** Add the overlay twice with different links — for example a Twitch-only
