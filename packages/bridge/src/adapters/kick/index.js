@@ -375,6 +375,24 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       connected = false;
     },
 
+    /** Send a chat message through Kick's official API (needs chat:write). */
+    async send(text) {
+      if (!config.accessToken) throw new Error('sign in to Kick to let the bot talk');
+      const res = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${config.accessToken}`,
+          'content-type': 'application/json',
+          accept: 'application/json',
+        },
+        body: JSON.stringify({ content: text, type: 'bot' }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `Kick refused the message (${res.status})`);
+      }
+    },
+
     health() {
       if (!typed) return { connected: false, detail: 'no channel name set' };
       if (!connected) {

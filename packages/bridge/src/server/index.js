@@ -253,6 +253,20 @@ async function api(req, res, url, { hub, config, onQuit }) {
     return sendJSON(res, 200, { events: hub.backlog(limit, platforms.length ? platforms : null) });
   }
 
+  if (path === '/api/chatbot' && req.method === 'GET') {
+    return sendJSON(res, 200, hub.chatbot.status());
+  }
+
+  if (path === '/api/chatbot' && req.method === 'POST') {
+    const body = await readBody(req);
+    return sendJSON(res, 200, hub.chatbot.save(body));
+  }
+
+  if (path === '/api/chatbot/test' && req.method === 'POST') {
+    const body = await readBody(req);
+    return sendJSON(res, 200, hub.chatbot.test(String(body.trigger || '')));
+  }
+
   if (path === '/api/timer' && req.method === 'GET') {
     return sendJSON(res, 200, { state: hub.timer.get() });
   }

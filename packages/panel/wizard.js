@@ -17,6 +17,10 @@ for (const o of Object.values(OVERLAYS)) {
   a.textContent = `${o.label} style`;
   tabs.append(a);
 }
+const commandsTab = document.createElement('a');
+commandsTab.href = '/commands/';
+commandsTab.textContent = 'Chat commands';
+tabs.append(commandsTab);
 
 const platformsEl = document.getElementById('platforms');
 const healthEl = document.getElementById('health');

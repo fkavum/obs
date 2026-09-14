@@ -14,6 +14,7 @@ import { Hub } from '../src/hub.js';
 import { startServer } from '../src/server/index.js';
 import { refreshExpiring } from '../src/server/auth.js';
 import { createHealthService } from '../src/obs/health.js';
+import { createChatbot } from '../src/chatbot.js';
 
 // Prefer IPv4 for outbound connections. Two machines on one Wi-Fi can present
 // different public addresses (one over IPv6, one over IPv4), and bot filters
@@ -52,9 +53,13 @@ const health = createHealthService({
   log: createLogger('obs'),
 });
 hub.health = health;
+
+const chatbot = createChatbot({ config, hub });
+hub.chatbot = chatbot;
 const server = startServer({ hub, config, onQuit: () => shutdown('Stopped from the setup page.') });
 await hub.startAll();
 await health.start();
+chatbot.start();
 
 // Keep tokens alive without the operator ever thinking about them.
 const refreshTimer = setInterval(() => {
@@ -109,6 +114,7 @@ async function shutdown(reason = 'Shutting down…') {
   console.log(`\n${reason}`);
   clearInterval(refreshTimer);
   // Never hang on a stuck socket: give adapters a moment, then leave regardless.
+  chatbot.stop();
   await Promise.race([Promise.all([hub.shutdown(), health.stop()]), new Promise((r) => setTimeout(r, 3000))]);
   server.close();
   process.exit(0);

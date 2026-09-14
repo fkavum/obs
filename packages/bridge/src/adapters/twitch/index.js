@@ -16,6 +16,7 @@ const ID = 'https://id.twitch.tv/oauth2';
 
 const SCOPES = [
   'chat:read',
+  'chat:edit',
   'moderator:read:followers',
   'channel:read:subscriptions',
   'bits:read',
@@ -381,6 +382,13 @@ export function createAdapter({ config, emit, log }) {
       try { eventsub?.close(); } catch { /* already gone */ }
       irc = eventsub = null;
       ircReady = esReady = false;
+    },
+
+    /** Send a chat message. Needs a signed-in connection (chat:edit scope). */
+    async send(text) {
+      if (!signedIn) throw new Error('sign in to Twitch to let the bot talk');
+      if (!ircReady || !irc) throw new Error('not connected to Twitch chat');
+      irc.send(`PRIVMSG #${channel} :${text}`);
     },
 
     health() {

@@ -25,6 +25,11 @@ export const DEFAULT_CONFIG = {
   bridge: { host: '127.0.0.1', wsPort: 8777, httpPort: 8778 },
   obs: { url: 'ws://127.0.0.1:4455', password: '', enabled: false },
   platforms: {},
+  // Lists, not maps: merging them item by item would fight the editor, so a
+  // saved list replaces the starting one outright.
+  chatbot: { enabled: false, sendTo: [] },
+  commands: null,
+  autoMessages: null,
 };
 
 /** The local layer travels with the merged view but never shows up in JSON or spreads. */
@@ -49,6 +54,10 @@ export function mergeConfig(defaults = {}, local = {}) {
     obs: { ...DEFAULT_CONFIG.obs, ...(defaults.obs || {}), ...(local.obs || {}) },
     platforms: {},
   };
+  cfg.chatbot = { ...DEFAULT_CONFIG.chatbot, ...(defaults.chatbot || {}), ...(local.chatbot || {}) };
+  cfg.commands = local.commands ?? defaults.commands ?? null;
+  cfg.autoMessages = local.autoMessages ?? defaults.autoMessages ?? null;
+
   const ids = new Set([...Object.keys(defaults.platforms || {}), ...Object.keys(local.platforms || {})]);
   for (const id of ids) {
     cfg.platforms[id] = { ...(defaults.platforms?.[id] || {}), ...(local.platforms?.[id] || {}) };
@@ -71,6 +80,9 @@ export function saveConfig(config) {
   // bridge/obs settings are only ever edited through the wizard, so they live local.
   local.bridge = config.bridge;
   local.obs = config.obs;
+  local.chatbot = config.chatbot;
+  if (config.commands) local.commands = config.commands;
+  if (config.autoMessages) local.autoMessages = config.autoMessages;
   mkdirSync(CONFIG_DIR, { recursive: true });
   const tmp = `${CONFIG_PATH}.tmp`;
   writeFileSync(tmp, JSON.stringify(local, null, 2), { mode: 0o600 });

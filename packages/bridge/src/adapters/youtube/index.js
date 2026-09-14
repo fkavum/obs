@@ -21,7 +21,7 @@ const API = 'https://www.googleapis.com/youtube/v3';
 const SCOPES = ['https://www.googleapis.com/auth/youtube.readonly'];
 
 // Documented quota costs, used for budgeting.
-const COST = { liveBroadcasts: 1, liveChatMessages: 5, videos: 1 };
+const COST = { liveBroadcasts: 1, liveChatMessages: 5, videos: 1, insertMessage: 50 };
 
 export const oauth = {
   needs: ['clientId', 'clientSecret'],
@@ -308,6 +308,29 @@ export function createAdapter({ config, emit, log, saveConfig }) {
       clearTimeout(pollTimer);
       connected = false;
       liveChatId = null;
+    },
+
+    /**
+     * Send a chat message. Deliberately expensive to call: YouTube charges 50
+     * quota units per message - ten times a chat poll - so a chatty bot here
+     * costs far more than the chat it is replying to.
+     */
+    async send(text) {
+      if (!config.accessToken) throw new Error('sign in to YouTube to let the bot talk');
+      if (!liveChatId) throw new Error('no live YouTube chat to send to');
+      if (remaining() < COST.insertMessage) throw new Error('not enough YouTube quota left today');
+      const res = await fetch(`${API}/liveChat/messages?part=snippet`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${config.accessToken}`, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          snippet: { liveChatId, type: 'textMessageEvent', textMessageDetails: { messageText: text } },
+        }),
+      });
+      spend(COST.insertMessage);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error?.message || `YouTube refused the message (${res.status})`);
+      }
     },
 
     health() {

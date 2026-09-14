@@ -7,10 +7,11 @@
   "order": 10,
   "capabilities": [
     "chat",
-    "follow",
-    "subscription",
     "donation",
+    "follow",
     "raid",
+    "send",
+    "subscription",
     "viewers"
   ],
   "setupUrl": "https://dev.twitch.tv/console/apps/create",

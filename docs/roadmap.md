@@ -75,7 +75,7 @@ Warns; does not act.
 
 ## Tier 3 — after Tier 2 is stable
 
-- ⬜ **Chat commands & timers** — `!discord`, rotating auto-messages, all platforms at once. Commands managed in the settings screen, not a file.
+- 🟨 **Chat commands & auto-messages** — built 2026-09-14. Matching, permissions, cooldowns and variables are verified; *sending* needs a signed-in platform and has not run live. Twitch now requests the chat:edit scope, so an existing Twitch login must sign in again to let the bot talk.
 - ✅ **Countdown / BRB / starting-soon timers** — built 2026-09-14. State lives on the bridge, so controls reach a source already open in OBS and a refreshed source resumes correctly.
 - ⬜ **Clip / highlight marker** — a hotkey saves a replay-buffer clip and writes a timestamped VOD marker.
 - ⬜ **Polls overlay** — chat-voted polls that work across all three audiences at once.

@@ -96,6 +96,11 @@ export function createAdapter({ config, emit, log }) {
 }
 ```
 
+An adapter may also export an optional `send(text)` for chat commands. Every platform
+refuses anonymous senders, so `send()` is expected to throw when that platform is not signed
+in; the chatbot treats a platform as able to talk only when its `health()` reports it signed
+in and connected, never merely because the method exists.
+
 Requirements on every adapter:
 - **Never throw into the bridge.** Catch everything; report via `health()`.
 - **Reconnect on its own** with exponential backoff. One dead platform must not affect the

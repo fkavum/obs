@@ -85,6 +85,10 @@ function paintChrome() {
     if (o.id === overlay.id) a.setAttribute('aria-current', 'page');
     tabs.append(a);
   }
+  const commandsTab = document.createElement('a');
+  commandsTab.href = '/commands/';
+  commandsTab.textContent = 'Chat commands';
+  tabs.append(commandsTab);
 
   const testRow = document.getElementById('testRow');
   if (!overlay.testEvents) {
