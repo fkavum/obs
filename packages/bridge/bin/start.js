@@ -15,6 +15,8 @@ import { startServer } from '../src/server/index.js';
 import { refreshExpiring } from '../src/server/auth.js';
 import { createHealthService } from '../src/obs/health.js';
 import { createChatbot } from '../src/chatbot.js';
+import { seedInitialPresets, migrateLegacyPresets } from '../src/presets.js';
+import { OVERLAYS } from '#core/settings-schema.js';
 
 // Prefer IPv4 for outbound connections. Two machines on one Wi-Fi can present
 // different public addresses (one over IPv6, one over IPv4), and bot filters
@@ -42,6 +44,11 @@ if (has('--demo')) {
 if (firstRun && !Object.values(config.platforms).some((p) => p.enabled)) {
   setPlatformConfig(config, 'fake', { enabled: true });
 }
+
+// The looks built into the toolkit are written out as files so they can be read
+// and edited; anything already on disk is left exactly as it is.
+migrateLegacyPresets(config);
+seedInitialPresets(config, OVERLAYS);
 
 const hub = new Hub(config);
 await hub.load();

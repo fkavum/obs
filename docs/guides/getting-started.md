@@ -39,9 +39,19 @@ file — every change you make on the setup pages, and every login, is saved the
 
 ```
 config/
-  initial.config.json   the starting point. Safe to edit; it is only a seed.
-  config.local.json     the working file. Everything lives here. Keep it private.
-  presets.json          the looks and command sets you saved yourself.
+  initial.config.json        the starting point. Safe to edit; it is only a seed.
+  config.local.json          the working file. Everything lives here. Keep it private.
+
+  chat/                      one folder per feature, holding its presets
+    neon.initial.config        a look that comes with the toolkit — editable
+    my-look.local.config       one you saved yourself
+  alerts/   stats/   health/   timer/   commands/
+```
+
+The master file names those folders, so you can move them if you want:
+
+```json
+"presets": { "chat": "chat", "alerts": "alerts", "commands": "commands", ... }
 ```
 
 Open `config/initial.config.json` in any text editor to change what a *fresh* install starts
@@ -84,14 +94,30 @@ setup page tells you which one is happening, next to the YouTube dot:
 
 ## Saving your own looks
 
-Every style page has a row of **Quick looks** built in, and next to them a **Yours** section.
-Set something up the way you like it, press **+ Save this look**, give it a name, and it
-becomes a button you can press any time. Press the **×** on one to delete it.
+Every style page has a row of **Quick looks**, and next to them a **Yours** section. Set
+something up the way you like it, press **+ Save this look**, give it a name, and it becomes a
+button you can press any time. Press the **×** on one to delete it.
 
-The commands page has the same thing as **Saved sets** — keep one set of commands for gaming
-nights and another for chatting streams, and switch between them.
+The commands page has the same as **Saved sets** — keep one set of commands for gaming nights
+and another for chatting streams, and switch between them.
 
-These live in `config/presets.json`, kept separate so your working file stays readable.
+Each one is its own small file in that feature's folder, so you can read and edit them by hand:
+
+```json
+// config/chat/my-look.local.config
+{
+  "name": "My look",
+  "settings": { "layout": "horizontal", "scale": "120" }
+}
+```
+
+**The Quick looks are files too.** `config/chat/neon.initial.config` is the Neon look — change
+a colour in it, restart the toolkit, and Neon is your version from then on. The toolkit only
+writes those files if they're missing, so your edits are never overwritten. Delete one and it
+comes back as shipped, which is how you undo.
+
+Your own presets (`.local.config`) and the shipped ones (`.initial.config`) are separate files
+even when they share a name, so saving yours can never destroy a built-in.
 
 ## Open the toolkit page
 

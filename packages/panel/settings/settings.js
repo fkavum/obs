@@ -28,7 +28,7 @@ let toastTimer;
 let settings = parseSettings(location.search.slice(1), overlay.schema, overlay.themes);
 let activeTheme = new URLSearchParams(location.search).get('theme') || 'default';
 let platforms = [];
-let myPresets = [];
+let presetsByKind = { initial: [], local: [] };
 
 // Remember the last look between visits; the URL still wins if one is given.
 // (the overlay= param alone doesn't count as "settings were given")
@@ -43,7 +43,7 @@ if (![...new URLSearchParams(location.search).keys()].some((k) => k !== 'overlay
 }
 
 platforms = await loadPlatforms();
-myPresets = await loadMyPresets();
+presetsByKind = await loadMyPresets();
 paintChrome();
 // Nothing connected yet? Then the preview has to fake it to be useful.
 fakeToggle.checked = !platforms.some((p) => p.connected && p.id !== 'fake');
@@ -62,7 +62,7 @@ document.getElementById('copy').addEventListener('click', () => {
 
 document.getElementById('reset').addEventListener('click', () => {
   settings = parseSettings('', overlay.schema, overlay.themes);
-  activeTheme = 'default';
+  activeTheme = '';
   renderControls();
   update();
   toast('Back to the default look');
@@ -133,70 +133,93 @@ async function loadPlatforms() {
 
 async function loadMyPresets() {
   try {
-    const { presets } = await (await fetch('/api/presets')).json();
-    return presets[overlay.id] || [];
+    const { presets } = await (await fetch(`/api/presets/${overlay.id}`)).json();
+    return { initial: presets.initial || [], local: presets.local || [] };
   } catch {
-    return [];
+    return { initial: [], local: [] };
   }
+}
+
+/**
+ * Apply a preset by expanding it into explicit settings rather than a theme
+ * name. That is what makes an edited .initial.config file actually change the
+ * overlay - a `theme=` in the URL would be resolved from the built-in table
+ * instead, ignoring the file.
+ */
+function applyPreset(preset) {
+  const query = new URLSearchParams(preset.settings || {}).toString();
+  settings = parseSettings(query, overlay.schema, overlay.themes);
+  settings.theme = 'default';
+  activeTheme = preset.id;
+  renderThemes();
+  renderControls();
+  update();
+  toast(`Loaded "${preset.name}"`);
+}
+
+function presetButton(preset, { deletable }) {
+  const wrap = document.createElement('span');
+  wrap.style.cssText = 'display:inline-flex;align-items:center';
+  const btn = document.createElement('button');
+  btn.textContent = preset.name;
+  btn.title = preset.source === 'initial'
+    ? `Comes with the toolkit — config/${overlay.id}/${preset.file}`
+    : `Saved ${new Date(preset.savedAt || Date.now()).toLocaleString()} — config/${overlay.id}/${preset.file}`;
+  btn.setAttribute('aria-pressed', String(activeTheme === preset.id));
+  btn.addEventListener('click', () => applyPreset(preset));
+  if (!deletable) {
+    wrap.append(btn);
+    return wrap;
+  }
+  btn.style.cssText = 'border-top-right-radius:0;border-bottom-right-radius:0';
+  const del = document.createElement('button');
+  del.textContent = '×';
+  del.title = `Delete "${preset.name}"`;
+  del.style.cssText = 'border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding:6px 9px;color:#ff9ea1';
+  del.addEventListener('click', async () => {
+    await fetch(`/api/presets/${overlay.id}/${preset.id}`, { method: 'DELETE' });
+    presetsByKind = await loadMyPresets();
+    renderThemes();
+    toast(`Deleted "${preset.name}"`);
+  });
+  wrap.append(btn, del);
+  return wrap;
 }
 
 function renderThemes() {
   themesEl.replaceChildren();
+
   themesEl.append(pill('Quick looks'));
+  for (const preset of presetsByKind.initial) themesEl.append(presetButton(preset, { deletable: false }));
 
-  for (const name of Object.keys(overlay.themes)) {
-    const btn = document.createElement('button');
-    btn.textContent = name;
-    btn.dataset.builtin = '';
-    btn.setAttribute('aria-pressed', String(name === activeTheme));
-    btn.addEventListener('click', () => {
-      activeTheme = name;
-      // Apply the preset over a clean slate so switching looks is predictable.
-      settings = parseSettings(`theme=${name}`, overlay.schema, overlay.themes);
-      renderThemes();
-      renderControls();
-      update();
-    });
-    themesEl.append(btn);
-  }
-
-  // ---- the operator's own saved looks ----
   themesEl.append(pill('Yours'));
-  for (const preset of myPresets) {
-    const wrap = document.createElement('span');
-    wrap.style.cssText = 'display:inline-flex;align-items:center';
-    const btn = document.createElement('button');
-    btn.textContent = preset.name;
-    btn.title = `Saved ${new Date(preset.savedAt).toLocaleString()}`;
-    btn.style.borderTopRightRadius = '0';
-    btn.style.borderBottomRightRadius = '0';
-    btn.addEventListener('click', () => {
-      activeTheme = 'default';
-      settings = parseSettings(preset.query || '', overlay.schema, overlay.themes);
-      renderThemes();
-      renderControls();
-      update();
-      toast(`Loaded "${preset.name}"`);
-    });
-    const del = document.createElement('button');
-    del.textContent = '×';
-    del.title = `Delete "${preset.name}"`;
-    del.style.cssText = 'border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding:6px 9px;color:#ff9ea1';
-    del.addEventListener('click', async () => {
-      await fetch(`/api/presets/${overlay.id}/${preset.id}`, { method: 'DELETE' });
-      myPresets = await loadMyPresets();
-      renderThemes();
-      toast(`Deleted "${preset.name}"`);
-    });
-    wrap.append(btn, del);
-    themesEl.append(wrap);
-  }
+  for (const preset of presetsByKind.local) themesEl.append(presetButton(preset, { deletable: true }));
 
   const save = document.createElement('button');
-  save.textContent = myPresets.length ? '+ Save as new' : '+ Save this look';
+  save.textContent = presetsByKind.local.length ? '+ Save as new' : '+ Save this look';
   save.className = 'primary';
   save.addEventListener('click', saveCurrentAsPreset);
   themesEl.append(save);
+}
+
+async function saveCurrentAsPreset() {
+  const name = window.prompt('Name this look (saving over one of your own names replaces it):', presetsByKind.local.length ? '' : 'My look');
+  if (name === null) return;
+  // Store the settings themselves, so the file is readable and hand-editable.
+  const asObject = Object.fromEntries(new URLSearchParams(toQuery(settings, overlay.schema)));
+  const res = await fetch('/api/presets', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ kind: overlay.id, name, settings: asObject }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    toast(body.error || 'Could not save that');
+    return;
+  }
+  presetsByKind = await loadMyPresets();
+  renderThemes();
+  toast(`Saved "${body.preset.name}"`);
 }
 
 function pill(text) {
@@ -205,25 +228,6 @@ function pill(text) {
   el.style.marginRight = '4px';
   el.textContent = text;
   return el;
-}
-
-async function saveCurrentAsPreset() {
-  const suggested = myPresets.length ? '' : 'My look';
-  const name = window.prompt('Name this look (saving over an existing name replaces it):', suggested);
-  if (name === null) return;
-  const res = await fetch('/api/presets', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ kind: overlay.id, name, query: toQuery(settings, overlay.schema) }),
-  });
-  const body = await res.json();
-  if (!res.ok) {
-    toast(body.error || 'Could not save that');
-    return;
-  }
-  myPresets = body.presets[overlay.id] || [];
-  renderThemes();
-  toast(`Saved "${body.preset.name}"`);
 }
 
 function renderControls() {

@@ -33,7 +33,15 @@ export const DEFAULT_CONFIG = {
   commands: [],
   autoMessages: [],
   timer: { durationMs: 300000, label: 'Starting soon', mode: 'countdown' },
-  presetsFile: 'presets.json',
+  // One folder per feature, holding that feature's presets as individual files.
+  presets: {
+    chat: 'chat',
+    alerts: 'alerts',
+    stats: 'stats',
+    health: 'health',
+    timer: 'timer',
+    commands: 'commands',
+  },
 };
 
 function readJSON(path, label) {
@@ -123,6 +131,4 @@ export function setPlatformConfig(config, id, patch) {
   return saved;
 }
 
-export function presetsPath(config) {
-  return join(CONFIG_DIR, config.presetsFile || 'presets.json');
-}
+

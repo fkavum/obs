@@ -13,7 +13,7 @@ import { makePreviewEvent } from '#core/preview-feed.js';
 import { parseClock } from '#core/timer-model.js';
 import { TimerService } from '../timer.js';
 import { ROOT, saveConfig, setPlatformConfig, resetToSeed } from '../config.js';
-import { loadPresets, putPreset, deletePreset } from '../presets.js';
+import { loadPresets, listPresets, putPreset, deletePreset } from '../presets.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
 import {
   beginAuth, completeAuth, callbackPage, redirectUriFor,
@@ -264,6 +264,15 @@ async function api(req, res, url, { hub, config, onQuit }) {
     try {
       const preset = putPreset(config, body.kind, body);
       return sendJSON(res, 200, { ok: true, preset, presets: loadPresets(config) });
+    } catch (err) {
+      return sendJSON(res, 400, { error: err.message });
+    }
+  }
+
+  const presetKind = /^\/api\/presets\/([a-z]+)$/i.exec(path);
+  if (presetKind && req.method === 'GET') {
+    try {
+      return sendJSON(res, 200, { presets: listPresets(config, presetKind[1]) });
     } catch (err) {
       return sendJSON(res, 400, { error: err.message });
     }

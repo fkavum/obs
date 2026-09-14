@@ -6,6 +6,10 @@ config/*.local.json
 config/tokens/
 *.pem
 
+# Presets the operator saved themselves are personal; the ones that ship
+# (*.initial.config) are part of the toolkit and are committed.
+config/**/*.local.config
+
 # Node
 node_modules/
 npm-debug.log*

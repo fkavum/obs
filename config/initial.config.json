@@ -1,5 +1,5 @@
 {
-  "$comment": "Starting values for this install. On first run everything here is copied into config.local.json next to it, which then becomes the working file - every change you make on the setup pages, and every login token, is written there. This file is only the seed: editing it afterwards adds any setting that is missing from the working file, but never overwrites what you have changed. To start over, delete config.local.json. Your saved presets live in presets.json. refreshSeconds (YouTube only): how often to check for new chat; '10' means every 10 seconds, honoured exactly unless YouTube's own minimum is higher or the daily allowance is running low. Twitch and Kick push messages instantly and need no setting.",
+  "$comment": "Starting values for this install. On first run everything here is copied into config.local.json next to it, which then becomes the working file - every change you make on the setup pages, and every login token, is written there. This file is only the seed: editing it afterwards adds any setting that is missing from the working file, but never overwrites what you have changed. To start over, delete config.local.json. 'presets' names the folder each feature keeps its presets in: chat/, alerts/, commands/ and so on. Inside each you'll find <name>.initial.config (looks that ship with the toolkit - editable) and <name>.local.config (ones you saved yourself). refreshSeconds (YouTube only): how often to check for new chat; '10' means every 10 seconds, honoured exactly unless YouTube's own minimum is higher or the daily allowance is running low. Twitch and Kick push messages instantly and need no setting.",
   "platforms": {
     "twitch": {
       "channel": "s0mcs",
@@ -104,5 +104,12 @@
     "label": "Starting soon",
     "mode": "countdown"
   },
-  "presetsFile": "presets.json"
+  "presets": {
+    "chat": "chat",
+    "alerts": "alerts",
+    "stats": "stats",
+    "health": "health",
+    "timer": "timer",
+    "commands": "commands"
+  }
 }

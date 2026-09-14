@@ -7,7 +7,7 @@ import { OVERLAYS } from '/core/settings-schema.js';
 const toastEl = document.getElementById('toast');
 let toastTimer;
 let state = { commands: [], autoMessages: [], enabled: false, canSendOn: [], sendTo: [] };
-let presets = [];
+let presets = { initial: [], local: [] };
 
 const tabs = document.getElementById('tabs');
 for (const o of Object.values(OVERLAYS)) {
@@ -41,10 +41,10 @@ document.getElementById('addAuto').addEventListener('click', () => {
 
 async function loadPresets() {
   try {
-    const body = await (await fetch('/api/presets')).json();
-    presets = body.presets.commands || [];
+    const body = await (await fetch('/api/presets/commands')).json();
+    presets = { initial: body.presets.initial || [], local: body.presets.local || [] };
   } catch {
-    presets = [];
+    presets = { initial: [], local: [] };
   }
   renderPresets();
 }
@@ -52,11 +52,11 @@ async function loadPresets() {
 function renderPresets() {
   const box = document.getElementById('presets');
   box.replaceChildren();
-  if (!presets.length) {
+  if (!presets.local.length && !presets.initial.length) {
     box.innerHTML = '<span class="sub">Nothing saved yet. Press <strong>Save this set</strong> to keep the commands below as a set you can come back to.</span>';
     return;
   }
-  for (const preset of presets) {
+  for (const preset of [...presets.initial, ...presets.local]) {
     const wrap = document.createElement('span');
     wrap.style.cssText = 'display:inline-flex;align-items:center';
     const load = document.createElement('button');
@@ -73,6 +73,14 @@ function renderPresets() {
       await save({ commands: state.commands, autoMessages: state.autoMessages });
       toast(`Loaded "${preset.name}"`);
     });
+    // Sets that ship with the toolkit can be loaded but not deleted.
+    if (preset.source === 'initial') {
+      load.style.cssText = '';
+      load.title = `Comes with the toolkit — config/commands/${preset.file}`;
+      wrap.append(load);
+      box.append(wrap);
+      continue;
+    }
     const del = document.createElement('button');
     del.textContent = '×';
     del.title = `Delete "${preset.name}"`;
@@ -88,7 +96,7 @@ function renderPresets() {
 }
 
 async function savePreset() {
-  const name = window.prompt('Name this set (saving over an existing name replaces it):', presets.length ? '' : 'My commands');
+  const name = window.prompt('Name this set (saving over one of your own names replaces it):', presets.local.length ? '' : 'My commands');
   if (name === null) return;
   const res = await fetch('/api/presets', {
     method: 'POST',
