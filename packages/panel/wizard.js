@@ -6,6 +6,18 @@
  * itself from GET /api/platforms, so a newly added adapter shows up here with
  * no edit to this file.
  */
+import { OVERLAYS } from '/core/settings-schema.js';
+
+// Built from the overlay registry, so a new overlay gets its tab automatically
+// instead of needing this page's markup edited.
+const tabs = document.getElementById('tabs');
+for (const o of Object.values(OVERLAYS)) {
+  const a = document.createElement('a');
+  a.href = `/settings/?overlay=${o.id}`;
+  a.textContent = `${o.label} style`;
+  tabs.append(a);
+}
+
 const platformsEl = document.getElementById('platforms');
 const healthEl = document.getElementById('health');
 const toastEl = document.getElementById('toast');
@@ -17,6 +29,89 @@ document.getElementById('healthUrl').value = `${location.origin}/overlays/health
 document.getElementById('copyHealth').addEventListener('click', () => {
   copy(document.getElementById('healthUrl').value, 'Health link copied — add it as a Custom Browser Dock in OBS');
 });
+
+// ---- Timer ----
+const timerFields = {
+  duration: document.getElementById('timerDuration'),
+  label: document.getElementById('timerLabel'),
+  mode: document.getElementById('timerMode'),
+  atZero: document.getElementById('timerAtZero'),
+  doneText: document.getElementById('timerDoneText'),
+};
+document.getElementById('timerUrl').value = `${location.origin}/overlays/timer/`;
+document.getElementById('copyTimer').addEventListener('click', () => {
+  copy(document.getElementById('timerUrl').value, 'Timer link copied — add it to OBS as a full-screen Browser Source');
+});
+
+let timerState = null;
+
+/** Send the on-screen settings along with every action, so they always match. */
+async function timerAction(action, extra = {}) {
+  const body = {
+    action,
+    duration: timerFields.duration.value.trim() || '5:00',
+    label: timerFields.label.value,
+    mode: timerFields.mode.value,
+    atZero: timerFields.atZero.value,
+    doneText: timerFields.doneText.value,
+    ...extra,
+  };
+  // Settings first, so a Start uses what is on screen right now.
+  if (action !== 'configure') await post('/api/timer', { ...body, action: 'configure' });
+  const res = await post('/api/timer', body);
+  if (res.state) paintTimer(res.state);
+}
+
+document.getElementById('timerStart').addEventListener('click', () => timerAction('start'));
+document.getElementById('timerReset').addEventListener('click', () => timerAction('reset'));
+document.getElementById('timerPlus').addEventListener('click', () => timerAction('add', { deltaMs: 60000 }));
+document.getElementById('timerMinus').addEventListener('click', () => timerAction('add', { deltaMs: -60000 }));
+document.getElementById('timerPause').addEventListener('click', () => {
+  timerAction(timerState?.status === 'paused' ? 'resume' : 'pause');
+});
+for (const btn of document.querySelectorAll('.timer-preset')) {
+  btn.addEventListener('click', () => {
+    timerFields.duration.value = btn.dataset.time;
+    timerFields.label.value = btn.dataset.label;
+    timerAction('reset');
+  });
+}
+for (const el of Object.values(timerFields)) el.addEventListener('change', () => timerAction('configure'));
+timerFields.atZero.addEventListener('change', paintTimerFields);
+
+function paintTimerFields() {
+  document.getElementById('timerDoneWrap').hidden = timerFields.atZero.value !== 'message';
+}
+
+function paintTimer(state) {
+  timerState = state;
+  const pill = document.getElementById('timerNow');
+  const dot = state.status === 'running' ? 'ok' : state.status === 'paused' ? 'warn' : '';
+  pill.innerHTML = `<span class="dot ${dot}"></span>${escape(timerClock(state))} · ${escape(state.status)}`;
+  document.getElementById('timerPause').textContent = state.status === 'paused' ? 'Resume' : 'Pause';
+  for (const [key, el] of Object.entries(timerFields)) {
+    if (document.activeElement === el) continue;
+    if (key === 'duration') el.value = timerClock({ ...state, status: 'stopped', frozenMs: state.durationMs });
+    else if (state[key] !== undefined) el.value = state[key];
+  }
+  paintTimerFields();
+}
+
+/** Mirror of the overlay's clock, for the little status pill. */
+function timerClock(state) {
+  const now = Date.now();
+  const ms = state.status === 'running'
+    ? (state.mode === 'countdown' ? Math.max(0, (state.endsAt ?? now) - now) : Math.max(0, now - (state.startedAt ?? now)))
+    : Math.max(0, state.frozenMs);
+  const total = Math.round(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+}
+
+fetch('/api/timer').then((r) => r.json()).then(({ state }) => paintTimer(state)).catch(() => {});
+setInterval(() => timerState && paintTimer(timerState), 1000);
 
 // ---- OBS connection ----
 const obsUrl = document.getElementById('obsUrl');

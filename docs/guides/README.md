@@ -15,6 +15,7 @@ every guide feels the same.
 | [Alerts](alerts.md) | Follow / sub / tip / raid pop-ups, test buttons, sound |
 | [Stats bar](stats-bar.md) | Viewers across platforms, time live, session counts, goal bar |
 | [Stream health](stream-health.md) | Dropped frames and encoder warnings, for your eyes only |
+| [Timer](timer.md) | Starting-soon countdown, be-right-back clock, count-up |
 
 ## Writing rules
 

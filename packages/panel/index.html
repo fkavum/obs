@@ -14,12 +14,7 @@
        Then drop the overlay into OBS. Leave the black terminal window open while you stream.</p>
   </header>
 
-  <nav class="tabs">
-    <a href="/" aria-current="page">Setup</a>
-    <a href="/settings/">Chat overlay style</a>
-    <a href="/settings/?overlay=alerts">Alerts style</a>
-    <a href="/settings/?overlay=stats">Stats bar style</a>
-  </nav>
+  <nav class="tabs" id="tabs"><a href="/" aria-current="page">Setup</a></nav>
 
   <section class="card">
     <div class="row between">
@@ -77,6 +72,58 @@
 
   <h2 style="font-size:17px;margin:26px 0 12px">Your channels</h2>
   <div id="platforms"></div>
+
+  <section class="card">
+    <div class="row between">
+      <div>
+        <h2>Timer</h2>
+        <p class="sub">A countdown for your <em>starting soon</em>, <em>be right back</em> and <em>ending</em> scenes.</p>
+      </div>
+      <a class="btn" href="/settings/?overlay=timer">Change how it looks</a>
+    </div>
+
+    <div class="row" style="margin:16px 0;gap:10px;align-items:flex-end">
+      <label class="field" style="margin:0;flex:0 0 130px"><span>Time</span><input type="text" id="timerDuration" placeholder="5:00"></label>
+      <label class="field" style="margin:0;flex:1 1 200px"><span>Label on screen</span><input type="text" id="timerLabel" placeholder="Starting soon"></label>
+      <label class="field" style="margin:0;flex:0 0 150px"><span>Counts</span>
+        <select id="timerMode"><option value="countdown">down to zero</option><option value="countup">up from zero</option></select>
+      </label>
+      <label class="field" style="margin:0;flex:0 0 190px"><span>At zero</span>
+        <select id="timerAtZero">
+          <option value="stop">stop at 0:00</option>
+          <option value="message">show a message</option>
+          <option value="countup">keep counting up</option>
+          <option value="hide">disappear</option>
+        </select>
+      </label>
+    </div>
+    <label class="field" id="timerDoneWrap" hidden><span>Message when it reaches zero</span><input type="text" id="timerDoneText" placeholder="We'll be right back"></label>
+
+    <div class="row" style="gap:8px">
+      <button class="primary" id="timerStart">Start</button>
+      <button id="timerPause">Pause</button>
+      <button id="timerReset">Reset</button>
+      <button class="ghost" id="timerPlus">+1 min</button>
+      <button class="ghost" id="timerMinus">−1 min</button>
+      <span class="pill" id="timerNow" style="margin-left:auto;font-variant-numeric:tabular-nums"><span class="dot"></span>—</span>
+    </div>
+
+    <div class="row" style="gap:8px;margin-top:12px">
+      <span class="sub" style="margin:0">Quick set:</span>
+      <button class="ghost timer-preset" data-time="5:00" data-label="Starting soon">Starting soon 5:00</button>
+      <button class="ghost timer-preset" data-time="10:00" data-label="Be right back">BRB 10:00</button>
+      <button class="ghost timer-preset" data-time="1:00" data-label="Starting soon">1:00</button>
+    </div>
+
+    <div class="urlbar" style="margin-top:16px">
+      <input id="timerUrl" class="grow" type="text" readonly>
+      <button class="primary" id="copyTimer">Copy</button>
+    </div>
+    <div class="note">
+      Add as a Browser Source at <code class="inline">1920</code> × <code class="inline">1080</code> on your starting-soon
+      or BRB scene. One source works for all of them — it shows whatever you start here.
+    </div>
+  </section>
 
   <section class="card" id="obsCard">
     <div class="row between">

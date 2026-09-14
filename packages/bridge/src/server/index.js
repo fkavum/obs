@@ -10,6 +10,8 @@ import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
 import { WSServer, createLogger } from '#core/index.js';
 import { makePreviewEvent } from '#core/preview-feed.js';
+import { parseClock } from '#core/timer-model.js';
+import { TimerService } from '../timer.js';
 import { ROOT, saveConfig, setPlatformConfig } from '../config.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
 import {
@@ -25,6 +27,10 @@ const CORE_DIR = join(ROOT, 'packages', 'core', 'src');
 const ASSETS_DIR = join(ROOT, 'assets');
 
 export function startServer({ hub, config, onQuit = null }) {
+  // Toolkit state rather than a platform event, so it travels as its own
+  // top-level message type instead of being squeezed into the event schema.
+  const timer = new TimerService(config.timer || {});
+  hub.timer = timer;
   const requestHandler = (req, res) => {
     handle(req, res, { hub, config, onQuit }).catch((err) => {
       log.error(`${req.method} ${req.url}: ${err.message}`);
@@ -47,6 +53,8 @@ export function startServer({ hub, config, onQuit = null }) {
     const backlogSize = Math.min(100, Number(params.get('backlog')) || 0);
 
     conn.send(JSON.stringify({ type: 'hello', platforms: hub.manifests(), ts: Date.now() }));
+    // A freshly opened timer source needs the current state immediately.
+    conn.send(JSON.stringify({ type: 'timer', state: timer.get() }));
     if (backlogSize) {
       for (const event of hub.backlog(backlogSize, filter.length ? filter : null)) {
         conn.send(JSON.stringify({ type: 'event', event, replay: true }));
@@ -63,6 +71,8 @@ export function startServer({ hub, config, onQuit = null }) {
       c.send(payload);
     }
   };
+  const onTimer = (state) => ws.broadcast({ type: 'timer', state });
+  timer.on('change', onTimer);
   hub.on('event', onEvent);
   hub.on('status', () => ws.broadcast({ type: 'status', platforms: hub.status(), ts: Date.now() }));
 
@@ -89,6 +99,7 @@ export function startServer({ hub, config, onQuit = null }) {
     url: `http://localhost:${httpPort}`,
     altUrl: `http://${host}:${httpPort}`,
     close() {
+      timer.off('change', onTimer);
       hub.off('event', onEvent);
       ws.close();
       http.close();
@@ -240,6 +251,22 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const limit = Math.min(100, Number(url.searchParams.get('limit')) || 25);
     const platforms = (url.searchParams.get('platforms') || '').split(',').filter(Boolean);
     return sendJSON(res, 200, { events: hub.backlog(limit, platforms.length ? platforms : null) });
+  }
+
+  if (path === '/api/timer' && req.method === 'GET') {
+    return sendJSON(res, 200, { state: hub.timer.get() });
+  }
+
+  if (path === '/api/timer' && req.method === 'POST') {
+    const body = await readBody(req);
+    // The duration may arrive as "5:00" from the setup page's box.
+    if (typeof body.duration === 'string') {
+      const ms = parseClock(body.duration);
+      if (ms === null) return sendJSON(res, 400, { error: `"${body.duration}" is not a time like 5:00` });
+      body.durationMs = ms;
+    }
+    const state = hub.timer.dispatch({ ...body, type: body.action || body.type });
+    return sendJSON(res, 200, { ok: true, state });
   }
 
   if (path === '/api/obs/config' && req.method === 'POST') {

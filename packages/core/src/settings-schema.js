@@ -530,3 +530,67 @@ OVERLAYS.health = {
   fakeLabel: 'Use made-up numbers in this preview',
   streamerOnly: true,
 };
+
+// ===========================================================================
+// Timer (starting soon / be right back / ending)
+// ===========================================================================
+
+export const TIMER_GROUPS = [
+  { id: 'layout', label: 'Position' },
+  { id: 'size', label: 'Size' },
+  { id: 'look', label: 'Look' },
+  { id: 'text', label: 'Wording' },
+];
+
+export const TIMER_SETTINGS = {
+  // ---- Position -----------------------------------------------------------
+  position: { group: 'layout', kind: 'select', default: 'center', options: ['top', 'center', 'bottom'], label: 'Where on the screen' },
+  align: { group: 'layout', kind: 'select', default: 'center', options: ['left', 'center', 'right'], label: 'Left / centre / right' },
+  offset: { group: 'layout', kind: 'number', default: 80, min: 0, max: 600, step: 4, label: 'Distance from the edge', unit: 'px' },
+
+  // ---- Size ---------------------------------------------------------------
+  scale: { group: 'size', kind: 'number', default: 100, min: 50, max: 200, step: 5, label: 'Overall size', unit: '%' },
+  clockSize: { group: 'size', kind: 'number', default: 120, min: 20, max: 400, step: 2, label: 'Clock size', unit: 'px' },
+  labelSize: { group: 'size', kind: 'number', default: 32, min: 10, max: 120, step: 1, label: 'Label size', unit: 'px' },
+  font: { group: 'size', kind: 'text', default: 'Inter', label: 'Font' },
+  gap: { group: 'size', kind: 'number', default: 12, min: 0, max: 80, step: 2, label: 'Space between label and clock', unit: 'px' },
+
+  // ---- Look ---------------------------------------------------------------
+  clockColor: { group: 'look', kind: 'color', default: '#ffffff', label: 'Clock colour' },
+  labelColor: { group: 'look', kind: 'color', default: '#ffffff', label: 'Label colour' },
+  clockWeight: { group: 'look', kind: 'select', default: '800', options: ['400', '500', '600', '700', '800', '900'], label: 'Clock boldness' },
+  shadow: { group: 'look', kind: 'select', default: 'soft', options: ['none', 'soft', 'hard', 'outline'], label: 'Text edge' },
+  bg: { group: 'look', kind: 'select', default: 'none', options: ['none', 'flat'], label: 'Box behind it' },
+  bgColor: { group: 'look', kind: 'color', default: '#0d0d13', label: 'Box colour', showIf: { bg: 'flat' } },
+  bgOpacity: { group: 'look', kind: 'number', default: 70, min: 0, max: 100, step: 1, label: 'Box transparency', unit: '%', showIf: { bg: 'flat' } },
+  padding: { group: 'look', kind: 'number', default: 40, min: 0, max: 160, step: 4, label: 'Space inside the box', unit: 'px', showIf: { bg: 'flat' } },
+  radius: { group: 'look', kind: 'number', default: 20, min: 0, max: 80, step: 1, label: 'Corner rounding', unit: 'px', showIf: { bg: 'flat' } },
+  urgentColor: { group: 'look', kind: 'color', default: '#e5484d', label: 'Colour in the last moments' },
+  urgentAt: { group: 'look', kind: 'number', default: 10, min: 0, max: 120, step: 1, label: 'Turn that colour under', unit: 'sec', help: '0 turns this off.' },
+
+  // ---- Wording ------------------------------------------------------------
+  showLabel: { group: 'text', kind: 'toggle', default: true, label: 'Show the label above the clock' },
+  hideWhenStopped: { group: 'text', kind: 'toggle', default: true, label: 'Show nothing until the timer is started', help: 'So an idle timer never sits on your scene.' },
+  preview: { group: 'text', kind: 'toggle', default: false, label: 'Preview mode', help: 'A pretend countdown so you can style it.' },
+  theme: { group: 'text', kind: 'text', default: 'default', label: 'Theme preset' },
+};
+
+export const TIMER_THEMES = {
+  default: {},
+  big: { clockSize: 200, labelSize: 48, clockWeight: '900' },
+  card: { bg: 'flat', bgOpacity: 80, padding: 48, radius: 24, clockSize: 110 },
+  corner: { position: 'top', align: 'right', clockSize: 56, labelSize: 20, offset: 40, bg: 'flat', bgOpacity: 60, padding: 20, radius: 14 },
+  minimal: { clockSize: 90, showLabel: false, shadow: 'outline' },
+};
+
+OVERLAYS.timer = {
+  id: 'timer',
+  label: 'Timer',
+  path: '/overlays/timer/',
+  schema: TIMER_SETTINGS,
+  groups: TIMER_GROUPS,
+  themes: TIMER_THEMES,
+  openGroups: ['layout', 'size', 'look'],
+  obsSize: { width: 1920, height: 1080 },
+  fakeLabel: 'Run a pretend countdown in this preview',
+};

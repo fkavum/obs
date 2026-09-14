@@ -1,0 +1,65 @@
+:root {
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --clock-size: 120px;
+  --label-size: 32px;
+  --gap: 12px;
+  --offset: 80px;
+  --padding: 0px;
+  --radius: 20px;
+  --bg: transparent;
+  --clock-color: #fff;
+  --label-color: #fff;
+  --clock-weight: 800;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: var(--font); user-select: none; }
+
+.stage { position: fixed; inset: 0; display: flex; padding: var(--offset); }
+.stage[data-position="top"]    { align-items: flex-start; }
+.stage[data-position="center"] { align-items: center; }
+.stage[data-position="bottom"] { align-items: flex-end; }
+.stage[data-align="left"]   { justify-content: flex-start; }
+.stage[data-align="center"] { justify-content: center; }
+.stage[data-align="right"]  { justify-content: flex-end; }
+.stage[data-hidden="yes"] .box { display: none; }
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  align-items: inherit;
+  padding: var(--padding);
+  border-radius: var(--radius);
+  background: var(--bg);
+  text-align: center;
+}
+.stage[data-align="left"]  .box { text-align: left; }
+.stage[data-align="right"] .box { text-align: right; }
+
+.label {
+  font-size: var(--label-size);
+  color: var(--label-color);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.label:empty { display: none; }
+
+.clock {
+  font-size: var(--clock-size);
+  color: var(--clock-color);
+  font-weight: var(--clock-weight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  /* Digits must not jiggle as they change width. */
+  font-feature-settings: "tnum";
+}
+.clock[data-urgent="yes"] { color: var(--urgent-color, #e5484d); }
+/* A finished countdown showing words rather than digits needs to wrap sensibly. */
+.clock[data-text="words"] { font-size: calc(var(--clock-size) * 0.45); max-width: 14em; }
+
+.stage[data-shadow="soft"]    .box { text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+.stage[data-shadow="hard"]    .box { text-shadow: 0 4px 0 rgba(0,0,0,0.85); }
+.stage[data-shadow="outline"] .box {
+  text-shadow: -2px -2px 0 rgba(0,0,0,.85), 2px -2px 0 rgba(0,0,0,.85),
+               -2px  2px 0 rgba(0,0,0,.85), 2px  2px 0 rgba(0,0,0,.85), 0 4px 12px rgba(0,0,0,.5);
+}

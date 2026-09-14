@@ -76,7 +76,7 @@ Warns; does not act.
 ## Tier 3 — after Tier 2 is stable
 
 - ⬜ **Chat commands & timers** — `!discord`, rotating auto-messages, all platforms at once. Commands managed in the settings screen, not a file.
-- ⬜ **Countdown / BRB / starting-soon timers** — browser sources, controlled from the settings screen.
+- ✅ **Countdown / BRB / starting-soon timers** — built 2026-09-14. State lives on the bridge, so controls reach a source already open in OBS and a refreshed source resumes correctly.
 - ⬜ **Clip / highlight marker** — a hotkey saves a replay-buffer clip and writes a timestamped VOD marker.
 - ⬜ **Polls overlay** — chat-voted polls that work across all three audiences at once.
 - ⬜ **Giveaway tool** — entries from all chats, deduped, drawn on stream.
