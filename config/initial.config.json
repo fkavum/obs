@@ -1,9 +1,108 @@
 {
-  "$comment": "Starting values for this install. Anything you change on the setup page is saved to config.local.json (next to this file) and takes priority over what is here - so editing this file only affects values you haven't changed on the setup page. To fall back to these, press Disconnect on that channel, or delete config.local.json. refreshSeconds (YouTube only): how often to check for new chat; '10' means every 10 seconds. It is honoured exactly unless YouTube's own minimum is higher or the free daily allowance is running low - the setup page says which. Twitch and Kick push messages instantly and need no setting.",
+  "$comment": "Starting values for this install. On first run everything here is copied into config.local.json next to it, which then becomes the working file - every change you make on the setup pages, and every login token, is written there. This file is only the seed: editing it afterwards adds any setting that is missing from the working file, but never overwrites what you have changed. To start over, delete config.local.json. Your saved presets live in presets.json. refreshSeconds (YouTube only): how often to check for new chat; '10' means every 10 seconds, honoured exactly unless YouTube's own minimum is higher or the daily allowance is running low. Twitch and Kick push messages instantly and need no setting.",
   "platforms": {
-    "twitch":   { "channel": "s0mcs", "enabled": true },
-    "kick":     { "channel": "4head", "enabled": true },
-    "youtube":  { "channel": "NFLonCBS", "enabled": true, "refreshSeconds": 10 },
-    "fake":     { "enabled": false }
-  }
+    "twitch": {
+      "channel": "s0mcs",
+      "enabled": true
+    },
+    "kick": {
+      "channel": "4head",
+      "enabled": true
+    },
+    "youtube": {
+      "channel": "NFLonCBS",
+      "enabled": true,
+      "refreshSeconds": 10
+    },
+    "fake": {
+      "enabled": false
+    }
+  },
+  "chatbot": {
+    "enabled": false,
+    "sendTo": []
+  },
+  "commands": [
+    {
+      "id": "cmd-socials",
+      "trigger": "!socials",
+      "aliases": [
+        "!links"
+      ],
+      "response": "Follow me everywhere: twitch.tv/your-name · kick.com/your-name · youtube.com/@your-name",
+      "enabled": true,
+      "permission": "everyone",
+      "cooldownSec": 5,
+      "userCooldownSec": 15,
+      "platforms": []
+    },
+    {
+      "id": "cmd-discord",
+      "trigger": "!discord",
+      "aliases": [],
+      "response": "Come hang out: discord.gg/your-invite",
+      "enabled": true,
+      "permission": "everyone",
+      "cooldownSec": 5,
+      "userCooldownSec": 15,
+      "platforms": []
+    },
+    {
+      "id": "cmd-uptime",
+      "trigger": "!uptime",
+      "aliases": [],
+      "response": "Live for {uptime}",
+      "enabled": true,
+      "permission": "everyone",
+      "cooldownSec": 5,
+      "userCooldownSec": 15,
+      "platforms": []
+    },
+    {
+      "id": "cmd-hello",
+      "trigger": "!hello",
+      "aliases": [
+        "!hi"
+      ],
+      "response": "Hey {user}! 👋",
+      "enabled": true,
+      "permission": "everyone",
+      "cooldownSec": 5,
+      "userCooldownSec": 15,
+      "platforms": []
+    },
+    {
+      "id": "cmd-commands",
+      "trigger": "!commands",
+      "aliases": [],
+      "response": "Commands: {commands}",
+      "enabled": true,
+      "permission": "everyone",
+      "cooldownSec": 10,
+      "userCooldownSec": 30,
+      "platforms": []
+    }
+  ],
+  "autoMessages": [
+    {
+      "id": "auto-follow",
+      "text": "Enjoying the stream? A follow helps a lot 💜",
+      "intervalSec": 900,
+      "minChatLines": 10,
+      "enabled": false
+    },
+    {
+      "id": "auto-socials",
+      "text": "All my links: !socials",
+      "intervalSec": 1200,
+      "minChatLines": 15,
+      "enabled": false
+    }
+  ],
+  "timer": {
+    "durationMs": 300000,
+    "label": "Starting soon",
+    "mode": "countdown"
+  },
+  "presetsFile": "presets.json"
 }

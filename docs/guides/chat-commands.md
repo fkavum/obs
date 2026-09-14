@@ -18,6 +18,8 @@ messages that post themselves on a loop.*
 2. Switch **Answer commands** on.
 3. Five commands are there to start with — `!socials`, `!discord`, `!uptime`, `!hello`,
    `!commands`. Click one to open it and change the answer to your own links.
+   (These come from `config/initial.config.json`, so you can change what a fresh install
+   starts with too.)
 4. Press **Test** on a command to see exactly what it would say.
 
 That's it. Type `!socials` in your own chat and the bot replies.
@@ -49,6 +51,12 @@ Click **Add a command**, then fill in:
 | `{random: a \| b \| c}` | picks one at random |
 
 So `Hey {user}, you're viewer number {count}!` becomes *"Hey Bob, you're viewer number 42!"*.
+
+## Saved sets
+
+Press **Save this set** to keep the commands and auto-messages you have now under a name.
+Load it again any time from the same row — handy if you want a different set for different
+kinds of stream. Loading a set replaces what's on screen, so it asks first.
 
 ## Auto-messages
 

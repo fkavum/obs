@@ -1,14 +1,17 @@
 /**
- * Configuration is two layers read together:
+ * Configuration lives in ONE working file: config/config.local.json.
  *
- *   config/initial.config.json  starting values for this install - channel names, which
- *                              platforms are on. Committed, human-edited.
- *   config/config.local.json  what the setup page saved - tokens, overrides.
- *                             Git-ignored, machine-written. Wins over defaults.
+ * config/initial.config.json is the seed. On first run its contents are copied
+ * into the working file, which from then on is the single source of truth -
+ * everything the operator changes, and every token, is written there.
  *
- * The layers are merged at read time and only the local layer is ever written,
- * so editing initial.config.json keeps working after the wizard has saved things:
- * a value you set in the wizard overrides it; everything else still follows it.
+ * Two rules protect the operator's data:
+ *   - an existing working file is NEVER overwritten by the seed;
+ *   - keys the seed has but the working file lacks ARE filled in, so a toolkit
+ *     update that adds a feature gets its defaults without touching anything else.
+ *
+ * Long lists that would bury the file - saved presets - live in presets.json,
+ * pointed at from here.
  */
 import { readFileSync, writeFileSync, mkdirSync, renameSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -18,76 +21,87 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, '..', '..', '..');
 // Overridable so tests can point at a scratch directory.
 export const CONFIG_DIR = process.env.OBS_TOOLKIT_CONFIG_DIR || join(ROOT, 'config');
-export const DEFAULTS_PATH = join(CONFIG_DIR, 'initial.config.json');
+export const SEED_PATH = join(CONFIG_DIR, 'initial.config.json');
 export const CONFIG_PATH = join(CONFIG_DIR, 'config.local.json');
 
+/** Anything the seed does not mention still needs a sane value. */
 export const DEFAULT_CONFIG = {
   bridge: { host: '127.0.0.1', wsPort: 8777, httpPort: 8778 },
   obs: { url: 'ws://127.0.0.1:4455', password: '', enabled: false },
   platforms: {},
-  // Lists, not maps: merging them item by item would fight the editor, so a
-  // saved list replaces the starting one outright.
   chatbot: { enabled: false, sendTo: [] },
-  commands: null,
-  autoMessages: null,
+  commands: [],
+  autoMessages: [],
+  timer: { durationMs: 300000, label: 'Starting soon', mode: 'countdown' },
+  presetsFile: 'presets.json',
 };
 
-/** The local layer travels with the merged view but never shows up in JSON or spreads. */
-const LOCAL = Symbol('local');
-
 function readJSON(path, label) {
-  if (!existsSync(path)) return {};
+  if (!existsSync(path)) return null;
   try {
-    return JSON.parse(readFileSync(path, 'utf8')) || {};
+    return JSON.parse(readFileSync(path, 'utf8'));
   } catch (err) {
     // A corrupt file must not stop the bridge starting - the operator needs the
     // setup page to come up so they can fix things.
-    console.error(`${label} unreadable, ignoring it: ${err.message}`);
-    return {};
+    console.error(`${label} is unreadable, ignoring it: ${err.message}`);
+    return null;
   }
 }
 
-/** Build the merged view from the two layers. Pure; tested directly. */
-export function mergeConfig(defaults = {}, local = {}) {
-  const cfg = {
-    bridge: { ...DEFAULT_CONFIG.bridge, ...(defaults.bridge || {}), ...(local.bridge || {}) },
-    obs: { ...DEFAULT_CONFIG.obs, ...(defaults.obs || {}), ...(local.obs || {}) },
-    platforms: {},
-  };
-  cfg.chatbot = { ...DEFAULT_CONFIG.chatbot, ...(defaults.chatbot || {}), ...(local.chatbot || {}) };
-  cfg.commands = local.commands ?? defaults.commands ?? null;
-  cfg.autoMessages = local.autoMessages ?? defaults.autoMessages ?? null;
-
-  const ids = new Set([...Object.keys(defaults.platforms || {}), ...Object.keys(local.platforms || {})]);
-  for (const id of ids) {
-    cfg.platforms[id] = { ...(defaults.platforms?.[id] || {}), ...(local.platforms?.[id] || {}) };
+/** Fill in only the keys `target` is missing. Never replaces what is already there. */
+function fillMissing(target, source) {
+  let added = 0;
+  for (const [key, value] of Object.entries(source || {})) {
+    if (key === '$comment') continue;
+    if (target[key] === undefined) {
+      target[key] = structuredClone(value);
+      added += 1;
+    } else if (isPlainObject(target[key]) && isPlainObject(value)) {
+      added += fillMissing(target[key], value);
+    }
   }
-  Object.defineProperty(cfg, LOCAL, { value: local, enumerable: false, writable: true });
-  Object.defineProperty(cfg, 'defaults', { value: defaults, enumerable: false });
-  return cfg;
+  return added;
 }
 
+const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * Load the working config, creating it from the seed on first run.
+ * @returns {object} config, with a non-enumerable `seed` for "reset to defaults".
+ */
 export function loadConfig() {
-  const defaults = readJSON(DEFAULTS_PATH, 'initial.config.json');
-  const local = readJSON(CONFIG_PATH, 'config.local.json');
-  if (!local.platforms) local.platforms = {};
-  return mergeConfig(defaults, local);
+  const seed = readJSON(SEED_PATH, 'initial.config.json') || {};
+  const existing = readJSON(CONFIG_PATH, 'config.local.json');
+
+  const config = existing ? { ...existing } : {};
+  const fromSeed = fillMissing(config, seed);
+  const fromDefaults = fillMissing(config, DEFAULT_CONFIG);
+
+  Object.defineProperty(config, 'seed', { value: seed, enumerable: false });
+
+  // Write on first run, and whenever an update introduced new settings, so the
+  // file on disk always shows everything that exists rather than hiding some of it.
+  if (!existing || fromSeed || fromDefaults) saveConfig(config);
+  return config;
 }
 
-/** Persist the local layer only. Atomic, so a crash mid-save can't corrupt it. */
+/** Write the whole working file. Atomic, so a crash mid-save can't corrupt it. */
 export function saveConfig(config) {
-  const local = config[LOCAL] || { platforms: {} };
-  // bridge/obs settings are only ever edited through the wizard, so they live local.
-  local.bridge = config.bridge;
-  local.obs = config.obs;
-  local.chatbot = config.chatbot;
-  if (config.commands) local.commands = config.commands;
-  if (config.autoMessages) local.autoMessages = config.autoMessages;
   mkdirSync(CONFIG_DIR, { recursive: true });
   const tmp = `${CONFIG_PATH}.tmp`;
-  writeFileSync(tmp, JSON.stringify(local, null, 2), { mode: 0o600 });
+  writeFileSync(tmp, JSON.stringify(config, null, 2), { mode: 0o600 });
   renameSync(tmp, CONFIG_PATH);
   return config;
+}
+
+/** Throw the working file away and start again from the seed. */
+export function resetToSeed() {
+  const seed = readJSON(SEED_PATH, 'initial.config.json') || {};
+  const config = structuredClone(seed);
+  delete config.$comment;
+  fillMissing(config, DEFAULT_CONFIG);
+  Object.defineProperty(config, 'seed', { value: seed, enumerable: false });
+  return saveConfig(config);
 }
 
 export function getPlatformConfig(config, id) {
@@ -95,18 +109,20 @@ export function getPlatformConfig(config, id) {
 }
 
 /**
- * Change one platform's saved values. A key set to `undefined` is removed from
- * the local layer, which lets a default show through again (used by Disconnect).
+ * Change one platform's saved values. A key set to `undefined` is removed
+ * (used by Disconnect to forget a login).
  */
 export function setPlatformConfig(config, id, patch) {
-  const local = config[LOCAL];
-  const saved = { ...(local.platforms[id] || {}) };
+  const saved = { ...(config.platforms[id] || {}) };
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined) delete saved[key];
     else saved[key] = value;
   }
-  local.platforms[id] = saved;
-  config.platforms[id] = { ...(config.defaults?.platforms?.[id] || {}), ...saved };
+  config.platforms[id] = saved;
   saveConfig(config);
-  return config.platforms[id];
+  return saved;
+}
+
+export function presetsPath(config) {
+  return join(CONFIG_DIR, config.presetsFile || 'presets.json');
 }

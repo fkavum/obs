@@ -181,5 +181,8 @@ code.inline {
 .urlbar input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 
 .themes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.themes button { padding: 6px 13px; font-size: 13px; font-weight: 500; text-transform: capitalize; }
+.themes button { padding: 6px 13px; font-size: 13px; font-weight: 500; }
+/* Built-in looks are lowercase ids, so title-case them. A preset the operator
+   named themselves must appear exactly as they typed it. */
+.themes button[data-builtin] { text-transform: capitalize; }
 .themes button[aria-pressed="true"] { background: var(--accent); border-color: transparent; color: #fff; }

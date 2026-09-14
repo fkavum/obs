@@ -12,7 +12,8 @@ import { WSServer, createLogger } from '#core/index.js';
 import { makePreviewEvent } from '#core/preview-feed.js';
 import { parseClock } from '#core/timer-model.js';
 import { TimerService } from '../timer.js';
-import { ROOT, saveConfig, setPlatformConfig } from '../config.js';
+import { ROOT, saveConfig, setPlatformConfig, resetToSeed } from '../config.js';
+import { loadPresets, putPreset, deletePreset } from '../presets.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
 import {
   beginAuth, completeAuth, callbackPage, redirectUriFor,
@@ -251,6 +252,39 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const limit = Math.min(100, Number(url.searchParams.get('limit')) || 25);
     const platforms = (url.searchParams.get('platforms') || '').split(',').filter(Boolean);
     return sendJSON(res, 200, { events: hub.backlog(limit, platforms.length ? platforms : null) });
+  }
+
+  // ---- saved presets (the operator's own looks and command sets) ----
+  if (path === '/api/presets' && req.method === 'GET') {
+    return sendJSON(res, 200, { presets: loadPresets(config) });
+  }
+
+  if (path === '/api/presets' && req.method === 'POST') {
+    const body = await readBody(req);
+    try {
+      const preset = putPreset(config, body.kind, body);
+      return sendJSON(res, 200, { ok: true, preset, presets: loadPresets(config) });
+    } catch (err) {
+      return sendJSON(res, 400, { error: err.message });
+    }
+  }
+
+  const presetDelete = /^\/api\/presets\/([a-z]+)\/([a-z0-9-]+)$/i.exec(path);
+  if (presetDelete && req.method === 'DELETE') {
+    try {
+      deletePreset(config, presetDelete[1], presetDelete[2]);
+      return sendJSON(res, 200, { ok: true, presets: loadPresets(config) });
+    } catch (err) {
+      return sendJSON(res, 400, { error: err.message });
+    }
+  }
+
+  if (path === '/api/config/reset' && req.method === 'POST') {
+    const fresh = resetToSeed();
+    // Replace the live object's contents so everything already holding it sees the reset.
+    for (const key of Object.keys(config)) delete config[key];
+    Object.assign(config, fresh);
+    return sendJSON(res, 200, { ok: true, restartRequired: true });
   }
 
   if (path === '/api/chatbot' && req.method === 'GET') {

@@ -31,23 +31,42 @@ overlays off.
 simply close the black window. (`Ctrl` + `C` in the window works too. On Windows it then asks
 *"Terminate batch job (Y/N)?"* and closes when you press `Y` — that's normal, not a crash.)
 
-## Setting your channels once, for good
+## Your settings file
 
-Open **`config/initial.config.json`** in the project folder with any text editor. It looks like:
+The first time you start the toolkit it creates **`config/config.local.json`** by copying
+everything out of **`config/initial.config.json`**. From then on the `.local` one is the real
+file — every change you make on the setup pages, and every login, is saved there.
+
+```
+config/
+  initial.config.json   the starting point. Safe to edit; it is only a seed.
+  config.local.json     the working file. Everything lives here. Keep it private.
+  presets.json          the looks and command sets you saved yourself.
+```
+
+Open `config/initial.config.json` in any text editor to change what a *fresh* install starts
+with — channel names, the starting chat commands, timer defaults:
 
 ```
 "twitch":  { "channel": "s0mcs",    "enabled": true },
 "kick":    { "channel": "4head",    "enabled": true },
-"youtube": { "channel": "NFLonCBS", "enabled": true },
+"youtube": { "channel": "NFLonCBS", "enabled": true, "refreshSeconds": 10 },
 ```
 
-Change the names to your own channels and save. Next time you start the toolkit it uses
-them. Anything you later change on the setup page wins over this file; to go back to the
-file's values, press **Disconnect** on that channel.
+Two rules that make this safe:
+
+- Editing the seed **never overwrites** something you've already changed. Your working file wins.
+- But a setting the seed has and your working file **doesn't** gets added — so when the toolkit
+  gains a new feature, its defaults appear without disturbing anything.
+
+**To start completely over**, delete `config.local.json` and start the toolkit again.
+
+> **`config.local.json` holds your logins.** Don't share it, and don't put it in a public
+> repository — it's already excluded from git for you.
 
 **`refreshSeconds`** (YouTube only) is how often it checks for new chat — **10** by default.
-Twitch and Kick don't need one: they push messages the instant they're sent. YouTube has to
-be asked, and every ask spends a little of a free daily allowance, so:
+Twitch and Kick push messages instantly and need no setting. YouTube has to be asked, and
+every ask spends a little of a free daily allowance:
 
 | refreshSeconds | Feels like | Full speed for about |
 |---|---|---|
@@ -63,7 +82,16 @@ setup page tells you which one is happening, next to the YouTube dot:
 - *(saving quota)* — once about a quarter of the day's free allowance is left, it stretches
   what remains over the hours until reset, so chat slows down instead of stopping.
 
-If you see neither, it's running at exactly your setting.
+## Saving your own looks
+
+Every style page has a row of **Quick looks** built in, and next to them a **Yours** section.
+Set something up the way you like it, press **+ Save this look**, give it a name, and it
+becomes a button you can press any time. Press the **×** on one to delete it.
+
+The commands page has the same thing as **Saved sets** — keep one set of commands for gaming
+nights and another for chatting streams, and switch between them.
+
+These live in `config/presets.json`, kept separate so your working file stays readable.
 
 ## Open the toolkit page
 

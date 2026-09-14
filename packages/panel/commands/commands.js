@@ -7,6 +7,7 @@ import { OVERLAYS } from '/core/settings-schema.js';
 const toastEl = document.getElementById('toast');
 let toastTimer;
 let state = { commands: [], autoMessages: [], enabled: false, canSendOn: [], sendTo: [] };
+let presets = [];
 
 const tabs = document.getElementById('tabs');
 for (const o of Object.values(OVERLAYS)) {
@@ -22,6 +23,9 @@ own.setAttribute('aria-current', 'page');
 tabs.append(own);
 
 await load();
+await loadPresets();
+
+document.getElementById('savePreset').addEventListener('click', savePreset);
 
 document.getElementById('botEnabled').addEventListener('change', (e) => save({ chatbot: { enabled: e.target.checked } }));
 document.getElementById('addCommand').addEventListener('click', () => {
@@ -34,6 +38,71 @@ document.getElementById('addAuto').addEventListener('click', () => {
   renderAutos();
   save({ autoMessages: state.autoMessages });
 });
+
+async function loadPresets() {
+  try {
+    const body = await (await fetch('/api/presets')).json();
+    presets = body.presets.commands || [];
+  } catch {
+    presets = [];
+  }
+  renderPresets();
+}
+
+function renderPresets() {
+  const box = document.getElementById('presets');
+  box.replaceChildren();
+  if (!presets.length) {
+    box.innerHTML = '<span class="sub">Nothing saved yet. Press <strong>Save this set</strong> to keep the commands below as a set you can come back to.</span>';
+    return;
+  }
+  for (const preset of presets) {
+    const wrap = document.createElement('span');
+    wrap.style.cssText = 'display:inline-flex;align-items:center';
+    const load = document.createElement('button');
+    load.textContent = `${preset.name} (${preset.data?.commands?.length ?? 0})`;
+    load.title = `Saved ${new Date(preset.savedAt).toLocaleString()}`;
+    load.style.cssText = 'border-top-right-radius:0;border-bottom-right-radius:0';
+    load.addEventListener('click', async () => {
+      // Replaces what is on screen, so say so rather than silently swapping it.
+      if (!window.confirm(`Load "${preset.name}"? This replaces the commands you have now.`)) return;
+      state.commands = preset.data?.commands || [];
+      state.autoMessages = preset.data?.autoMessages || [];
+      renderCommands();
+      renderAutos();
+      await save({ commands: state.commands, autoMessages: state.autoMessages });
+      toast(`Loaded "${preset.name}"`);
+    });
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.title = `Delete "${preset.name}"`;
+    del.style.cssText = 'border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding:6px 9px;color:#ff9ea1';
+    del.addEventListener('click', async () => {
+      await fetch(`/api/presets/commands/${preset.id}`, { method: 'DELETE' });
+      await loadPresets();
+      toast(`Deleted "${preset.name}"`);
+    });
+    wrap.append(load, del);
+    box.append(wrap);
+  }
+}
+
+async function savePreset() {
+  const name = window.prompt('Name this set (saving over an existing name replaces it):', presets.length ? '' : 'My commands');
+  if (name === null) return;
+  const res = await fetch('/api/presets', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ kind: 'commands', name, data: { commands: state.commands, autoMessages: state.autoMessages } }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    toast(body.error || 'Could not save that');
+    return;
+  }
+  await loadPresets();
+  toast(`Saved "${body.preset.name}"`);
+}
 
 async function load() {
   state = await (await fetch('/api/chatbot')).json();

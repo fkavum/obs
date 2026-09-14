@@ -28,6 +28,7 @@ let toastTimer;
 let settings = parseSettings(location.search.slice(1), overlay.schema, overlay.themes);
 let activeTheme = new URLSearchParams(location.search).get('theme') || 'default';
 let platforms = [];
+let myPresets = [];
 
 // Remember the last look between visits; the URL still wins if one is given.
 // (the overlay= param alone doesn't count as "settings were given")
@@ -42,6 +43,7 @@ if (![...new URLSearchParams(location.search).keys()].some((k) => k !== 'overlay
 }
 
 platforms = await loadPlatforms();
+myPresets = await loadMyPresets();
 paintChrome();
 // Nothing connected yet? Then the preview has to fake it to be useful.
 fakeToggle.checked = !platforms.some((p) => p.connected && p.id !== 'fake');
@@ -129,11 +131,23 @@ async function loadPlatforms() {
   }
 }
 
+async function loadMyPresets() {
+  try {
+    const { presets } = await (await fetch('/api/presets')).json();
+    return presets[overlay.id] || [];
+  } catch {
+    return [];
+  }
+}
+
 function renderThemes() {
-  themesEl.innerHTML = '<span class="pill" style="margin-right:4px">Quick looks</span>';
+  themesEl.replaceChildren();
+  themesEl.append(pill('Quick looks'));
+
   for (const name of Object.keys(overlay.themes)) {
     const btn = document.createElement('button');
     btn.textContent = name;
+    btn.dataset.builtin = '';
     btn.setAttribute('aria-pressed', String(name === activeTheme));
     btn.addEventListener('click', () => {
       activeTheme = name;
@@ -145,6 +159,71 @@ function renderThemes() {
     });
     themesEl.append(btn);
   }
+
+  // ---- the operator's own saved looks ----
+  themesEl.append(pill('Yours'));
+  for (const preset of myPresets) {
+    const wrap = document.createElement('span');
+    wrap.style.cssText = 'display:inline-flex;align-items:center';
+    const btn = document.createElement('button');
+    btn.textContent = preset.name;
+    btn.title = `Saved ${new Date(preset.savedAt).toLocaleString()}`;
+    btn.style.borderTopRightRadius = '0';
+    btn.style.borderBottomRightRadius = '0';
+    btn.addEventListener('click', () => {
+      activeTheme = 'default';
+      settings = parseSettings(preset.query || '', overlay.schema, overlay.themes);
+      renderThemes();
+      renderControls();
+      update();
+      toast(`Loaded "${preset.name}"`);
+    });
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.title = `Delete "${preset.name}"`;
+    del.style.cssText = 'border-left:0;border-top-left-radius:0;border-bottom-left-radius:0;padding:6px 9px;color:#ff9ea1';
+    del.addEventListener('click', async () => {
+      await fetch(`/api/presets/${overlay.id}/${preset.id}`, { method: 'DELETE' });
+      myPresets = await loadMyPresets();
+      renderThemes();
+      toast(`Deleted "${preset.name}"`);
+    });
+    wrap.append(btn, del);
+    themesEl.append(wrap);
+  }
+
+  const save = document.createElement('button');
+  save.textContent = myPresets.length ? '+ Save as new' : '+ Save this look';
+  save.className = 'primary';
+  save.addEventListener('click', saveCurrentAsPreset);
+  themesEl.append(save);
+}
+
+function pill(text) {
+  const el = document.createElement('span');
+  el.className = 'pill';
+  el.style.marginRight = '4px';
+  el.textContent = text;
+  return el;
+}
+
+async function saveCurrentAsPreset() {
+  const suggested = myPresets.length ? '' : 'My look';
+  const name = window.prompt('Name this look (saving over an existing name replaces it):', suggested);
+  if (name === null) return;
+  const res = await fetch('/api/presets', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ kind: overlay.id, name, query: toQuery(settings, overlay.schema) }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    toast(body.error || 'Could not save that');
+    return;
+  }
+  myPresets = body.presets[overlay.id] || [];
+  renderThemes();
+  toast(`Saved "${body.preset.name}"`);
 }
 
 function renderControls() {

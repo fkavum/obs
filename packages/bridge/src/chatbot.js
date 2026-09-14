@@ -17,20 +17,6 @@ import { saveConfig } from './config.js';
 
 const log = createLogger('chatbot');
 
-/** A useful starting set, so the page is never an empty box. */
-export const STARTER_COMMANDS = [
-  createCommand({ id: 'cmd-socials', trigger: '!socials', response: 'Follow me everywhere: twitch.tv/your-name · kick.com/your-name · youtube.com/@your-name' }),
-  createCommand({ id: 'cmd-discord', trigger: '!discord', response: 'Come hang out: discord.gg/your-invite' }),
-  createCommand({ id: 'cmd-uptime', trigger: '!uptime', response: 'Live for {uptime}' }),
-  createCommand({ id: 'cmd-hello', trigger: '!hello', aliases: ['!hi'], response: 'Hey {user}! 👋' }),
-  createCommand({ id: 'cmd-commands', trigger: '!commands', response: 'Commands: {commands}' }),
-];
-
-export const STARTER_AUTO_MESSAGES = [
-  { id: 'auto-follow', text: 'Enjoying the stream? A follow helps a lot 💜', intervalSec: 900, minChatLines: 10, enabled: false },
-  { id: 'auto-socials', text: 'All my links: !socials', intervalSec: 1200, minChatLines: 15, enabled: false },
-];
-
 export function createChatbot({ config, hub }) {
   const runtime = createRuntime();
   let timer = null;
@@ -41,8 +27,9 @@ export function createChatbot({ config, hub }) {
   let liveSince = null;
   const viewers = new Map();
 
-  const commands = () => config.commands ?? STARTER_COMMANDS;
-  const autoMessages = () => config.autoMessages ?? STARTER_AUTO_MESSAGES;
+  // Both come from the working config, which is seeded from initial.config.json.
+  const commands = () => config.commands ?? [];
+  const autoMessages = () => config.autoMessages ?? [];
 
   /**
    * Which platforms the bot is allowed AND actually able to talk on.
