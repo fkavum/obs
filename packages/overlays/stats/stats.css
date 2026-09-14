@@ -8,6 +8,10 @@
   --icon-size: 20px;
   --text-color: #fff;
   --accent: #7c5cff;
+  /* goal bar (overlay writes these from its settings) */
+  --goal-width: 320px; --goal-height: 8px; --goal-radius: 999px; --goal-padding: 0px;
+  --goal-bg: transparent; --goal-track: rgba(255,255,255,0.18); --goal-fill: var(--accent);
+  --goal-border: var(--accent); --goal-border-width: 1px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: var(--font); user-select: none; }
@@ -53,11 +57,25 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
 .item[data-border="solid"] { border: var(--border-width) solid var(--item-accent, var(--accent)); }
 .item[data-border="glow"]  { box-shadow: 0 0 calc(var(--border-width) * 6) var(--item-accent, var(--accent)), 0 0 0 var(--border-width) var(--item-accent, var(--accent)) inset; }
 
-.goal { min-width: 220px; flex: 0 1 320px; display: flex; flex-direction: column; gap: 4px; white-space: nowrap; }
+.goal {
+  flex: 0 1 var(--goal-width);
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--goal-padding);
+  border-radius: calc(var(--goal-radius) + var(--goal-padding));
+  background: var(--goal-bg);
+  white-space: nowrap;
+}
+.goal[data-text="below"] { flex-direction: column-reverse; }
+.goal[data-text="none"] .row { display: none; }
 .goal .row { display: flex; justify-content: space-between; gap: 12px; font-size: 0.8em; }
-.goal .track { height: 0.5em; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; }
-.goal .fill { height: 100%; border-radius: 999px; background: var(--item-accent, var(--accent)); }
+.goal .track { height: var(--goal-height); border-radius: var(--goal-radius); background: var(--goal-track); overflow: hidden; }
+.goal .fill { height: 100%; border-radius: var(--goal-radius); background: var(--goal-fill); }
 .bar[data-animate="on"] .goal .fill { transition: width 600ms ease; }
+.goal[data-border="solid"] { border: var(--goal-border-width) solid var(--goal-border); }
+.goal[data-border="glow"]  { box-shadow: 0 0 calc(var(--goal-border-width) * 6) var(--goal-border), 0 0 0 var(--goal-border-width) var(--goal-border) inset; }
 
 .bar[data-shadow="soft"]    .item, .bar[data-shadow="soft"]    .goal { text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
 .bar[data-shadow="hard"]    .item, .bar[data-shadow="hard"]    .goal { text-shadow: 0 2px 0 rgba(0,0,0,0.9); }

@@ -51,6 +51,18 @@ function applyStaticStyles() {
   st.setProperty('--icon-size', px(s.iconSize));
   st.setProperty('--text-color', s.textColor);
   if (s.accent !== 'platform') st.setProperty('--accent', s.accent);
+
+  // The goal bar's own look. 'accent' means follow the highlight colour.
+  const colour = (v) => (v === 'accent' ? 'var(--accent)' : v);
+  st.setProperty('--goal-width', px(s.goalWidth));
+  st.setProperty('--goal-height', px(s.goalHeight));
+  st.setProperty('--goal-radius', s.goalRadius >= 999 ? '999px' : px(s.goalRadius));
+  st.setProperty('--goal-padding', s.goalBg === 'flat' ? px(s.goalPadding) : '0px');
+  st.setProperty('--goal-bg', s.goalBg === 'flat' ? withAlpha(s.goalBgColor, s.goalBgOpacity / 100) : 'transparent');
+  st.setProperty('--goal-track', withAlpha(s.goalTrack, s.goalTrackOpacity / 100));
+  st.setProperty('--goal-fill', colour(s.goalFill));
+  st.setProperty('--goal-border', colour(s.goalBorderColor));
+  st.setProperty('--goal-border-width', px(s.goalBorderWidth));
 }
 
 async function loadPlatforms() {
@@ -212,6 +224,8 @@ function createGoal() {
   const el = document.createElement('div');
   el.className = 'goal';
   el.dataset.key = 'goal';
+  el.dataset.border = settings.goalBorder;
+  el.dataset.text = settings.goalText;
   const row = document.createElement('div');
   row.className = 'row';
   const label = document.createElement('span');

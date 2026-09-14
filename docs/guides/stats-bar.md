@@ -31,10 +31,16 @@ use a source about `360 × 300`.
 
 ## Set a goal
 
-On the style page, **Goal bar** → choose *followers*, *subs*, *viewers* or *tips*, set a
-**Target**, and — for followers, subs and tips — put your current total in **Starting from**
-(e.g. `1180` if you have 1,180 followers). The bar then shows `1,182 / 1,200` and fills as
-alerts come in. Viewer goals use the live total instead.
+On the style page, **Goal bar** → choose *followers*, *subs*, *viewers* or *tips*, type a
+**Target**, and — for followers, subs and tips — type your **Current number** (e.g. `1180` if
+you have 1,180 followers). Both are typed boxes, so exact numbers are easy. The bar then shows
+`1,182 / 1,200` and fills as alerts come in. Viewer goals use the live total instead.
+
+The bar has its own look, separate from the pills: the **filled** and **empty** part colours,
+thickness and rounding, an optional **box** behind it with its own colour and border (solid or
+glow), and whether the label and numbers sit **above**, **below** or are hidden. *Filled part
+colour* defaults to *Match the highlight colour* so it follows the rest of the bar unless you
+pick something else.
 
 ## Change how it looks
 

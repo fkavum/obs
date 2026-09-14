@@ -10,7 +10,11 @@
  * is no second place to edit. Runs unchanged in Node and in the browser.
  */
 
-/** @typedef {'select'|'number'|'color'|'text'|'toggle'|'list'} ControlKind */
+/**
+ * @typedef {'select'|'number'|'int'|'color'|'text'|'toggle'|'list'} ControlKind
+ *   number = slider (for things you nudge by eye); int = typed number box (for exact values
+ *   like a follower target). Both validate the same way.
+ */
 
 export const GROUPS = [
   { id: 'layout', label: 'Layout' },
@@ -131,7 +135,8 @@ const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 
 function coerce(spec, raw) {
   switch (spec.kind) {
-    case 'number': {
+    case 'number':
+    case 'int': {
       const n = Number(raw);
       if (!Number.isFinite(n)) return spec.default;
       return clamp(n, spec.min ?? -Infinity, spec.max ?? Infinity);
@@ -148,6 +153,7 @@ function coerce(spec, raw) {
       const v = String(raw);
       if (spec.allowPlatform && v === 'platform') return v;
       if (spec.allowUser && v === 'user') return v;
+      if (spec.allowAccent && v === 'accent') return v;
       return /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : spec.default;
     }
     case 'list':
@@ -385,9 +391,23 @@ export const STATS_SETTINGS = {
 
   // ---- Goal ---------------------------------------------------------------
   goalType: { group: 'goal', kind: 'select', default: 'none', options: ['none', 'followers', 'subs', 'viewers', 'tips'], label: 'Goal', help: 'A progress bar toward a target.' },
-  goalTarget: { group: 'goal', kind: 'number', default: 100, min: 1, max: 1000000, step: 1, label: 'Target' },
-  goalStart: { group: 'goal', kind: 'number', default: 0, min: 0, max: 1000000, step: 1, label: 'Starting from', help: 'Where you already are, e.g. your follower count before the stream. Not used for viewer goals.' },
+  goalTarget: { group: 'goal', kind: 'int', default: 100, min: 1, max: 100000000, step: 1, label: 'Target' },
+  goalStart: { group: 'goal', kind: 'int', default: 0, min: 0, max: 100000000, step: 1, label: 'Current number', help: 'Where you are now, e.g. your follower count before the stream. New follows/subs/tips add to it. Not used for viewer goals.' },
   goalLabel: { group: 'goal', kind: 'text', default: '', label: 'Label', maxLength: 60, help: 'Leave empty for "Follower goal", "Sub goal"…' },
+  goalText: { group: 'goal', kind: 'select', default: 'above', options: ['above', 'below', 'none'], label: 'Label and numbers' },
+  goalWidth: { group: 'goal', kind: 'number', default: 320, min: 120, max: 1200, step: 10, label: 'Bar width', unit: 'px', help: 'In a column layout it fills the width instead.' },
+  goalHeight: { group: 'goal', kind: 'number', default: 8, min: 2, max: 60, step: 1, label: 'Bar thickness', unit: 'px' },
+  goalRadius: { group: 'goal', kind: 'number', default: 999, min: 0, max: 999, step: 1, label: 'Bar rounding', unit: 'px', help: '999 makes it a pill.' },
+  goalFill: { group: 'goal', kind: 'color', default: 'accent', label: 'Filled part colour', allowAccent: true },
+  goalTrack: { group: 'goal', kind: 'color', default: '#ffffff', label: 'Empty part colour' },
+  goalTrackOpacity: { group: 'goal', kind: 'number', default: 18, min: 0, max: 100, step: 1, label: 'Empty part transparency', unit: '%' },
+  goalBg: { group: 'goal', kind: 'select', default: 'none', options: ['none', 'flat'], label: 'Box behind the goal' },
+  goalBgColor: { group: 'goal', kind: 'color', default: '#000000', label: 'Box colour', showIf: { goalBg: 'flat' } },
+  goalBgOpacity: { group: 'goal', kind: 'number', default: 60, min: 0, max: 100, step: 1, label: 'Box transparency', unit: '%', showIf: { goalBg: 'flat' } },
+  goalPadding: { group: 'goal', kind: 'number', default: 10, min: 0, max: 40, step: 1, label: 'Space inside the box', unit: 'px', showIf: { goalBg: 'flat' } },
+  goalBorder: { group: 'goal', kind: 'select', default: 'none', options: ['none', 'solid', 'glow'], label: 'Box border' },
+  goalBorderColor: { group: 'goal', kind: 'color', default: 'accent', label: 'Border colour', allowAccent: true },
+  goalBorderWidth: { group: 'goal', kind: 'number', default: 1, min: 0, max: 8, step: 1, label: 'Border thickness', unit: 'px' },
 
   // ---- Layout -------------------------------------------------------------
   direction: { group: 'layout', kind: 'select', default: 'row', options: ['row', 'column'], label: 'Arrangement', help: 'Row is a bar; column is a stacked panel for a corner.' },

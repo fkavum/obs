@@ -201,6 +201,25 @@ function buildControl(key, spec) {
   wrap.append(lab);
 
   switch (spec.kind) {
+    case 'int': {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.inputMode = 'numeric';
+      if (spec.min !== undefined) input.min = spec.min;
+      if (spec.max !== undefined) input.max = spec.max;
+      input.step = spec.step ?? 1;
+      input.value = settings[key];
+      val.textContent = spec.unit || '';
+      const commit = () => {
+        const n = Number(input.value);
+        if (!Number.isFinite(n)) return; // half-typed: wait
+        set(key, Math.min(spec.max ?? Infinity, Math.max(spec.min ?? -Infinity, n)));
+      };
+      input.addEventListener('input', commit);
+      input.addEventListener('blur', () => { input.value = settings[key]; }); // show the clamped value
+      wrap.append(input);
+      break;
+    }
     case 'number': {
       const input = document.createElement('input');
       input.type = 'range';
@@ -232,7 +251,7 @@ function buildControl(key, spec) {
     case 'color': {
       const swap = document.createElement('div');
       swap.className = 'swap';
-      const special = [spec.allowPlatform && 'platform', spec.allowUser && 'user'].filter(Boolean);
+      const special = [spec.allowPlatform && 'platform', spec.allowUser && 'user', spec.allowAccent && 'accent'].filter(Boolean);
       const current = settings[key];
 
       const picker = document.createElement('input');
@@ -245,7 +264,7 @@ function buildControl(key, spec) {
         for (const option of [...special, 'custom']) {
           const o = document.createElement('option');
           o.value = option;
-          o.textContent = { platform: 'Match the platform', user: "The chatter's own colour", custom: 'Pick a colour' }[option];
+          o.textContent = { platform: 'Match the platform', user: "The chatter's own colour", accent: 'Match the highlight colour', custom: 'Pick a colour' }[option];
           o.selected = special.includes(current) ? current === option : option === 'custom';
           mode.append(o);
         }
