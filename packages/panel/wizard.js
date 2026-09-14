@@ -12,6 +12,10 @@ const toastEl = document.getElementById('toast');
 
 document.getElementById('overlayUrl').value = `${location.origin}/overlays/chat/`;
 document.getElementById('alertsUrl').value = `${location.origin}/overlays/alerts/`;
+document.getElementById('statsUrl').value = `${location.origin}/overlays/stats/`;
+document.getElementById('copyStats').addEventListener('click', () => {
+  copy(document.getElementById('statsUrl').value, 'Stats bar link copied — add it to OBS as a 1920 × 90 Browser Source');
+});
 document.getElementById('copyAlerts').addEventListener('click', () => {
   copy(document.getElementById('alertsUrl').value, 'Alerts link copied — add it to OBS as a full-screen Browser Source');
 });

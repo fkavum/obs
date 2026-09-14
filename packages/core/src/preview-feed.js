@@ -105,10 +105,35 @@ export function startPreviewFeed(emit, { platforms, minMs = 700, maxMs = 3500, b
 
   timer = setTimeout(tick, 300);
   timer.unref?.();
+
+  // Viewer counts and live state, so the stats bar can be built without a real
+  // stream: each platform drifts around a plausible base, reported every few seconds.
+  const ids = platforms?.length ? platforms : ['fake'];
+  const base = { twitch: 820, kick: 310, youtube: 140 };
+  const counts = Object.fromEntries(ids.map((id) => [id, base[id] ?? 200]));
+  for (const id of ids) emit(makeStreamStateEvent(id, true));
+  const statsTimer = setInterval(() => {
+    if (stopped) return;
+    for (const id of ids) {
+      counts[id] = Math.max(0, Math.round(counts[id] + (Math.random() - 0.48) * counts[id] * 0.06));
+      emit(makeViewersEvent(id, counts[id]));
+    }
+  }, 4000);
+  statsTimer.unref?.();
+
   return () => {
     stopped = true;
     if (timer) clearTimeout(timer);
+    clearInterval(statsTimer);
   };
+}
+
+export function makeViewersEvent(platform, count) {
+  return { id: uuid(), type: 'viewers', platform, ts: Date.now(), channel: 'demo', user: null, data: { count } };
+}
+
+export function makeStreamStateEvent(platform, live, title = 'Demo stream') {
+  return { id: uuid(), type: 'stream.state', platform, ts: Date.now(), channel: 'demo', user: null, data: { live, title, category: 'Just Chatting' } };
 }
 
 function hash(s) {

@@ -1,0 +1,67 @@
+:root {
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-size: 20px;
+  --padding: 10px;
+  --gap: 10px;
+  --radius: 999px;
+  --border-width: 1px;
+  --icon-size: 20px;
+  --text-color: #fff;
+  --accent: #7c5cff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: var(--font); user-select: none; }
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  align-items: center;
+  padding: var(--gap);
+  height: 100%;
+  color: var(--text-color);
+  font-size: var(--font-size);
+}
+.bar[data-direction="column"] { flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: flex-start; }
+/* In a column the goal's row-oriented flex-basis would become a 320px HEIGHT and wrap
+   into a second column; size it like a normal stacked item instead. */
+.bar[data-direction="column"] .goal { flex: 0 0 auto; min-width: 0; width: 100%; }
+.bar[data-direction="column"] .item { justify-content: flex-start; }
+.bar[data-align="center"] { justify-content: center; }
+.bar[data-align="right"]  { justify-content: flex-end; }
+.bar[data-direction="column"][data-align="center"] { align-items: center; }
+.bar[data-direction="column"][data-align="right"]  { align-items: flex-end; }
+
+.item {
+  --platform-color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--padding) * 0.7);
+  padding: calc(var(--padding) * 0.6) calc(var(--padding) * 1.3);
+  border-radius: var(--radius);
+  background: var(--item-bg, transparent);
+  line-height: 1.2;
+  white-space: nowrap;
+  animation: in 260ms ease-out both;
+}
+.item .n { font-weight: 800; color: var(--item-accent, var(--accent)); font-variant-numeric: tabular-nums; }
+.item .l { opacity: 0.85; font-size: 0.8em; }
+.item img { width: var(--icon-size); height: var(--icon-size); }
+.item .dot { width: 0.5em; height: 0.5em; border-radius: 50%; background: var(--platform-color); }
+
+.item[data-border="solid"] { border: var(--border-width) solid var(--item-accent, var(--accent)); }
+.item[data-border="glow"]  { box-shadow: 0 0 calc(var(--border-width) * 6) var(--item-accent, var(--accent)), 0 0 0 var(--border-width) var(--item-accent, var(--accent)) inset; }
+
+.goal { min-width: 220px; flex: 0 1 320px; display: flex; flex-direction: column; gap: 4px; white-space: nowrap; }
+.goal .row { display: flex; justify-content: space-between; gap: 12px; font-size: 0.8em; }
+.goal .track { height: 0.5em; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; }
+.goal .fill { height: 100%; border-radius: 999px; background: var(--item-accent, var(--accent)); transition: width 600ms ease; }
+
+.bar[data-shadow="soft"]    .item, .bar[data-shadow="soft"]    .goal { text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+.bar[data-shadow="hard"]    .item, .bar[data-shadow="hard"]    .goal { text-shadow: 0 2px 0 rgba(0,0,0,0.9); }
+.bar[data-shadow="outline"] .item, .bar[data-shadow="outline"] .goal { text-shadow: -1px -1px 0 rgba(0,0,0,.85), 1px -1px 0 rgba(0,0,0,.85), -1px 1px 0 rgba(0,0,0,.85), 1px 1px 0 rgba(0,0,0,.85); }
+
+.n.bump { animation: bump 400ms ease-out; }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .item, .n.bump, .goal .fill { animation-duration: 1ms; transition-duration: 1ms; } }

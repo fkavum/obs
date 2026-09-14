@@ -18,6 +18,7 @@
     <a href="/" aria-current="page">Setup</a>
     <a href="/settings/">Chat overlay style</a>
     <a href="/settings/?overlay=alerts">Alerts style</a>
+    <a href="/settings/?overlay=stats">Stats bar style</a>
   </nav>
 
   <section class="card">
@@ -53,6 +54,24 @@
     <div class="note">
       Set Width <code class="inline">1920</code> and Height <code class="inline">1080</code> (full screen) and let the
       style page decide where on the screen alerts appear. Alerts need a channel to be <strong>signed in</strong> — chat works without, alerts don't.
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row between">
+      <div>
+        <h2>Stats bar</h2>
+        <p class="sub">Viewers across all platforms, time live, this stream's follows and subs, and a goal bar.</p>
+      </div>
+      <a class="btn" href="/settings/?overlay=stats">Change how it looks</a>
+    </div>
+    <div class="urlbar">
+      <input id="statsUrl" class="grow" type="text" readonly>
+      <button class="primary" id="copyStats">Copy</button>
+    </div>
+    <div class="note">
+      Set Width <code class="inline">1920</code> and Height <code class="inline">90</code>. Viewer counts need a channel to be
+      <strong>signed in</strong>; follows and subs count from when the overlay opened.
     </div>
   </section>
 

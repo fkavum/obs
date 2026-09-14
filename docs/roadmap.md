@@ -61,7 +61,7 @@ Restyled from the same settings screen.
 *Why it matters:* replaces the main paid SaaS widget, and fires for Kick and YouTube with the
 same look as Twitch.
 
-### ⬜ 8. Live stats bar
+### 🟨 8. Live stats bar
 Combined and per-platform viewer counts, uptime, session goal bar.
 *Why it matters:* when multi-streaming, "how many people am I actually talking to" is a
 number no single platform can tell you.

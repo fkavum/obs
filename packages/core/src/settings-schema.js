@@ -357,3 +357,84 @@ export const OVERLAYS = {
     ],
   },
 };
+
+// ===========================================================================
+// Stats bar
+// ===========================================================================
+
+export const STATS_GROUPS = [
+  { id: 'show', label: 'What to show' },
+  { id: 'goal', label: 'Goal bar' },
+  { id: 'layout', label: 'Layout' },
+  { id: 'size', label: 'Size' },
+  { id: 'look', label: 'Look' },
+  { id: 'behaviour', label: 'Behaviour' },
+];
+
+export const STATS_SETTINGS = {
+  // ---- What to show -------------------------------------------------------
+  showTotal: { group: 'show', kind: 'toggle', default: true, label: 'Total viewers across all platforms' },
+  showPerPlatform: { group: 'show', kind: 'toggle', default: true, label: 'Viewers per platform' },
+  showUptime: { group: 'show', kind: 'toggle', default: true, label: 'Time live' },
+  showFollows: { group: 'show', kind: 'toggle', default: true, label: 'New followers this stream' },
+  showSubs: { group: 'show', kind: 'toggle', default: true, label: 'New subs this stream' },
+  showTips: { group: 'show', kind: 'toggle', default: false, label: 'Tips this stream' },
+  showRaids: { group: 'show', kind: 'toggle', default: false, label: 'Raids this stream' },
+  icons: { group: 'show', kind: 'toggle', default: true, label: 'Platform icons' },
+  platforms: { group: 'show', kind: 'list', default: [], label: 'Show only these platforms', help: 'Leave empty for all.' },
+
+  // ---- Goal ---------------------------------------------------------------
+  goalType: { group: 'goal', kind: 'select', default: 'none', options: ['none', 'followers', 'subs', 'viewers', 'tips'], label: 'Goal', help: 'A progress bar toward a target.' },
+  goalTarget: { group: 'goal', kind: 'number', default: 100, min: 1, max: 1000000, step: 1, label: 'Target' },
+  goalStart: { group: 'goal', kind: 'number', default: 0, min: 0, max: 1000000, step: 1, label: 'Starting from', help: 'Where you already are, e.g. your follower count before the stream. Not used for viewer goals.' },
+  goalLabel: { group: 'goal', kind: 'text', default: '', label: 'Label', maxLength: 60, help: 'Leave empty for "Follower goal", "Sub goal"…' },
+
+  // ---- Layout -------------------------------------------------------------
+  direction: { group: 'layout', kind: 'select', default: 'row', options: ['row', 'column'], label: 'Arrangement', help: 'Row is a bar; column is a stacked panel for a corner.' },
+  align: { group: 'layout', kind: 'select', default: 'left', options: ['left', 'center', 'right'], label: 'Align' },
+  gap: { group: 'layout', kind: 'number', default: 10, min: 0, max: 60, step: 1, label: 'Space between items', unit: 'px' },
+
+  // ---- Size ---------------------------------------------------------------
+  scale: { group: 'size', kind: 'number', default: 100, min: 50, max: 200, step: 5, label: 'Overall size', unit: '%' },
+  fontSize: { group: 'size', kind: 'number', default: 20, min: 10, max: 64, step: 1, label: 'Text size', unit: 'px' },
+  font: { group: 'size', kind: 'text', default: 'Inter', label: 'Font' },
+  padding: { group: 'size', kind: 'number', default: 10, min: 0, max: 40, step: 1, label: 'Space inside each item', unit: 'px' },
+  iconSize: { group: 'size', kind: 'number', default: 20, min: 10, max: 48, step: 1, label: 'Icon size', unit: 'px', showIf: { icons: true } },
+
+  // ---- Look ---------------------------------------------------------------
+  bg: { group: 'look', kind: 'select', default: 'flat', options: ['flat', 'platform', 'none'], label: 'Item background', help: 'Platform tints each platform’s chip by its colour.' },
+  bgOpacity: { group: 'look', kind: 'number', default: 60, min: 0, max: 100, step: 1, label: 'Background transparency', unit: '%' },
+  bgColor: { group: 'look', kind: 'color', default: '#000000', label: 'Background colour', showIf: { bg: 'flat' } },
+  bgTint: { group: 'look', kind: 'number', default: 40, min: 0, max: 100, step: 1, label: 'Platform tint strength', unit: '%', showIf: { bg: 'platform' } },
+  textColor: { group: 'look', kind: 'color', default: '#ffffff', label: 'Text colour' },
+  accent: { group: 'look', kind: 'color', default: '#7c5cff', label: 'Highlight colour', allowPlatform: true, help: 'Numbers and the goal bar.' },
+  radius: { group: 'look', kind: 'number', default: 999, min: 0, max: 999, step: 1, label: 'Corner rounding', unit: 'px', help: '999 makes pills.' },
+  border: { group: 'look', kind: 'select', default: 'none', options: ['none', 'solid', 'glow'], label: 'Border' },
+  borderWidth: { group: 'look', kind: 'number', default: 1, min: 0, max: 8, step: 1, label: 'Border thickness', unit: 'px' },
+  shadow: { group: 'look', kind: 'select', default: 'soft', options: ['none', 'soft', 'hard', 'outline'], label: 'Text edge' },
+
+  // ---- Behaviour ----------------------------------------------------------
+  stale: { group: 'behaviour', kind: 'number', default: 90, min: 10, max: 600, step: 5, label: 'Hide a platform after no update for', unit: 'sec', help: 'So a platform that went offline drops out of the total.' },
+  preview: { group: 'behaviour', kind: 'toggle', default: false, label: 'Preview mode', help: 'Fake numbers so you can style it without being live.' },
+  theme: { group: 'behaviour', kind: 'text', default: 'default', label: 'Theme preset' },
+};
+
+export const STATS_THEMES = {
+  default: {},
+  minimal: { bg: 'none', shadow: 'outline', icons: true, gap: 18 },
+  platform: { bg: 'platform', bgOpacity: 75, accent: 'platform' },
+  panel: { direction: 'column', radius: 12, bg: 'flat', bgOpacity: 70, gap: 6 },
+  neon: { bg: 'flat', bgColor: '#0b0b16', bgOpacity: 85, border: 'glow', borderWidth: 1, accent: '#4dd2ff' },
+};
+
+OVERLAYS.stats = {
+  id: 'stats',
+  label: 'Stats bar',
+  path: '/overlays/stats/',
+  schema: STATS_SETTINGS,
+  groups: STATS_GROUPS,
+  themes: STATS_THEMES,
+  openGroups: ['show', 'goal', 'look'],
+  obsSize: { width: 1920, height: 90 },
+  fakeLabel: 'Use fake numbers in this preview',
+};

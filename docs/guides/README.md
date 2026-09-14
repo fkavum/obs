@@ -13,6 +13,7 @@ every guide feels the same.
 | [Google Cloud App Setup](how-to-add-google-cloud-app.md) | Step-by-step setup for YouTube chat API credentials |
 | [Chat overlay](chat-overlay.md) | Adding it to OBS and restyling it |
 | [Alerts](alerts.md) | Follow / sub / tip / raid pop-ups, test buttons, sound |
+| [Stats bar](stats-bar.md) | Viewers across platforms, time live, session counts, goal bar |
 
 ## Writing rules
 
