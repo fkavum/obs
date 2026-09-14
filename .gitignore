@@ -2,13 +2,16 @@
 .env
 .env.*
 !.env.example
+# The master working file holds access tokens and client secrets - never commit it.
 config/*.local.json
 config/tokens/
 *.pem
 
-# Presets the operator saved themselves are personal; the ones that ship
-# (*.initial.config) are part of the toolkit and are committed.
-config/**/*.local.config
+# Half-written files from an interrupted atomic save.
+config/**/*.tmp
+
+# Note: config/**/*.local.config IS committed on purpose. Those files hold looks,
+# commands and timer settings - no credentials - so they travel between machines.
 
 # Node
 node_modules/
