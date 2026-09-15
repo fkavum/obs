@@ -37,6 +37,8 @@
     "!attack",
     "!attack",
     "!heist 50",
-    "!heist all"
+    "!heist all",
+    "!coins",
+    "!top"
   ]
 }

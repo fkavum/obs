@@ -253,11 +253,11 @@ function finished() {
   if (settings.showLeaderboard && state.leaderboard?.length) {
     const label = document.createElement('div');
     label.className = 'sub';
-    label.textContent = 'Points leaderboard';
+    label.textContent = 'Coin leaderboard';
     const rows = document.createElement('div');
     rows.className = 'rows';
     state.leaderboard.slice(0, 5).forEach((p, i) =>
-      rows.append(row({ rank: i + 1, name: p.name, platform: p.platform, value: `${p.points}` })));
+      rows.append(row({ rank: i + 1, name: p.name, platform: p.platform, value: `${p.coins}` })));
     out.push(label, rows);
   }
   return out;
@@ -372,7 +372,7 @@ function startPreview() {
 
 function previewBoard(names, ids) {
   return names.slice(0, 5).map((name, i) => ({
-    name, platform: ids[i % Math.max(1, ids.length)] || 'twitch', points: 900 - i * 137,
+    name, platform: ids[i % Math.max(1, ids.length)] || 'twitch', coins: 900 - i * 137,
   }));
 }
 

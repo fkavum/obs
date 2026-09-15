@@ -126,11 +126,22 @@ export function createChatbot({ config, hub }) {
 
   return {
     start() {
+      // How anything else in the toolkit says something in chat, without
+      // knowing which platforms exist or whether they are signed in.
+      hub.say = async (platformId, text) => {
+        const clean = sanitizeOutgoing(text);
+        if (!clean) return false;
+        if (platformId) return sendTo(platformId, clean);
+        let sent = false;
+        for (const id of sendablePlatforms()) if (await sendTo(id, clean)) sent = true;
+        return sent;
+      };
       hub.on('event', onEvent);
       timer = setInterval(tickAuto, 15000);
       timer.unref?.();
     },
     stop() {
+      delete hub.say;
       hub.off('event', onEvent);
       clearInterval(timer);
     },

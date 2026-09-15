@@ -73,10 +73,11 @@ Warns; does not act.
 
 ---
 
-### 🟨 Chat games (Race · Raid Boss · Heist)
-Built 2026-09-15, not yet reviewed. Three games the whole chat plays together, pooled across
-all three platforms. Read-only, so they need no sign-in — the only major feature since chat
-that doesn't. Points ledger per viewer per platform in `config/games/points.local.config`.
+### 🟨 Game Center (chat games · coins · profiles)
+Built 2026-09-15, not yet reviewed. A feature module at `packages/modules/game-center/` —
+three games the whole chat plays together across all three platforms, plus a coin currency and
+a profile per viewer per platform with a deterministic crest. Read-only, so no sign-in needed.
+Phases 3–6 (pets, customisation, avatars, profile cards) are planned in `docs/plans/`.
 
 ## Tier 3 — after Tier 2 is stable
 

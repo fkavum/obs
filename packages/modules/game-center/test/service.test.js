@@ -9,9 +9,11 @@ const dir = mkdtempSync(join(tmpdir(), 'obs-games-'));
 process.env.OBS_TOOLKIT_CONFIG_DIR = dir;
 const { GameService } = await import('../service.js');
 const { createModuleStore } = await import('#bridge/store.js');
+const { ProfileStore } = await import('../profiles.js');
 process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
 
 const store = createModuleStore('game-center');
+const quietLog = { info() {}, warn() {}, debug() {}, error() {} };
 const chat = (name, platform, text) => ({
   type: 'chat', platform, ts: Date.now(), channel: 'c',
   user: { id: name, name: name.toLowerCase(), displayName: name, roles: [] },
@@ -24,10 +26,14 @@ function makeService({ keepPoints = false } = {}) {
   const config = {};
   // Coins persist to a file, so without this each test would inherit the last
   // one's leaderboard - which is exactly what caught me out writing these.
-  if (!keepPoints) rmSync(join(dir, 'game-center', 'coins.local.config'), { force: true });
-  const service = new GameService({ config, hub, store });
+  if (!keepPoints) {
+    rmSync(join(dir, 'game-center', 'coins.local.config'), { force: true });
+    rmSync(join(dir, 'game-center', 'profiles.local.config'), { force: true });
+  }
+  const profiles = new ProfileStore({ store, log: quietLog, flushMs: 5 });
+  const service = new GameService({ config, hub, profiles });
   service.start();
-  return { service, hub, config };
+  return { service, hub, config, profiles };
 }
 
 test('a game cannot start while another is running', () => {
@@ -59,7 +65,7 @@ test('chat from every platform joins the same game', () => {
 });
 
 test('finishing a game pays the players and records a win', () => {
-  const { service } = makeService();
+  const { service, profiles } = makeService();
   service.begin('race');
   service.state = {
     ...service.state,
@@ -72,12 +78,13 @@ test('finishing a game pays the players and records a win', () => {
   };
   service.settle();
 
-  assert.equal(service.balanceOf('twitch:ann'), 50);
-  assert.equal(service.balanceOf('kick:ben'), 25);
-  assert.equal(service.balanceOf('kick:cal'), 0, 'turning up still counts as played');
-  assert.equal(service.coins['twitch:ann'].wins, 1);
-  assert.equal(service.coins['kick:ben'].wins, 0, 'second place is not a win');
-  assert.equal(service.coins['kick:cal'].played, 1);
+  // Everyone starts on 100, so a win is the starting balance plus the prize.
+  assert.equal(service.balanceOf('twitch:ann'), 150);
+  assert.equal(service.balanceOf('kick:ben'), 125);
+  assert.equal(service.balanceOf('kick:cal'), 100, 'no prize, but turning up still counts as played');
+  assert.equal(profiles.get('twitch:ann').stats.wins, 1);
+  assert.equal(profiles.get('kick:ben').stats.wins, 0, 'second place is not a win');
+  assert.equal(profiles.get('kick:cal').stats.played, 1);
   assert.deepEqual(service.leaderboard().map((p) => p.name), ['Ann', 'Ben', 'Cal']);
   service.stop();
 });
@@ -91,13 +98,13 @@ test('a game is never paid out twice', () => {
   };
   service.settle();
   service.settle();
-  assert.equal(service.balanceOf('twitch:ann'), 50, 'not 100');
+  assert.equal(service.balanceOf('twitch:ann'), 150, 'paid once, not twice');
   service.stop();
 });
 
-test('a lost heist takes points away but never below zero', () => {
-  const { service } = makeService();
-  service.coins['twitch:ann'] = { name: 'Ann', platform: 'twitch', coins: 30 };
+test('a lost heist takes coins away but never below zero', () => {
+  const { service, profiles } = makeService();
+  profiles.ensure('twitch', 'Ann').coins = 30;
   service.begin('heist');
   service.state = {
     ...service.state, phase: 'finished',
@@ -108,26 +115,27 @@ test('a lost heist takes points away but never below zero', () => {
   service.stop();
 });
 
-test('points survive a restart because they live in their own file', () => {
-  const { service, config } = makeService();  // fresh ledger, then prove it reloads
+test('coins survive a restart because profiles live in their own file', () => {
+  const { service, profiles, config } = makeService();  // fresh ledger, then prove it reloads
   service.begin('race');
   service.state = {
     ...service.state, phase: 'finished',
-    results: [{ key: 'twitch:ann', name: 'Ann', platform: 'twitch', place: 1, reward: 120 }],
+    results: [{ key: 'twitch:ann', name: 'Ann', platform: 'twitch', place: 1, reward: 20 }],
   };
   service.settle();
   service.stop();
-  assert.equal(existsSync(join(dir, 'game-center', 'coins.local.config')), true, 'written to its own file');
+  profiles.stop();
+  assert.equal(existsSync(join(dir, 'game-center', 'profiles.local.config')), true, 'written to its own file');
 
-  const again = new GameService({ config, hub: Object.assign(new EventEmitter(), { platforms: new Map() }), store: createModuleStore('game-center') });
-  assert.equal(again.balanceOf('twitch:ann'), 120, 'and read back on the next start');
-  assert.equal(again.leaderboard()[0].name, 'Ann');
+  const reloaded = new ProfileStore({ store: createModuleStore('game-center'), log: quietLog });
+  assert.equal(reloaded.coinsOf('twitch:ann'), 120, 'starting 100 plus the 20 won, read back on the next start');
+  assert.equal(reloaded.leaderboard()[0].name, 'Ann');
 });
 
 test('the heist uses each viewer’s own balance', () => {
-  const { service, hub } = makeService();
-  service.coins['twitch:rich'] = { name: 'Rich', platform: 'twitch', coins: 400 };
-  service.coins['kick:poor'] = { name: 'Poor', platform: 'kick', coins: 5 };
+  const { service, hub, profiles } = makeService();
+  profiles.ensure('twitch', 'Rich').coins = 400;
+  profiles.ensure('kick', 'Poor').coins = 5;
   service.begin('heist');
 
   hub.emit('event', chat('Rich', 'twitch', '!heist all'));
@@ -156,7 +164,7 @@ test('a viewer nobody has seen before can still join a heist', () => {
 
   assert.equal(service.state.players.length, 1);
   assert.equal(service.state.players[0].wager, 50);
-  assert.ok(service.balanceOf('kick:newcomer') > 0, 'and they have an account now');
+  assert.equal(service.balanceOf('kick:newcomer'), 100, 'and they have an account now');
   service.stop();
 });
 

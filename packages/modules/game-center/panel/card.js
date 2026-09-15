@@ -68,7 +68,7 @@ async function refreshGames() {
     const title = document.createElement('p');
     title.className = 'sub';
     title.style.margin = '0 0 8px';
-    title.textContent = 'Points leaderboard';
+    title.textContent = 'Coin leaderboard';
     board.append(title);
     const row = document.createElement('div');
     row.className = 'row';
@@ -76,7 +76,7 @@ async function refreshGames() {
     status.leaderboard.slice(0, 8).forEach((p, i) => {
       const chip = document.createElement('span');
       chip.className = 'pill';
-      chip.textContent = `${i + 1}. ${p.name} — ${p.points}`;
+      chip.textContent = `${i + 1}. ${p.name} — ${p.coins}`;
       row.append(chip);
     });
     board.append(row);

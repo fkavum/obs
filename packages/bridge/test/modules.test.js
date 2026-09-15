@@ -128,3 +128,18 @@ test('the server mounts modules generically, without naming one', () => {
     : [];
   for (const id of ids) assert.ok(!server.includes(id), `server names the module "${id}"`);
 });
+
+test('a module cannot overwrite the loader’s own status fields', async () => {
+  // A module reporting `running` for its own purposes silently shadowed
+  // "is this module loaded", which made a working module look broken.
+  rmSync(scratch, { recursive: true, force: true });
+  writeModule('sneaky', {
+    index: 'export function createModule() { return { start() {}, status: () => ({ running: false, id: "hijacked", mine: 1 }) }; }',
+  });
+  const registry = await startModules({ dir: scratch, config: {}, hub: new EventEmitter() });
+  const [status] = registry.status();
+  assert.equal(status.running, true, 'the loader still says the module is loaded');
+  assert.equal(status.id, 'sneaky', 'and it still owns the id');
+  assert.deepEqual(status.state, { running: false, id: 'hijacked', mine: 1 }, 'the module’s own view is kept, nested');
+  await registry.stop();
+});

@@ -23,7 +23,7 @@ Nothing shows until you start a game, so it never sits on your scene doing nothi
 
 ### 🏁 Chat Race — `!race`
 Everyone who types `!race` gets a runner. After the joining window they sprint across the
-screen, swapping places, and the first three over the line get points. Best for a quick
+screen, swapping places, and the first three over the line get coins. Best for a quick
 burst of chat activity between matches.
 
 ### 🐉 Raid Boss — `!attack`
@@ -33,10 +33,10 @@ cooldown per person, so it's a team effort rather than whoever types fastest.
 
 The boss's health scales with how many people join, so it stays close whether five or fifty
 turn up — but it stops growing halfway through, so a late rush can't make it unwinnable.
-Everyone who joined gets points if it dies; the top damage dealer gets more.
+Everyone who joined gets coins if it dies; the top damage dealer gets more.
 
 ### 💰 Heist — `!heist <amount>`
-Chat stakes points and robs somewhere together. `!heist 50` puts in 50; `!heist all` puts in
+Chat stakes coins and robs somewhere together. `!heist 50` puts in 50; `!heist all` puts in
 everything. **The more people join, the better everyone's odds** — which is the real game,
 because chat starts talking each other into joining. Survivors double their stake; the caught
 lose theirs.
@@ -48,15 +48,16 @@ Chat joins by typing the command. **Stop the game** cancels it.
 
 Only one game runs at a time.
 
-## Points
+## Coins
 
-Everyone starts with **100 points** the first time they join anything. Points are won by
-playing and staked in the heist. They're kept per person *per platform* — the same name on
-Twitch and Kick is two different people, because it usually is.
+Everyone starts with **100 coins** the first time they join anything. Coins are won by playing
+and staked in the heist, and viewers can check theirs by typing `!coins`. They're kept per
+person *per platform* — the same name on Twitch and Kick is two different people, because it
+usually is.
 
-The leaderboard shows on the setup page and after each game. Points live in
-`config/games/points.local.config`, so they survive restarts. Delete that file to wipe the
-scores.
+`!top` shows the leaderboard, which also appears on the setup page and after each game.
+Everything is stored in `config/game-center/profiles.local.config`, so it survives restarts.
+Delete that file to wipe the scores.
 
 ## Change how it looks
 
@@ -75,7 +76,7 @@ first thing in the message.
 The race and heist need at least two. The raid boss works with one.
 
 **The heist says people can't afford it**
-The minimum stake is 10. Someone who lost everything has to earn points back in a race or
+The minimum stake is 10. Someone who lost everything has to earn coins back in a race or
 boss fight first.
 
 **Chat plays but nothing shows in OBS**

@@ -127,12 +127,15 @@ export async function startModules({ config, hub, dir } = {}) {
         }));
     },
     status() {
+      // A module's own status is nested, so it can never overwrite the
+      // loader's fields - a module reporting `running` for its own purposes
+      // silently shadowed "is this module loaded" until this was found.
       return running.map((m) => ({
         id: m.manifest.id,
         label: m.manifest.label,
         version: m.manifest.version || '0.0.0',
         running: !!m.instance,
-        ...(m.instance?.status?.() || {}),
+        state: m.instance?.status?.() || {},
       }));
     },
     async stop() {

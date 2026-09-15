@@ -1,39 +1,44 @@
 /**
  * Game Center module.
  *
- * Self-contained: the games, their overlay, the setup-page card, the coin
- * ledger and the tests all live under packages/modules/game-center/. Nothing
- * outside this folder names it, so deleting the folder removes the feature
- * cleanly — there is a test that enforces exactly that.
+ * Self-contained: games, coins, profiles, the overlay, the setup-page card and
+ * the tests all live under packages/modules/game-center/. Nothing outside this
+ * folder names it — there is a test that enforces exactly that.
  */
 import { createModuleStore } from '#bridge/store.js';
 import { GameService } from './service.js';
+import { ProfileStore } from './profiles.js';
+import { createCommands } from './commands.js';
 
 export function createModule({ config, hub, log }) {
   const store = createModuleStore('game-center');
-  const games = new GameService({ config, hub, store });
-  let broadcast = null;
+  const profiles = new ProfileStore({ store, log });
+  const games = new GameService({ config, hub, profiles });
+  const commands = createCommands({ profiles, games, hub, log });
+
+  const onEvent = (event) => commands.handle(event);
 
   return {
     async start() {
       games.start();
-      // The server hands modules a way to push to connected overlays.
-      broadcast = hub.broadcast?.bind(hub) || null;
-      games.on('change', (state) => broadcast?.({ type: 'game', state }));
-      log.info('ready');
+      games.on('change', (state) => hub.broadcast?.({ type: 'game', state }));
+      hub.on('event', onEvent);
+      log.info(`ready — ${Object.keys(profiles.all()).length} profile(s)`);
     },
 
     async stop() {
+      hub.off('event', onEvent);
       games.stop();
+      // Flush immediately: nothing earned in the last few seconds should be lost.
+      profiles.stop();
     },
 
-    /** Sent to an overlay the moment it connects, so a game already in progress shows. */
+    /** Sent to an overlay the moment it connects, so a game in progress shows. */
     hello() {
       return games.state ? [{ type: 'game', state: games.state }] : [];
     },
 
-    /** Everything under /api/m/game-center/. */
-    async routes({ path, method, req, res, sendJSON, readBody }) {
+    async routes({ path, method, req, res, sendJSON, readBody, url }) {
       if (path === '/games' && method === 'GET') {
         sendJSON(res, 200, games.status());
         return true;
@@ -51,11 +56,46 @@ export function createModule({ config, hub, log }) {
         }
         return true;
       }
+
+      if (path === '/profiles' && method === 'GET') {
+        const limit = Math.min(100, Number(url.searchParams.get('limit')) || 25);
+        sendJSON(res, 200, {
+          total: Object.keys(profiles.all()).length,
+          leaderboard: profiles.leaderboard(limit),
+        });
+        return true;
+      }
+
+      const one = /^\/profiles\/([a-z0-9_-]+):(.+)$/i.exec(path);
+      if (one && method === 'GET') {
+        const profile = profiles.byName(one[1], decodeURIComponent(one[2]));
+        if (!profile) {
+          sendJSON(res, 404, { error: 'no profile for that viewer yet' });
+          return true;
+        }
+        sendJSON(res, 200, { profile });
+        return true;
+      }
+
+      // Adjusting someone's coins by hand, from the setup page.
+      if (path === '/coins' && method === 'POST') {
+        const body = await readBody(req);
+        const profile = profiles.byName(body.platform, body.name);
+        if (!profile) {
+          sendJSON(res, 404, { error: 'no profile for that viewer yet' });
+          return true;
+        }
+        const key = `${profile.platform}:${profile.name.toLowerCase()}`;
+        profiles.award(key, Number(body.delta) || 0);
+        sendJSON(res, 200, { ok: true, coins: profile.coins });
+        return true;
+      }
+
       return false;
     },
 
     status() {
-      return { running: games.status().running };
+      return { running: games.status().running, profiles: Object.keys(profiles.all()).length };
     },
   };
 }

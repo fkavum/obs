@@ -415,6 +415,8 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const enabled = hub.status().filter((r) => r.enabled && r.id !== 'fake').map((r) => r.id);
     const platform = hub.platforms.has(body.platform) ? body.platform : enabled[0] || 'fake';
     const event = makePreviewEvent([platform], type);
+    // An exact line, so a feature that reacts to chat can be driven from a test.
+    if (typeof body.text === 'string' && body.text && event.data) event.data.text = body.text;
     hub.inject(event);
     return sendJSON(res, 200, { ok: true, event });
   }

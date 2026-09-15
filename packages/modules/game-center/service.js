@@ -14,20 +14,16 @@ import { GAMES, makeRandom, matchesCommand, playerKey } from './shared/games/ind
 
 const log = createLogger('games');
 const TICK_MS = 250;
-// Everyone starts with something, or the heist is unplayable on day one: you
-// need coins to stake, and coins only come from playing.
-const STARTING_COINS = 100;
 
 export class GameService extends EventEmitter {
-  constructor({ config, hub, store }) {
+  constructor({ config, hub, profiles }) {
     super();
     this.config = config;
     this.hub = hub;
-    this.store = store;
+    this.profiles = profiles;
     this.state = null;      // the running game, or null
     this.random = makeRandom();
     this.timer = null;
-    this.coins = this.store.load('coins', {}) || {};
     this.onEvent = (event) => this.#handleChat(event);
   }
 
@@ -45,33 +41,12 @@ export class GameService extends EventEmitter {
   // ---------------------------------------------------------------- coins
 
   balanceOf(key) {
-    return this.coins[key]?.coins ?? STARTING_COINS;
-  }
-
-  /** First time we see someone, open an account for them. */
-  ensurePlayer(key, name, platform) {
-    if (!this.coins[key]) {
-      this.coins[key] = { name, platform, coins: STARTING_COINS, wins: 0, played: 0 };
-    }
-    return this.coins[key];
-  }
-
-  /** Records the player even when they earned nothing - turning up still counts. */
-  #award(key, name, platform, amount) {
-    const entry = this.coins[key] || { name, platform, coins: 0, wins: 0, played: 0 };
-    entry.name = name;
-    entry.platform = platform;
-    entry.coins = Math.max(0, entry.coins + (amount || 0));
-    this.coins[key] = entry;
-    return entry;
+    return this.profiles.coinsOf(key);
   }
 
   /** Top of the leaderboard, for the overlay and the setup page. */
   leaderboard(limit = 10) {
-    return Object.entries(this.coins)
-      .map(([key, v]) => ({ key, ...v }))
-      .sort((a, b) => b.coins - a.coins)
-      .slice(0, limit);
+    return this.profiles.leaderboard(limit);
   }
 
   // ---------------------------------------------------------------- games
@@ -112,7 +87,8 @@ export class GameService extends EventEmitter {
     if (!matchesCommand(event.data?.text, game.joinCommand)) return;
 
     const before = this.state;
-    this.ensurePlayer(playerKey(event), event.user?.displayName || event.user?.name || 'someone', event.platform);
+    // Seeing someone play is enough to open an account for them.
+    this.profiles.ensure(event.platform, event.user?.displayName || event.user?.name || 'someone');
     // Each game takes what it needs: the boss needs randomness per hit, the
     // heist needs to know what the player can afford.
     if (game.id === 'boss') this.state = game.join(this.state, event, this.random, Date.now());
@@ -146,12 +122,14 @@ export class GameService extends EventEmitter {
   settle() {
     if (this.state.settled) return;
     for (const result of this.state.results || []) {
-      const entry = this.#award(result.key, result.name, result.platform, result.reward || 0);
-      entry.played = (entry.played || 0) + 1;
-      if (result.place === 1 || result.survived === true) entry.wins = (entry.wins || 0) + 1;
+      // Turning up counts even when nothing was won.
+      const profile = this.profiles.ensure(result.platform, result.name);
+      profile.coins = Math.max(0, profile.coins + (result.reward || 0));
+      profile.stats.played = (profile.stats.played || 0) + 1;
+      if (result.place === 1 || result.survived === true) profile.stats.wins = (profile.stats.wins || 0) + 1;
     }
+    this.profiles.touch();
     this.state.settled = true;
-    this.store.save('coins', this.coins);
     log.info(this.state.message);
   }
 
