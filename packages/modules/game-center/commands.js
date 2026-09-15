@@ -14,7 +14,7 @@ import { COAT_NAMES } from './shared/profiles.js';
 
 const COOLDOWN_MS = 30000;
 
-export function createCommands({ profiles, games, pets, wardrobe, avatars, hub, log }) {
+export function createCommands({ profiles, games, pets, wardrobe, avatars, wander, hub, log }) {
   const lastUse = new Map();
 
   function onCooldown(key, command, now) {
@@ -99,12 +99,14 @@ export function createCommands({ profiles, games, pets, wardrobe, avatars, hub, 
 
         if (command === '!name') {
           const result = pets.rename(profile, args);
+          if (result.ok) wander?.refresh(profile);
           reply(event, result.ok ? pets.card(profile) : { kind: 'note', text: result.message }, result.message);
           return true;
         }
 
         if (command === '!switch') {
           const result = pets.switchTo(profile, args.split(/\s+/)[0]?.toLowerCase());
+          if (result.ok) wander?.refresh(profile);
           reply(event, result.ok ? pets.card(profile) : { kind: 'note', text: result.message }, result.message);
           return true;
         }
@@ -170,6 +172,10 @@ export function createCommands({ profiles, games, pets, wardrobe, avatars, hub, 
           : command === '!off' ? wardrobe.takeOff(profile, args)
           : command === '!coat' ? wardrobe.coat(profile, args)
           : wardrobe.eyes(profile, args);
+
+        // The pet may be on screen right now; push the new look to it at once
+        // rather than making them type again to see their own hat.
+        if (result.ok) wander?.refresh(profile);
 
         const hint = !args && command === '!coat' ? ` — coats: ${COAT_NAMES.join(', ')}`
           : !args && command === '!eyes' ? ` — eyes: ${EYE_NAMES.join(', ')}` : '';

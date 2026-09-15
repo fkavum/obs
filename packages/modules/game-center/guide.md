@@ -196,6 +196,31 @@ if you'd rather have a normal card.
 **http://localhost:8778/settings/?overlay=game-center.profile** — position, size, colours, how
 cards appear, how long they stay, and all of the above.
 
+## Pets wandering on your stream
+
+This is the one most people will actually see. Add a browser source pointing at
+**http://localhost:8778/overlays/game-center/wander/** at 1920 × 1080.
+
+**When somebody with a pet types in chat, their pet walks onto the bottom of your screen**,
+wanders about for a while, and then wanders off. That's the whole thing. It's also how the shop
+pays off: a hat sitting on a card nobody was looking at is a hat nobody buys.
+
+- Only people who **have** a pet appear. Lurkers and people who've never played cost nothing and
+  create nothing.
+- Talking again resets their stay, so regulars stay out and quiet people drift off.
+- **Ten at once by default.** When it's full, the pet whose owner has been quiet longest wanders
+  off to make room.
+- Change a hat with `!wear` and the pet on screen changes **immediately** — no need to type again.
+- Bigger pets are further along: a fully grown one is about half again the size of a new one.
+
+**Keeping it out of the way.** `Keep clear on the left` and `Keep clear on the right` stop pets
+walking over your webcam or your alerts — they turn around at those lines instead. `Distance from
+that edge` lifts the whole strip up off the bottom, and `Depth of the strip` is how much they
+spread up and down, so they don't queue in one straight line.
+
+**http://localhost:8778/settings/?overlay=game-center.wander** — position, size, speed, how long
+they stay, how many at once, and whether names show.
+
 ## Change how it looks
 
 **http://localhost:8778/settings/?overlay=game-center.games** — position, size, colours, how many players

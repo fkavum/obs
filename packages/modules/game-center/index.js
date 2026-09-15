@@ -12,6 +12,7 @@ import { createCommands } from './commands.js';
 import { createWardrobe } from './wardrobe.js';
 import { createPets } from './pets.js';
 import { createAvatars } from './avatars.js';
+import { createWander } from './wander.js';
 
 export function createModule({ config, hub, log }) {
   const store = createModuleStore('game-center');
@@ -20,7 +21,8 @@ export function createModule({ config, hub, log }) {
   const pets = createPets({ profiles, log });
   const wardrobe = createWardrobe({ profiles, pets, log });
   const avatars = createAvatars({ profiles, pets, log });
-  const commands = createCommands({ profiles, games, pets, wardrobe, avatars, hub, log });
+  const wander = createWander({ profiles, pets, hub, log });
+  const commands = createCommands({ profiles, games, pets, wardrobe, avatars, wander, hub, log });
 
   // Mythic pets are milestones, not drops: a game result advances the counter.
   games.on('settled', (results) => {
@@ -35,7 +37,12 @@ export function createModule({ config, hub, log }) {
     }
   });
 
-  const onEvent = (event) => commands.handle(event);
+  const onEvent = (event) => {
+    commands.handle(event);
+    // Chatting brings your pet on screen. Runs after the commands so a !wear
+    // has already been applied by the time the pet is announced.
+    wander.handle(event);
+  };
 
   return {
     async start() {

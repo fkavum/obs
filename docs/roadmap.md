@@ -86,12 +86,14 @@ needed. All six phases of `docs/plans/game-center.md` are complete:
 | 4 | 31 accessories, 12 coats, shiny coats, `!shop`, shop board overlay | 🟨 built |
 | 5 | Avatars — crests from shape, pattern, emblem and colour | 🟨 built |
 | 6 | Pet and profile cards on stream, with the evolution moment | 🟨 built |
+| — | Wandering pets: a chatter's pet walks along the bottom of the stream | 🟨 built |
 
-Three overlays: `game-center.games`, `game-center.shop`, `game-center.profile`. **Quiet mode is
+Four overlays: `game-center.games`, `game-center.shop`, `game-center.profile` and
+`game-center.wander`. **Quiet mode is
 on by default** on the card overlay — only level-ups, evolutions, hatchings and earned items
 reach the stream until the streamer turns the noise up.
 
-Everything is verified by 309 tests and by driving real chat commands through the bridge; none
+Everything is verified by 329 tests and by driving real chat commands through the bridge; none
 of it has run against a live audience yet.
 
 ## Tier 3 — after Tier 2 is stable
