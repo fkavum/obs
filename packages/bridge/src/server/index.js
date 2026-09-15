@@ -426,7 +426,14 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const platform = hub.platforms.has(body.platform) ? body.platform : enabled[0] || 'fake';
     const event = makePreviewEvent([platform], type);
     // An exact line, so a feature that reacts to chat can be driven from a test.
-    if (typeof body.text === 'string' && body.text && event.data) event.data.text = body.text;
+    if (typeof body.text === 'string' && body.text && event.data) {
+      event.data.text = body.text;
+      // Fragments are what a chat overlay actually draws — they carry emotes,
+      // so they win over `text` wherever both exist. Leaving the generated
+      // ones in place made a typed message appear on stream as whatever random
+      // line the preview feed happened to invent.
+      event.data.fragments = [{ type: 'text', text: body.text }];
+    }
     // ...and optionally as a consistent person, so a sequence of commands can
     // come from the same viewer rather than a different random one each time.
     if (typeof body.user === 'string' && body.user && event.user) {
