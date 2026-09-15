@@ -7,10 +7,12 @@
  * channel where the bot can't talk.
  */
 import { formatCoins } from './shared/profiles.js';
+import { SPECIES, STARTER_SPECIES } from './shared/pets/species.js';
+import { FOODS } from './shared/pets/model.js';
 
 const COOLDOWN_MS = 30000;
 
-export function createCommands({ profiles, games, hub, log }) {
+export function createCommands({ profiles, games, pets, hub, log }) {
   const lastUse = new Map();
 
   function onCooldown(key, command, now) {
@@ -63,8 +65,74 @@ export function createCommands({ profiles, games, hub, log }) {
         return true;
       }
 
+      // ---- pets ----------------------------------------------------------
+      if (pets && ['!adopt', '!pet', '!feed', '!name', '!pets', '!switch', '!egg'].includes(command)) {
+        const profile = profiles.ensure(event.platform, event.user?.displayName || event.user?.name);
+        const key = `${event.platform}:${(event.user?.name || '').toLowerCase()}`;
+
+        if (command === '!adopt') {
+          const result = pets.adopt(profile, args.split(/\s+/)[0]?.toLowerCase());
+          reply(event, result.ok ? pets.card(profile) : { kind: 'note', text: result.message }, result.message);
+          return true;
+        }
+
+        if (command === '!feed') {
+          const result = pets.feed(profile, args.split(/\s+/)[0]?.toLowerCase());
+          if (!result.ok) {
+            reply(event, { kind: 'note', text: result.message }, result.message);
+            return true;
+          }
+          // A level-up or evolution always shows, even in quiet mode.
+          const card = { ...pets.card(profile), event: result.evolvedTo ? 'evolved' : result.levelledTo ? 'levelled' : 'fed',
+            gained: result.xp, reasons: result.reasons, forage: result.forage, note: result.message };
+          reply(event, card,
+            `${result.message} +${result.xp} XP, found ${result.forage} coins. ${result.mealsLeft} meal(s) left today.`);
+          return true;
+        }
+
+        if (command === '!name') {
+          const result = pets.rename(profile, args);
+          reply(event, result.ok ? pets.card(profile) : { kind: 'note', text: result.message }, result.message);
+          return true;
+        }
+
+        if (command === '!switch') {
+          const result = pets.switchTo(profile, args.split(/\s+/)[0]?.toLowerCase());
+          reply(event, result.ok ? pets.card(profile) : { kind: 'note', text: result.message }, result.message);
+          return true;
+        }
+
+        if (command === '!pets') {
+          const list = profile.pets.map((p) => `${p.name} (${SPECIES[p.species]?.label} lv${p.level})`).join(' · ');
+          reply(event, { kind: 'note', text: list || 'No pets yet' },
+            list ? `Your pets: ${list}` : `No pets yet — try !adopt ${STARTER_SPECIES[0]}`);
+          return true;
+        }
+
+        if (command === '!egg') {
+          const progress = pets.mythicProgress(profile);
+          const text = progress.map((m) => `${m.label} ${m.have}/${m.need}`).join(' · ');
+          reply(event, { kind: 'note', text }, `Mythic progress: ${text}`);
+          return true;
+        }
+
+        // !pet, with an optional @someone
+        const target = args.replace(/^@/, '').trim();
+        const shown = target ? profiles.byName(event.platform, target) : profile;
+        if (!shown) {
+          reply(event, { kind: 'note', text: `No profile for ${target} yet` }, `No profile for ${target} yet.`);
+          return true;
+        }
+        if (onCooldown(key, command, now)) return true;
+        const card = pets.card(shown);
+        reply(event, card || { kind: 'note', text: `${shown.name} has no pet yet` },
+          card ? `${card.pet.name} the ${card.stageName} — level ${card.pet.level}` : `${shown.name} has no pet yet.`);
+        return true;
+      }
+
       if (command === '!gchelp') {
-        reply(event, { kind: 'help' }, 'Games: !race !attack !heist · Coins: !coins !top');
+        reply(event, { kind: 'help' },
+          'Games: !race !attack !heist · Coins: !coins !top · Pets: !adopt !pet !feed !name');
         return true;
       }
 

@@ -417,6 +417,13 @@ async function api(req, res, url, { hub, config, onQuit }) {
     const event = makePreviewEvent([platform], type);
     // An exact line, so a feature that reacts to chat can be driven from a test.
     if (typeof body.text === 'string' && body.text && event.data) event.data.text = body.text;
+    // ...and optionally as a consistent person, so a sequence of commands can
+    // come from the same viewer rather than a different random one each time.
+    if (typeof body.user === 'string' && body.user && event.user) {
+      event.user.name = body.user.toLowerCase();
+      event.user.displayName = body.user;
+      event.user.id = body.user.toLowerCase();
+    }
     hub.inject(event);
     return sendJSON(res, 200, { ok: true, event });
   }

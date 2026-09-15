@@ -1,7 +1,7 @@
 # Game Center — implementation plan
 
-*Written 2026-09-15. **Phases 0, 1 and 2 are built** — the module contract exists and the
-chat games live inside it, and coins and profiles exist. Phases 3–6 are still plan only.*
+*Written 2026-09-15. **Phases 0–3 are built** — the module contract exists and the
+chat games live inside it, and coins, profiles and pets exist. Phases 4–6 are still plan only.*
 
 A shared world for chat across Twitch, Kick and YouTube: coins earned by playing chat games,
 spent on a profile with an avatar and a pet you feed, level up, evolve and dress up.
@@ -166,7 +166,7 @@ Each phase is shippable on its own and verifiable without a live stream.
 | **0** | Module system | ✅ The contract above | — |
 | **1** | Move games into a module | ✅ Identical behaviour, zero shared-file edits | 0 |
 | **2** | Coins and profiles | ✅ Currency, profile store with crests, `!coins` / `!top` | 1 |
-| **3** | Pets | Species, SVG renderer, adoption, feeding, XP, levels, evolution | 2 |
+| **3** | Pets | ✅ Five species, SVG renderer, adoption, feeding, XP, levels, evolution | 2 |
 | **4** | Customisation and shop | Colours, accessories, slots, buying, equipping | 3 |
 | **5** | Avatars | The human-side profile picture | 2 |
 | **6** | Profile card overlay | On-stream card when someone shows their pet; panel browser | 3–5 |

@@ -9,12 +9,22 @@ import { createModuleStore } from '#bridge/store.js';
 import { GameService } from './service.js';
 import { ProfileStore } from './profiles.js';
 import { createCommands } from './commands.js';
+import { createPets } from './pets.js';
 
 export function createModule({ config, hub, log }) {
   const store = createModuleStore('game-center');
   const profiles = new ProfileStore({ store, log });
   const games = new GameService({ config, hub, profiles });
-  const commands = createCommands({ profiles, games, hub, log });
+  const pets = createPets({ profiles, log });
+  const commands = createCommands({ profiles, games, pets, hub, log });
+
+  // Mythic pets are milestones, not drops: a game result advances the counter.
+  games.on('settled', (results) => {
+    for (const r of results) {
+      const profile = profiles.byName(r.platform, r.name);
+      if (profile) pets.recordGameResult(profile, r);
+    }
+  });
 
   const onEvent = (event) => commands.handle(event);
 
@@ -54,6 +64,17 @@ export function createModule({ config, hub, log }) {
         } catch (err) {
           sendJSON(res, 400, { error: err.message });
         }
+        return true;
+      }
+
+      if (path === '/species' && method === 'GET') {
+        const { SPECIES_LIST } = await import('./shared/pets/species.js');
+        sendJSON(res, 200, {
+          species: SPECIES_LIST.map((s) => ({
+            id: s.id, label: s.label, tier: s.tier, personality: s.personality,
+            stageNames: s.stageNames, favourite: s.favourite, earnedBy: s.earnedBy || null,
+          })),
+        });
         return true;
       }
 

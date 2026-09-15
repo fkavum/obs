@@ -59,6 +59,50 @@ usually is.
 Everything is stored in `config/game-center/profiles.local.config`, so it survives restarts.
 Delete that file to wipe the scores.
 
+## Pets
+
+Viewers adopt a pet, feed it, and watch it grow up.
+
+```
+!adopt dog        your first pet is free — dog, cat, duck or frog
+!name Biscuit     name it (first rename free, 100 coins after)
+!feed             feed it — !feed fish for something better
+!pet              show your pet on stream
+!pet @someone     show theirs
+!pets  !switch    when you have more than one
+!egg              progress toward a mythic
+```
+
+**Four starters, plus one that must be earned.** Dog, Cat, Duck and Frog are free to adopt
+(a second pet of any kind costs 600 coins). The **Dragon** can't be bought at any price —
+you earn it by being top damage in 5 raid bosses, and `!egg` shows how far along you are.
+
+**Food**
+
+| | Cost | XP |
+|---|---|---|
+| Kibble | 10 | 10 |
+| Apple | 25 | 30 |
+| Fish | 50 | 70 |
+| Cake | 150 | 250 |
+| Golden Carrot | 500 | 1,000 |
+
+Each species has a favourite worth 50% more — Dog and Cat love fish, Duck loves apple, Frog
+loves kibble, Dragon loves cake.
+
+**Three meals per stream, and that's the point.** Coins decide how *good* each meal is; how
+*many* you get is decided by turning up. Nobody can buy their way to a maxed pet in one
+evening. The first feed each stream is worth double, and a fed pet forages 10–30 coins back —
+so someone who only turns up to feed still sees a number go up.
+
+**Nothing bad happens if you disappear.** A pet that hasn't been fed for a few streams looks
+a bit droopy and the card says it missed you — then the next feed is worth **triple**. There's
+no decay, no hunger meter draining, and nothing to lose by taking a week off.
+
+**Growing up.** Four stages: a pup with an oversized head becomes a Good Dog at level 10, a
+Big Dog at 25, and the Goodest Boy at 50 — which should be rare on any channel. Each stage
+changes how the pet is drawn, and an evolution always shows on stream even in quiet mode.
+
 ## Change how it looks
 
 **http://localhost:8778/settings/?overlay=game-center.games** — position, size, colours, how many players

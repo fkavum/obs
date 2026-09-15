@@ -130,6 +130,11 @@ export class GameService extends EventEmitter {
     }
     this.profiles.touch();
     this.state.settled = true;
+    // Let anything else react (mythic milestones, for one) without this
+    // service needing to know what pets are.
+    this.emit('settled', (this.state.results || []).map((r) => ({
+      ...r, game: this.state.id, topDamage: this.state.id === 'boss' && r.place === 1 && this.state.won,
+    })));
     log.info(this.state.message);
   }
 
