@@ -17,6 +17,7 @@ every guide feels the same.
 | [Stream health](stream-health.md) | Dropped frames and encoder warnings, for your eyes only |
 | [Timer](timer.md) | Starting-soon countdown, be-right-back clock, count-up |
 | [Chat commands](chat-commands.md) | !commands the bot answers, plus auto-messages |
+| [Chat games](chat-games.md) | Race, Raid Boss and Heist — all three chats playing together |
 
 ## Writing rules
 

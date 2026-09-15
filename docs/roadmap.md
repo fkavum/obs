@@ -73,6 +73,11 @@ Warns; does not act.
 
 ---
 
+### 🟨 Chat games (Race · Raid Boss · Heist)
+Built 2026-09-15, not yet reviewed. Three games the whole chat plays together, pooled across
+all three platforms. Read-only, so they need no sign-in — the only major feature since chat
+that doesn't. Points ledger per viewer per platform in `config/games/points.local.config`.
+
 ## Tier 3 — after Tier 2 is stable
 
 - 🟨 **Chat commands & auto-messages** — built 2026-09-14. Matching, permissions, cooldowns and variables are verified; *sending* needs a signed-in platform and has not run live. Twitch now requests the chat:edit scope, so an existing Twitch login must sign in again to let the bot talk.

@@ -128,6 +128,33 @@
   <section class="card">
     <div class="row between">
       <div>
+        <h2>Chat games</h2>
+        <p class="sub">Everyone from all three chats plays together — no account needed, since games only read chat.</p>
+      </div>
+      <a class="btn" href="/settings/?overlay=games">Change how it looks</a>
+    </div>
+
+    <div class="row" id="gameButtons" style="margin:16px 0;gap:8px;flex-wrap:wrap"></div>
+    <div class="row between">
+      <span class="pill" id="gameStatus"><span class="dot"></span>no game running</span>
+      <button class="ghost danger" id="gameCancel" hidden>Stop the game</button>
+    </div>
+
+    <div id="gameBoard" style="margin-top:16px"></div>
+
+    <div class="urlbar" style="margin-top:16px">
+      <input id="gamesUrl" class="grow" type="text" readonly>
+      <button class="primary" id="copyGames">Copy</button>
+    </div>
+    <div class="note">
+      Add as a Browser Source at <code class="inline">1920</code> × <code class="inline">1080</code>. Start a game here and
+      chat joins by typing the command — points are kept per viewer, per platform.
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row between">
+      <div>
         <h2>Chat commands</h2>
         <p class="sub">Answer <code class="inline">!socials</code>, <code class="inline">!discord</code> and the rest, on every platform at once. Plus messages that post themselves on a loop.</p>
       </div>

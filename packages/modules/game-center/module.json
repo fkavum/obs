@@ -1,0 +1,12 @@
+{
+  "id": "game-center",
+  "label": "Game Center",
+  "version": "0.1.0",
+  "order": 20,
+  "description": "Chat games, coins, profiles and pets — shared across every connected platform.",
+  "overlays": [
+    { "id": "profile", "label": "Pet & profile cards", "obsSize": { "width": 1920, "height": 1080 } }
+  ],
+  "panel": { "card": "card.html" },
+  "data": { "profiles": "profiles" }
+}

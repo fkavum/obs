@@ -40,6 +40,8 @@ const MESSAGES = [
   'KEKW',
   'skill issue honestly',
   'how do i get that border on my chat',
+  // Game commands, so the demo chat can actually play a game while you test.
+  '!race', '!race', '!attack', '!attack', '!attack', '!heist 50', '!heist all',
 ];
 
 const ROLE_SETS = [[], [], [], ['subscriber'], ['subscriber'], ['moderator'], ['moderator', 'subscriber'], ['vip']];

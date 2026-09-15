@@ -77,7 +77,7 @@ hub.health = health;
 
 const chatbot = createChatbot({ config, hub });
 hub.chatbot = chatbot;
-const server = startServer({ hub, config, onQuit: () => shutdown('Stopped from the setup page.') });
+const server = await startServer({ hub, config, onQuit: () => shutdown('Stopped from the setup page.') });
 await hub.startAll();
 await health.start();
 chatbot.start();

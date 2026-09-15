@@ -12,6 +12,8 @@ import { WSServer, createLogger } from '#core/index.js';
 import { makePreviewEvent } from '#core/preview-feed.js';
 import { parseClock } from '#core/timer-model.js';
 import { TimerService } from '../timer.js';
+import { GameService } from '../games.js';
+import { startModules } from '../modules/loader.js';
 import { ROOT, saveConfig, setPlatformConfig, resetToSeed } from '../config.js';
 import { loadPresets, listPresets, putPreset, deletePreset } from '../presets.js';
 import { loadData, saveData } from '../store.js';
@@ -24,13 +26,22 @@ import {
 const log = createLogger('server');
 
 const OVERLAYS_DIR = join(ROOT, 'packages', 'overlays');
+const MODULES_DIR = join(ROOT, 'packages', 'modules');
 const PANEL_DIR = join(ROOT, 'packages', 'panel');
 const CORE_DIR = join(ROOT, 'packages', 'core', 'src');
 const ASSETS_DIR = join(ROOT, 'assets');
 
-export function startServer({ hub, config, onQuit = null }) {
+export async function startServer({ hub, config, onQuit = null }) {
+  // Feature modules register themselves; nothing below names one.
+  const modules = await startModules({ config, hub });
+  hub.modules = modules;
+
   // Toolkit state rather than a platform event, so it travels as its own
   // top-level message type instead of being squeezed into the event schema.
+  const games = new GameService({ config, hub });
+  hub.games = games;
+  games.start();
+
   const timer = new TimerService(loadData(config, 'timer', {}) || {});
   // Remember how the timer is set up, so a restart comes back the same.
   timer.on('change', (state) => {
@@ -61,6 +72,7 @@ export function startServer({ hub, config, onQuit = null }) {
     conn.send(JSON.stringify({ type: 'hello', platforms: hub.manifests(), ts: Date.now() }));
     // A freshly opened timer source needs the current state immediately.
     conn.send(JSON.stringify({ type: 'timer', state: timer.get() }));
+    if (games.state) conn.send(JSON.stringify({ type: 'game', state: games.state }));
     if (backlogSize) {
       for (const event of hub.backlog(backlogSize, filter.length ? filter : null)) {
         conn.send(JSON.stringify({ type: 'event', event, replay: true }));
@@ -79,6 +91,8 @@ export function startServer({ hub, config, onQuit = null }) {
   };
   const onTimer = (state) => ws.broadcast({ type: 'timer', state });
   timer.on('change', onTimer);
+  const onGame = (state) => ws.broadcast({ type: 'game', state });
+  games.on('change', onGame);
   hub.on('event', onEvent);
   hub.on('status', () => ws.broadcast({ type: 'status', platforms: hub.status(), ts: Date.now() }));
 
@@ -105,6 +119,9 @@ export function startServer({ hub, config, onQuit = null }) {
     url: `http://localhost:${httpPort}`,
     altUrl: `http://${host}:${httpPort}`,
     close() {
+      modules.stop();
+      games.off('change', onGame);
+      games.stop();
       timer.off('change', onTimer);
       hub.off('event', onEvent);
       ws.close();
@@ -117,6 +134,32 @@ export function startServer({ hub, config, onQuit = null }) {
 async function handle(req, res, ctx) {
   const url = new URL(req.url, 'http://127.0.0.1');
   const path = url.pathname;
+
+  // ---- Module-owned API ----------------------------------------------------
+  // /api/m/<module>/<rest> is handed straight to that module. This one branch
+  // replaces the per-feature route branches that used to accumulate here.
+  const moduleApi = /^\/api\/m\/([a-z0-9-]+)(\/.*)?$/i.exec(path);
+  if (moduleApi) {
+    const entry = ctx.hub.modules?.get(moduleApi[1]);
+    if (!entry?.instance?.routes) return sendJSON(res, 404, { error: `no such module: ${moduleApi[1]}` });
+    const handled = await entry.instance.routes({
+      path: moduleApi[2] || '/', method: req.method, url, req, res, sendJSON, readBody,
+    });
+    if (handled !== false) return;
+    return sendJSON(res, 404, { error: `no such endpoint: ${path}` });
+  }
+
+  // ---- Module-owned static -------------------------------------------------
+  const moduleOverlay = /^\/overlays\/([a-z0-9-]+)\/(.*)$/i.exec(path);
+  if (moduleOverlay && ctx.hub.modules?.get(moduleOverlay[1])) {
+    const entry = ctx.hub.modules.get(moduleOverlay[1]);
+    if (serveStatic(res, join(entry.dir, 'overlays'), `/${moduleOverlay[2]}`)) return;
+  }
+  const modulePanel = /^\/panel\/([a-z0-9-]+)\/(.*)$/i.exec(path);
+  if (modulePanel && ctx.hub.modules?.get(modulePanel[1])) {
+    const entry = ctx.hub.modules.get(modulePanel[1]);
+    if (serveStatic(res, join(entry.dir, 'panel'), `/${modulePanel[2]}`)) return;
+  }
 
   // ---- API ---------------------------------------------------------------
   if (path.startsWith('/api/')) return api(req, res, url, ctx);
@@ -155,6 +198,14 @@ async function handle(req, res, ctx) {
 
 async function api(req, res, url, { hub, config, onQuit }) {
   const path = url.pathname;
+
+  if (path === '/api/modules' && req.method === 'GET') {
+    return sendJSON(res, 200, {
+      modules: hub.modules?.status() || [],
+      overlays: hub.modules?.overlays() || [],
+      cards: hub.modules?.panelCards() || [],
+    });
+  }
 
   if (path === '/api/platforms' && req.method === 'GET') {
     return sendJSON(res, 200, { platforms: hub.manifests() });
@@ -318,6 +369,21 @@ async function api(req, res, url, { hub, config, onQuit }) {
   if (path === '/api/chatbot/test' && req.method === 'POST') {
     const body = await readBody(req);
     return sendJSON(res, 200, hub.chatbot.test(String(body.trigger || '')));
+  }
+
+  if (path === '/api/games' && req.method === 'GET') {
+    return sendJSON(res, 200, hub.games.status());
+  }
+
+  if (path === '/api/games' && req.method === 'POST') {
+    const body = await readBody(req);
+    try {
+      if (body.action === 'cancel') return sendJSON(res, 200, { ok: true, state: hub.games.cancel() });
+      hub.games.begin(body.game, body);
+      return sendJSON(res, 200, { ok: true, ...hub.games.status() });
+    } catch (err) {
+      return sendJSON(res, 400, { error: err.message });
+    }
   }
 
   if (path === '/api/timer' && req.method === 'GET') {

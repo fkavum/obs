@@ -34,6 +34,75 @@ document.getElementById('copyHealth').addEventListener('click', () => {
   copy(document.getElementById('healthUrl').value, 'Health link copied — add it as a Custom Browser Dock in OBS');
 });
 
+// ---- Chat games ----
+document.getElementById('gamesUrl').value = `${location.origin}/overlays/games/`;
+document.getElementById('copyGames').addEventListener('click', () => {
+  copy(document.getElementById('gamesUrl').value, 'Games link copied — add it to OBS as a full-screen Browser Source');
+});
+
+async function refreshGames() {
+  let status;
+  try {
+    status = await (await fetch('/api/games')).json();
+  } catch {
+    return;
+  }
+
+  const buttons = document.getElementById('gameButtons');
+  if (!buttons.dataset.built) {
+    for (const game of status.games) {
+      const btn = document.createElement('button');
+      btn.className = 'primary';
+      btn.textContent = `${game.emoji} Start ${game.label}`;
+      btn.title = `Chat joins by typing ${game.joinCommand}`;
+      btn.addEventListener('click', async () => {
+        const res = await post('/api/games', { game: game.id });
+        if (res.error) toast(res.error);
+        else toast(`${game.label} started — chat types ${game.joinCommand}`);
+        refreshGames();
+      });
+      buttons.append(btn);
+    }
+    buttons.dataset.built = '1';
+  }
+
+  const pill = document.getElementById('gameStatus');
+  const running = status.running;
+  pill.innerHTML = `<span class="dot ${running ? 'ok' : ''}"></span>${escape(
+    running ? `${status.state.message || 'in progress'} · ${status.state.players?.length || 0} playing` : 'no game running',
+  )}`;
+  document.getElementById('gameCancel').hidden = !running;
+  for (const btn of buttons.children) btn.disabled = running;
+
+  const board = document.getElementById('gameBoard');
+  board.replaceChildren();
+  if (status.leaderboard?.length) {
+    const title = document.createElement('p');
+    title.className = 'sub';
+    title.style.margin = '0 0 8px';
+    title.textContent = 'Points leaderboard';
+    board.append(title);
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.flexWrap = 'wrap';
+    status.leaderboard.slice(0, 8).forEach((p, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'pill';
+      chip.textContent = `${i + 1}. ${p.name} — ${p.points}`;
+      row.append(chip);
+    });
+    board.append(row);
+  }
+}
+
+document.getElementById('gameCancel').addEventListener('click', async () => {
+  await post('/api/games', { action: 'cancel' });
+  refreshGames();
+});
+
+refreshGames();
+setInterval(refreshGames, 2000);
+
 // ---- Timer ----
 const timerFields = {
   duration: document.getElementById('timerDuration'),
