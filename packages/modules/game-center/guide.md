@@ -130,6 +130,30 @@ fights. They're handed over automatically the moment they're earned, and a card 
 be bought and worn earlier — the pet just wears them once it's big enough, and chat is told that
 when they put it on.
 
+## Avatars
+
+Everyone has an avatar from the moment they first type — a crest built from their name, so a
+new viewer's card already looks like theirs rather than blank. They can change it with one
+command:
+
+| Command | What it does |
+| --- | --- |
+| `!avatar` | Show what they have now. |
+| `!avatar hexagon gold skull` | Change it. Any words, in any order. |
+| `!avatar random` | Roll a new one. |
+| `!avatar pet` | Match it to the pet they have out. |
+| `!avatar reset` | Back to the one they started with. |
+| `!avatar list` | Every word that works. |
+
+**Any word, in any order.** Each word is checked against the shapes, the patterns, the emblems
+and the colours all at once, so nobody has to learn which word goes where. `!avatar gold skull
+hexagon` and `!avatar hexagon skull gold` do the same thing. Everyday colour words work too —
+"blue" means lagoon, "gold" means honey. Words that mean nothing are ignored and named in the
+reply, and the parts that did make sense still apply.
+
+There are 6 shapes, 5 patterns, 24 emblems and 12 colours — 720 looks before you count the
+second colour. It's all free: an avatar is how someone shows up, not something to charge for.
+
 ## The shop board
 
 An optional overlay that shows what's for sale. Add a browser source pointing at

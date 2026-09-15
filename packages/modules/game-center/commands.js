@@ -14,7 +14,7 @@ import { COAT_NAMES } from './shared/profiles.js';
 
 const COOLDOWN_MS = 30000;
 
-export function createCommands({ profiles, games, pets, wardrobe, hub, log }) {
+export function createCommands({ profiles, games, pets, wardrobe, avatars, hub, log }) {
   const lastUse = new Map();
 
   function onCooldown(key, command, now) {
@@ -175,9 +175,27 @@ export function createCommands({ profiles, games, pets, wardrobe, hub, log }) {
         return true;
       }
 
+      // ---- avatar ---------------------------------------------------------
+      if (avatars && (command === '!avatar' || command === '!crest')) {
+        const profile = profiles.ensure(event.platform, event.user?.displayName || event.user?.name);
+        if (args.trim().toLowerCase() === 'list') {
+          const w = avatars.words();
+          reply(event, { kind: 'avatar-list', ...w },
+            `Shapes: ${w.shapes.join(' ')} · Patterns: ${w.patterns.join(' ')} · Colours: ${w.colours.join(' ')}`);
+          return true;
+        }
+        const result = avatars.set(profile, args);
+        reply(event,
+          result.ok
+            ? { kind: 'avatar', name: profile.name, platform: profile.platform, crest: result.crest, coins: profile.coins, note: result.message }
+            : { kind: 'note', text: result.message },
+          result.message);
+        return true;
+      }
+
       if (command === '!gchelp') {
         reply(event, { kind: 'help' },
-          'Games: !race !attack !heist · Coins: !coins !top · Pets: !adopt !pet !feed !name · Shop: !shop !buy !wear !coat !eyes');
+          'Games: !race !attack !heist · Coins: !coins !top · Pets: !adopt !pet !feed !name · Shop: !shop !buy !wear !coat !eyes · !avatar');
         return true;
       }
 

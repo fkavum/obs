@@ -11,6 +11,7 @@ import { ProfileStore } from './profiles.js';
 import { createCommands } from './commands.js';
 import { createWardrobe } from './wardrobe.js';
 import { createPets } from './pets.js';
+import { createAvatars } from './avatars.js';
 
 export function createModule({ config, hub, log }) {
   const store = createModuleStore('game-center');
@@ -18,7 +19,8 @@ export function createModule({ config, hub, log }) {
   const games = new GameService({ config, hub, profiles });
   const pets = createPets({ profiles, log });
   const wardrobe = createWardrobe({ profiles, pets, log });
-  const commands = createCommands({ profiles, games, pets, wardrobe, hub, log });
+  const avatars = createAvatars({ profiles, pets, log });
+  const commands = createCommands({ profiles, games, pets, wardrobe, avatars, hub, log });
 
   // Mythic pets are milestones, not drops: a game result advances the counter.
   games.on('settled', (results) => {
