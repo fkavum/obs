@@ -43,3 +43,18 @@ export const SHOP_THEMES = {
   wide: { width: 720, columns: '2', rows: 6, fontSize: 20 },
   minimal: { bgOpacity: 0, shadow: 'hard', showPrices: true, hint: false },
 };
+
+/**
+ * The standard shape a module overlay exports: the settings screen imports this
+ * and builds itself from it, exactly as it does for the built-in overlays.
+ */
+export const overlay = {
+  id: 'game-center.shop',
+  label: 'Shop board',
+  path: '/overlays/game-center/shop/',
+  schema: SHOP_SETTINGS,
+  groups: SHOP_GROUPS,
+  themes: SHOP_THEMES,
+  openGroups: ['layout', 'look'],
+  obsSize: { width: 1920, height: 1080 },
+};

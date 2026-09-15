@@ -47,3 +47,19 @@ export const PROFILE_THEMES = {
   loud: { quiet: false, holdSec: 5, cooldownSec: 0, queueDepth: 12, entrance: 'pop' },
   silent: { quiet: true, holdSec: 8, evolutionMoment: true },
 };
+
+/**
+ * The standard shape a module overlay exports: the settings screen imports this
+ * and builds itself from it, exactly as it does for the built-in overlays.
+ */
+export const overlay = {
+  id: 'game-center.profile',
+  label: 'Pet cards',
+  path: '/overlays/game-center/profile/',
+  schema: PROFILE_SETTINGS,
+  groups: PROFILE_GROUPS,
+  themes: PROFILE_THEMES,
+  openGroups: ['behaviour', 'look'],
+  obsSize: { width: 1920, height: 1080 },
+  fakeLabel: 'Show pretend cards in this preview',
+};
