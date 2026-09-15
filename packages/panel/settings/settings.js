@@ -7,6 +7,7 @@
  * gives it a tab, a preview and a Copy URL button, with no edit to this file.
  */
 import { OVERLAYS, parseSettings, toQuery, isVisible } from '/core/settings-schema.js';
+import { mountNav, sectionOf } from '/nav.js';
 
 // Which overlay this screen is editing: /settings/?overlay=alerts. Everything
 // below reads from the registry entry, so a new overlay needs no code here.
@@ -106,19 +107,9 @@ function paintChrome() {
   fakeToggle.parentElement.querySelector('span').textContent = overlay.fakeLabel;
   document.getElementById('obsSize').textContent = `${overlay.obsSize.width} × ${overlay.obsSize.height}`;
 
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = '<a href="/">Setup</a>';
-  for (const o of Object.values(REGISTRY)) {
-    const a = document.createElement('a');
-    a.href = `/settings/?overlay=${o.id}`;
-    a.textContent = `${o.label} style`;
-    if (o.id === overlay.id) a.setAttribute('aria-current', 'page');
-    tabs.append(a);
-  }
-  const commandsTab = document.createElement('a');
-  commandsTab.href = '/commands/';
-  commandsTab.textContent = 'Chat commands';
-  tabs.append(commandsTab);
+  // A module overlay's id is "<module>.<overlay>", which is also which section
+  // it belongs to — so the nav lands on the right row without being told.
+  mountNav(document.getElementById('nav'), { section: sectionOf(overlay.id), page: overlay.id });
 
   const testRow = document.getElementById('testRow');
   if (!overlay.testEvents) {

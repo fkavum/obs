@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feature</title>
+<link rel="stylesheet" href="/panel.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1 id="title">Feature</h1>
+    <p id="sub"></p>
+  </header>
+
+  <div id="nav"></div>
+
+  <!-- The module's own controls are injected here. This page never names one. -->
+  <div id="moduleCards"></div>
+
+  <div class="card">
+    <h2>Add these to OBS</h2>
+    <p class="sub">Each one is a Browser Source. Copy a link, then in OBS: <strong>+ → Browser</strong>,
+      paste it in, and set the size shown.</p>
+    <div id="overlayList"></div>
+  </div>
+
+  <div class="card" id="guideCard" hidden>
+    <h2>How to use it</h2>
+    <p class="sub">The full guide for this feature.</p>
+    <div id="guide" class="guide"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script type="module" src="module.js"></script>
+</body>
+</html>

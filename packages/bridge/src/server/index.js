@@ -161,6 +161,13 @@ async function handle(req, res, ctx) {
     const entry = ctx.hub.modules.get(modulePanel[1]);
     if (serveStatic(res, join(entry.dir, 'panel'), `/${modulePanel[2]}`)) return;
   }
+  // A module's guide, served from the module root rather than through a `..`
+  // out of its panel folder — which the static server rightly refuses.
+  const moduleGuide = /^\/guide\/([a-z0-9-]+)\.md$/i.exec(path);
+  if (moduleGuide && ctx.hub.modules?.get(moduleGuide[1])) {
+    const entry = ctx.hub.modules.get(moduleGuide[1]);
+    if (serveStatic(res, entry.dir, '/guide.md')) return;
+  }
 
   // ---- API ---------------------------------------------------------------
   if (path.startsWith('/api/')) return api(req, res, url, ctx);

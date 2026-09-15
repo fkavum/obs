@@ -2,25 +2,14 @@
  * Chat command editor. Everything is saved to the toolkit, not to a file the
  * operator has to find - same rule as the rest of the setup pages.
  */
-import { OVERLAYS } from '/core/settings-schema.js';
+import { mountNav, STREAM_SECTION } from '/nav.js';
 
 const toastEl = document.getElementById('toast');
 let toastTimer;
 let state = { commands: [], autoMessages: [], enabled: false, canSendOn: [], sendTo: [] };
 let presets = { initial: [], local: [] };
 
-const tabs = document.getElementById('tabs');
-for (const o of Object.values(OVERLAYS)) {
-  const a = document.createElement('a');
-  a.href = `/settings/?overlay=${o.id}`;
-  a.textContent = `${o.label} style`;
-  tabs.append(a);
-}
-const own = document.createElement('a');
-own.href = '/commands/';
-own.textContent = 'Chat commands';
-own.setAttribute('aria-current', 'page');
-tabs.append(own);
+mountNav(document.getElementById('nav'), { section: STREAM_SECTION, page: 'commands' });
 
 await load();
 await loadPresets();

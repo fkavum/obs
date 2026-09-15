@@ -6,56 +6,11 @@
  * itself from GET /api/platforms, so a newly added adapter shows up here with
  * no edit to this file.
  */
-import { OVERLAYS } from '/core/settings-schema.js';
+import { mountNav, STREAM_SECTION } from '/nav.js';
 
-// Built from the overlay registry, so a new overlay gets its tab automatically
-// instead of needing this page's markup edited.
-const tabs = document.getElementById('tabs');
-function addTab(id, label) {
-  const a = document.createElement('a');
-  a.href = `/settings/?overlay=${id}`;
-  a.textContent = `${label} style`;
-  tabs.append(a);
-}
-for (const o of Object.values(OVERLAYS)) addTab(o.id, o.label);
-// Module overlays get a tab the same way, without this page naming them.
-fetch('/api/modules')
-  .then((r) => r.json())
-  .then(({ overlays }) => {
-    for (const o of overlays || []) if (o.settings) addTab(`${o.module}.${o.id}`, o.label);
-  })
-  .catch(() => {});
-const commandsTab = document.createElement('a');
-commandsTab.href = '/commands/';
-commandsTab.textContent = 'Chat commands';
-tabs.append(commandsTab);
-
-// Feature modules supply their own setup-page cards; this page never names one.
-async function loadModuleCards() {
-  const host = document.getElementById('moduleCards');
-  if (!host) return;
-  let cards = [];
-  try {
-    cards = (await (await fetch('/api/modules')).json()).cards || [];
-  } catch {
-    return;
-  }
-  for (const card of cards) {
-    try {
-      const html = await (await fetch(card.src)).text();
-      const holder = document.createElement('div');
-      holder.innerHTML = html;
-      host.append(...holder.children);
-      // A card may ship behaviour alongside its markup.
-      const script = card.src.replace(/\.html$/, '.js');
-      const head = await fetch(script, { method: 'HEAD' }).catch(() => null);
-      if (head?.ok) await import(script);
-    } catch (err) {
-      console.warn(`module card ${card.module} failed:`, err);
-    }
-  }
-}
-loadModuleCards();
+// Two rows: the sections across the top, this section's pages beneath. Feature
+// modules become sections of their own, so this page never names one.
+mountNav(document.getElementById('nav'), { section: STREAM_SECTION, page: 'setup' });
 
 const platformsEl = document.getElementById('platforms');
 const healthEl = document.getElementById('health');

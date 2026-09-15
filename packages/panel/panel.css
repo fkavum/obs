@@ -33,6 +33,27 @@ header.top h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
 header.top p { margin: 0; color: var(--muted); }
 
 nav.tabs { display: flex; gap: 8px; margin: 18px 0 26px; flex-wrap: wrap; }
+/* Two rows: the sections are the primary choice, so they read as headings and
+   the pages beneath them as the smaller, secondary row. */
+nav.tabs.sections { margin: 18px 0 10px; gap: 6px; }
+nav.tabs.sections a { font-size: 15px; font-weight: 600; padding: 9px 18px; }
+nav.tabs.sections + nav.tabs { margin-top: 0; }
+nav.tabs.sections + nav.tabs a { font-size: 13px; padding: 5px 12px; }
+#nav { margin-bottom: 26px; }
+#nav nav.tabs:last-child { margin-bottom: 0; }
+
+.guide { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.guide h2, .guide h3, .guide h4 { color: var(--text, #fff); margin: 18px 0 6px; }
+.guide h2 { font-size: 17px; }
+.guide h3 { font-size: 15px; }
+.guide h4 { font-size: 14px; }
+.guide p { margin: 6px 0; }
+.guide ul { margin: 6px 0; padding-left: 20px; }
+.guide code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+.guide table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+.guide th, .guide td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.guide th { color: var(--text, #fff); font-size: 13px; }
+.guide a { color: var(--accent); }
 nav.tabs a {
   padding: 7px 14px; border-radius: 999px; text-decoration: none;
   color: var(--muted); background: var(--surface); border: 1px solid var(--line);
