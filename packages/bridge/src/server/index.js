@@ -212,6 +212,9 @@ async function api(req, res, url, { hub, config, onQuit }) {
       modules: hub.modules?.status() || [],
       overlays: hub.modules?.overlays() || [],
       cards: hub.modules?.panelCards() || [],
+      // The lines a module says are worth demonstrating. The fake-chat adapter
+      // already types these; the rehearsal page offers them as buttons.
+      previewMessages: hub.modules?.previewMessages() || [],
     });
   }
 

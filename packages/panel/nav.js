@@ -26,6 +26,7 @@ export async function loadSections() {
         id: o.id, label: `${o.label} style`, href: `/settings/?overlay=${o.id}`,
       })),
       { id: 'commands', label: 'Chat commands', href: '/commands/' },
+      { id: 'rehearsal', label: 'Rehearsal', href: '/rehearsal/' },
     ],
   };
 

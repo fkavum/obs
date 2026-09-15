@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rehearsal</title>
+<link rel="stylesheet" href="/panel.css">
+</head>
+<body>
+<div class="wrap wide">
+  <header class="top">
+    <h1>Rehearsal</h1>
+    <p>A pretend stream, so you can see everything working before you go live. This drives the
+      <strong>real</strong> toolkit — the same overlays, the same chat commands — so whatever
+      happens here is what will happen on stream.</p>
+  </header>
+
+  <div id="nav"></div>
+
+  <div class="rehearse">
+    <div class="rehearse-stage">
+      <div class="stage-frame" id="frame">
+        <div class="stage-box" id="stageBox">
+          <div class="backdrop" id="backdrop" data-scene="room"></div>
+          <video id="video" hidden playsinline muted loop></video>
+          <div class="layers" id="layers"></div>
+        </div>
+      </div>
+      <p class="sub stage-note">Each overlay is trimmed to the part it is actually drawing, so the
+        ones underneath show through — browsers paint every embedded frame on solid white, and
+        there is no way to ask for a see-through one. OBS has no such limit: on stream the layers
+        are genuinely transparent. Use this to check placement and readability, not to judge
+        edges and soft shadows.</p>
+      <div class="row stage-tools">
+        <span class="pill">Behind the overlays</span>
+        <select id="scene">
+          <option value="room">Dark room</option>
+          <option value="game">Bright gameplay</option>
+          <option value="moving">Moving scene</option>
+          <option value="grid">Checkerboard</option>
+          <option value="none">Nothing (transparent)</option>
+        </select>
+        <label class="btn" for="videoFile">Use a video from this computer</label>
+        <input id="videoFile" type="file" accept="video/*" hidden>
+        <button id="clearVideo" hidden>Remove video</button>
+      </div>
+    </div>
+
+    <div class="rehearse-side">
+      <div class="card">
+        <h2>Which overlays are on</h2>
+        <p class="sub">Exactly as you styled them. Turning one off here does not change OBS.</p>
+        <div id="toggles" class="toggles"></div>
+      </div>
+
+      <div class="card">
+        <h2>Pretend chat</h2>
+        <p class="sub">Type as anybody. Commands work — this goes through the real bridge.</p>
+        <div class="row">
+          <input id="who" class="grow" type="text" placeholder="Viewer name" value="PixelPete">
+          <select id="asPlatform"></select>
+        </div>
+        <div class="row">
+          <input id="line" class="grow" type="text" placeholder="Say something, or !shop" autocomplete="off">
+          <button class="primary" id="send">Send</button>
+        </div>
+        <div id="quick" class="toggles"></div>
+      </div>
+
+      <div class="card">
+        <h2>Keep chat busy</h2>
+        <p class="sub">Fake viewers talking away in the background, including the game commands.</p>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="demoChat"><span>Demo chat running</span></label>
+          <button id="burst">Send a burst of messages</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Alerts</h2>
+        <p class="sub">Fire one and watch it land on the stage.</p>
+        <div id="alerts" class="toggles"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script type="module" src="rehearsal.js"></script>
+</body>
+</html>

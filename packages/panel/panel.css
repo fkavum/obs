@@ -207,3 +207,64 @@ code.inline {
    named themselves must appear exactly as they typed it. */
 .themes button[data-builtin] { text-transform: capitalize; }
 .themes button[aria-pressed="true"] { background: var(--accent); border-color: transparent; color: #fff; }
+
+
+/* ---- Rehearsal ------------------------------------------------------- */
+.rehearse { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
+@media (max-width: 1100px) { .rehearse { grid-template-columns: 1fr; } }
+
+.rehearse-stage { min-width: 0; }
+.stage-frame {
+  position: relative; width: 100%; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: #0b0b10;
+}
+/* The stage is a real 1920x1080 canvas scaled down, so what you judge here is
+   the same geometry OBS will render. */
+.stage-box { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; transform-origin: top left; }
+.stage-box > * { position: absolute; inset: 0; }
+.stage-box video { width: 100%; height: 100%; object-fit: cover; }
+.layers iframe { position: absolute; inset: 0; width: 1920px; height: 1080px; border: 0; background: transparent; }
+
+.backdrop[data-scene="none"] { background: none; }
+.backdrop[data-scene="room"] {
+  background:
+    radial-gradient(120% 90% at 70% 30%, #2a3550 0%, #141a28 55%, #0a0d16 100%),
+    #0a0d16;
+}
+.backdrop[data-scene="game"] {
+  background:
+    radial-gradient(90% 70% at 30% 20%, #ffe9a8 0%, #f2a65a 40%, #b45a3c 75%, #5c2b26 100%);
+}
+.backdrop[data-scene="grid"] {
+  background-color: #7a7a84;
+  background-image:
+    linear-gradient(45deg, #5c5c66 25%, transparent 25%, transparent 75%, #5c5c66 75%),
+    linear-gradient(45deg, #5c5c66 25%, transparent 25%, transparent 75%, #5c5c66 75%);
+  background-size: 96px 96px; background-position: 0 0, 48px 48px;
+}
+/* Moving, because the thing you cannot judge over a still image is whether
+   text stays readable when the picture underneath changes. */
+.backdrop[data-scene="moving"] {
+  background: linear-gradient(115deg, #10203a, #3a1f4d, #0f3d3a, #4a2a1c, #10203a);
+  background-size: 400% 400%;
+  animation: rehearse-drift 18s ease-in-out infinite;
+}
+@keyframes rehearse-drift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@media (prefers-reduced-motion: reduce) { .backdrop[data-scene="moving"] { animation: none; } }
+
+.stage-tools { margin-top: 12px; }
+.rehearse-side .card { margin-bottom: 16px; }
+
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px; font-size: 13px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--muted);
+  cursor: pointer;
+}
+button.chip:hover { color: #fff; border-color: var(--accent); }
+label.chip { user-select: none; }
+label.chip:has(input:checked) { color: #fff; border-color: var(--accent); }
+.check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.stage-note { margin: 10px 0 0; font-size: 12px; line-height: 1.5; }
