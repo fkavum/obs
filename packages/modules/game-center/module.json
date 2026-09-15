@@ -15,6 +15,15 @@
       }
     },
     {
+      "id": "shop",
+      "label": "Shop board",
+      "settings": "overlays/shop/settings.js",
+      "obsSize": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
       "id": "profile",
       "label": "Pet & profile cards",
       "obsSize": {
@@ -39,6 +48,9 @@
     "!heist 50",
     "!heist all",
     "!coins",
-    "!top"
+    "!top",
+    "!shop",
+    "!buy partyhat",
+    "!wear partyhat"
   ]
 }

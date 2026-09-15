@@ -9,10 +9,12 @@
 import { formatCoins } from './shared/profiles.js';
 import { SPECIES, STARTER_SPECIES } from './shared/pets/species.js';
 import { FOODS } from './shared/pets/model.js';
+import { SLOTS, SLOT_LABELS, EYE_NAMES } from './shared/pets/wardrobe.js';
+import { COAT_NAMES } from './shared/profiles.js';
 
 const COOLDOWN_MS = 30000;
 
-export function createCommands({ profiles, games, pets, hub, log }) {
+export function createCommands({ profiles, games, pets, wardrobe, hub, log }) {
   const lastUse = new Map();
 
   function onCooldown(key, command, now) {
@@ -130,9 +132,52 @@ export function createCommands({ profiles, games, pets, hub, log }) {
         return true;
       }
 
+      // ---- shop and wardrobe ---------------------------------------------
+      if (wardrobe && ['!shop', '!buy', '!wear', '!off', '!coat', '!eyes', '!closet'].includes(command)) {
+        const profile = profiles.ensure(event.platform, event.user?.displayName || event.user?.name);
+        const key = `${event.platform}:${(event.user?.name || '').toLowerCase()}`;
+
+        if (command === '!shop') {
+          if (onCooldown(key, command, now)) return true;
+          const words = args.toLowerCase().split(/\s+/).filter(Boolean);
+          const slot = SLOTS.find((s) => words.includes(s)) || 'hat';
+          const page = Math.max(1, parseInt(words.find((w) => /^\d+$/.test(w)) || '1', 10)) - 1;
+          const view = wardrobe.shop(profile, { slot, page });
+          reply(event,
+            { kind: 'shop', ...view, coins: profile.coins, name: profile.name },
+            `${SLOT_LABELS[view.slot]} shop (${view.page + 1}/${view.pages}): ${view.items
+              .map((i) => `${i.label} ${i.owned ? '✓' : i.price == null ? 'earned' : i.price}`).join(' · ')}`);
+          return true;
+        }
+
+        if (command === '!closet') {
+          const items = wardrobe.wardrobeOf(profile);
+          const text = items.length
+            ? items.map((i) => `${i.label}${i.worn ? ' (worn)' : ''}`).join(' · ')
+            : 'nothing yet — browse !shop';
+          reply(event, { kind: 'closet', items, name: profile.name }, `${profile.name}'s closet: ${text}`);
+          return true;
+        }
+
+        // The rest change something, so they answer with the pet card.
+        const result = command === '!buy' ? wardrobe.buy(profile, args)
+          : command === '!wear' ? wardrobe.wear(profile, args)
+          : command === '!off' ? wardrobe.takeOff(profile, args)
+          : command === '!coat' ? wardrobe.coat(profile, args)
+          : wardrobe.eyes(profile, args);
+
+        const hint = !args && command === '!coat' ? ` — coats: ${COAT_NAMES.join(', ')}`
+          : !args && command === '!eyes' ? ` — eyes: ${EYE_NAMES.join(', ')}` : '';
+        const card = result.ok && pets.card(profile)
+          ? { ...pets.card(profile), event: command === '!buy' ? 'bought' : 'dressed', note: result.message }
+          : { kind: 'note', text: result.message + hint };
+        reply(event, card, result.message + hint);
+        return true;
+      }
+
       if (command === '!gchelp') {
         reply(event, { kind: 'help' },
-          'Games: !race !attack !heist · Coins: !coins !top · Pets: !adopt !pet !feed !name');
+          'Games: !race !attack !heist · Coins: !coins !top · Pets: !adopt !pet !feed !name · Shop: !shop !buy !wear !coat !eyes');
         return true;
       }
 

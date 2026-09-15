@@ -9,6 +9,7 @@ import { createModuleStore } from '#bridge/store.js';
 import { GameService } from './service.js';
 import { ProfileStore } from './profiles.js';
 import { createCommands } from './commands.js';
+import { createWardrobe } from './wardrobe.js';
 import { createPets } from './pets.js';
 
 export function createModule({ config, hub, log }) {
@@ -16,13 +17,19 @@ export function createModule({ config, hub, log }) {
   const profiles = new ProfileStore({ store, log });
   const games = new GameService({ config, hub, profiles });
   const pets = createPets({ profiles, log });
-  const commands = createCommands({ profiles, games, pets, hub, log });
+  const wardrobe = createWardrobe({ profiles, pets, log });
+  const commands = createCommands({ profiles, games, pets, wardrobe, hub, log });
 
   // Mythic pets are milestones, not drops: a game result advances the counter.
   games.on('settled', (results) => {
     for (const r of results) {
       const profile = profiles.byName(r.platform, r.name);
-      if (profile) pets.recordGameResult(profile, r);
+      if (!profile) continue;
+      pets.recordGameResult(profile, r);
+      // Trophies are handed over the moment they're earned, not claimed later.
+      for (const item of wardrobe.claimEarned(profile)) {
+        hub.broadcast?.({ type: 'gc:card', card: { kind: 'note', text: `${profile.name} earned the ${item.label}!` } });
+      }
     }
   });
 
@@ -64,6 +71,11 @@ export function createModule({ config, hub, log }) {
         } catch (err) {
           sendJSON(res, 400, { error: err.message });
         }
+        return true;
+      }
+
+      if (path === '/shop' && method === 'GET') {
+        sendJSON(res, 200, { items: wardrobe.catalogue() });
         return true;
       }
 

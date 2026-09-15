@@ -192,12 +192,15 @@ export function createPets({ profiles, log }) {
     },
 
     /** Called when a game is settled, so mythic milestones can advance. */
-    recordGameResult(profile, { game, place, topDamage }) {
+    recordGameResult(profile, { game, place, topDamage, survived }) {
       if (game === 'boss' && topDamage) {
         profile.stats.bossTopDamage = (profile.stats.bossTopDamage || 0) + 1;
       }
       if (game === 'race' && place <= 3) {
         profile.stats.racePodium = (profile.stats.racePodium || 0) + 1;
+      }
+      if (game === 'heist' && survived) {
+        profile.stats.heistSurvived = (profile.stats.heistSurvived || 0) + 1;
       }
       profiles.touch();
     },

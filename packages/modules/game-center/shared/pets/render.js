@@ -6,6 +6,7 @@
  * tractable to maintain.
  */
 import { SPECIES } from './species.js';
+import { ACCESSORY_STYLES } from './accessories.js';
 import { coatColours, EYE_COLOURS } from './colours.js';
 import { stageForLevel } from './model.js';
 import { eyeComponent } from './species.js';
@@ -30,13 +31,14 @@ export function renderPet(pet, options = {}) {
   if (!species) return '';
   const level = Math.max(1, pet.level || 1);
   const stageDef = stageForLevel(level);
-  const c = coatColours(pet.colour);
+  const c = coatColours(pet.colour, { shiny: !!pet.shiny });
   const eyeColour = EYE_COLOURS[pet.eyes] || EYE_COLOURS.onyx;
   const has = (group) => stageDef.groups.includes(group);
 
   // The eye component carries the stage's eye scale, so a stage-1 pet has the
   // oversized eyes that make it read as a baby.
-  const eye = (opts = {}) => eyeComponent({
+  const covered = hidesEyes(pet.accessories, options.accessories || {});
+  const eye = (opts = {}) => covered ? '' : eyeComponent({
     ...opts,
     r: (opts.r ?? 3.2) * stageDef.eyeScale,
     colour: eyeColour,
@@ -55,6 +57,7 @@ export function renderPet(pet, options = {}) {
 
   const size = pet.size || 100;
   return `<svg class="gc-pet" viewBox="0 0 100 100" width="${size}" height="${size}" role="img" aria-label="${species.label}">
+    ${c.defs}
     ${aura}
     ${slots.back}
     ${parts.back || ''}
@@ -82,13 +85,21 @@ function renderAccessories(species, worn, definitions, stage) {
     const anchor = species.anchors?.[slot];
     if (!def || !anchor) continue;
     const rotate = anchor.rotate ? ` rotate(${anchor.rotate})` : '';
-    out[slot] = `<g transform="translate(${anchor.x},${anchor.y}) scale(${anchor.scale})${rotate}">${def.svg}</g>`;
+    // The item's own motion (a swaying cape, a bobbing balloon) rides on an
+    // inner group so the anchor transform stays untouched by the animation.
+    const inner = def.animate ? `<g class="${def.animate}">${def.svg}</g>` : def.svg;
+    out[slot] = `<g transform="translate(${anchor.x},${anchor.y}) scale(${anchor.scale})${rotate}">${inner}</g>`;
   }
   return out;
 }
 
+/** Does anything worn cover the eyes? Then the species shouldn't draw them. */
+function hidesEyes(worn, definitions) {
+  return Object.values(worn || {}).some((id) => definitions[id]?.hidesEyes);
+}
+
 /** The CSS a page needs for the idle motion. Kept with the renderer. */
-export const PET_STYLES = `
+export const PET_STYLES = ACCESSORY_STYLES + `
 .gc-pet { overflow: visible; }
 .gc-pet .gc-sparkle { transform-origin: 50px 60px; animation: gc-orbit 8s linear infinite; }
 @keyframes gc-orbit { to { transform: rotate(360deg); } }

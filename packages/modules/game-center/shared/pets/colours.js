@@ -36,15 +36,37 @@ export function hslToHex({ h, s, l }) {
 
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
 
-/** The three shades every creature is drawn with. */
-export function coatColours(coatName) {
-  const base = PALETTE[coatName] || PALETTE.biscuit;
+/**
+ * The three shades every creature is drawn with.
+ *
+ * A shiny coat swaps the flat fill for a gradient paint served from `defs`.
+ * The gradient's id is derived from the coat name, so two shiny moss pets on
+ * one page share one definition instead of colliding.
+ */
+export function coatColours(coatName, { shiny = false } = {}) {
+  const name = PALETTE[coatName] ? coatName : 'biscuit';
+  const base = PALETTE[name];
   const hsl = hexToHsl(base);
-  return {
+  const shades = {
     coat: base,
     // Never black: an outline in the coat's own hue keeps the creature warm.
     outline: hslToHex({ ...hsl, l: clamp01(hsl.l - 0.25), s: clamp01(hsl.s * 0.9) }),
     belly: hslToHex({ h: hsl.h, s: clamp01(hsl.s * 0.8), l: clamp01(hsl.l + 0.2) }),
+    defs: '',
+  };
+  if (!shiny) return shades;
+
+  const id = `gc-shiny-${name}`;
+  const lift = hslToHex({ h: (hsl.h + 24) % 360, s: clamp01(hsl.s * 1.15 + 0.1), l: clamp01(hsl.l + 0.22) });
+  const drop = hslToHex({ h: (hsl.h + 340) % 360, s: clamp01(hsl.s * 1.1), l: clamp01(hsl.l - 0.14) });
+  return {
+    ...shades,
+    coat: `url(#${id})`,
+    defs: `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="${lift}"/>
+      <stop offset="52%" stop-color="${base}"/>
+      <stop offset="100%" stop-color="${drop}"/>
+    </linearGradient></defs>`,
   };
 }
 

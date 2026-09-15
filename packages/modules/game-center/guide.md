@@ -103,6 +103,45 @@ no decay, no hunger meter draining, and nothing to lose by taking a week off.
 Big Dog at 25, and the Goodest Boy at 50 — which should be rare on any channel. Each stage
 changes how the pet is drawn, and an evolution always shows on stream even in quiet mode.
 
+## Dressing up
+
+Every pet can wear one thing per slot: a **hat**, something on its **face**, something round its
+**neck**, something on its **back**, and something **held**. Thirty-one items in all.
+
+| Command | What it does |
+| --- | --- |
+| `!shop` | Show the hat shelf. `!shop neck`, `!shop back`, `!shop paw`, `!shop face`, `!shop coat` for the others, and `!shop hat 2` for the second page. |
+| `!buy <item>` | Buy it. `!buy party hat` and `!buy partyhat` both work. |
+| `!wear <item>` | Put it on the pet you have out. |
+| `!off <slot>` | Take it off again — `!off hat`. |
+| `!coat <colour>` | Change the coat. Free, as often as you like. Twelve colours. |
+| `!eyes <colour>` | Change the eyes: onyx, amber, sky, forest, rose, gold. Also free. |
+| `!closet` | Everything they own, and what's currently worn. |
+
+**Prices.** Common 75, Uncommon 200, Rare 600, Epic 2,000. Coats and eye colours cost nothing —
+that's how someone makes a creature theirs in their first minute. **Shiny** coats are the paid
+version: `!buy shiny moss` for 1,500, then `!coat moss shiny`.
+
+**Some things can't be bought.** The Podium Flag comes from finishing a race on the podium, the
+Heist Bag from surviving 50 heists, and the Raid Champion Helm from topping the damage in 25 boss
+fights. They're handed over automatically the moment they're earned, and a card says so on stream.
+
+**Back items need a grown-up pet.** Capes and wings only show from stage 3 (level 25). They can
+be bought and worn earlier — the pet just wears them once it's big enough, and chat is told that
+when they put it on.
+
+## The shop board
+
+An optional overlay that shows what's for sale. Add a browser source pointing at
+**http://localhost:8778/overlays/game-center/shop/** at 1920 × 1080.
+
+It **never scrolls** — it pages instead, one section at a time, changing every 8 seconds. If a
+section doesn't fit, it becomes another page rather than a scrollbar nobody on stream can move.
+
+**http://localhost:8778/settings/?overlay=game-center.shop** — position, width, one or two columns,
+rows per page, seconds per page, and which sections to include. Set `Sections to show` to a single
+word like `hat` if you only ever want one shelf.
+
 ## Change how it looks
 
 **http://localhost:8778/settings/?overlay=game-center.games** — position, size, colours, how many players
