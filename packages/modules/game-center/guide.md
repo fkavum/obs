@@ -166,6 +166,36 @@ section doesn't fit, it becomes another page rather than a scrollbar nobody on s
 rows per page, seconds per page, and which sections to include. Set `Sections to show` to a single
 word like `hat` if you only ever want one shelf.
 
+## Pet cards on stream
+
+The third overlay shows a card when something happens to somebody's pet. Add a browser source
+pointing at **http://localhost:8778/overlays/game-center/profile/** at 1920 × 1080.
+
+**Quiet mode is on by default, and you probably want to leave it on.** A busy chat can produce a
+card a second; an overlay that covers your stream is one you turn off on day one. With quiet mode
+on you only see the moments worth seeing:
+
+- somebody adopts their first pet
+- a pet levels up
+- a pet **evolves**
+- somebody earns an item they can't buy
+
+Everything else — feeding, shopping, checking coins — happens quietly in the background. Turn
+quiet mode off in the settings if you want to see it all.
+
+**When lots happens at once.** Only one card is on screen at a time. Up to five wait their turn;
+past that the rest collapse into a single line — *"…and 12 others fed their pets"* — so the
+channel still feels busy without the screen filling up. The same person can't take the slot twice
+inside a minute, unless it's one of the moments above.
+
+**The evolution moment.** When a pet evolves, its new shape appears as a white silhouette for a
+few seconds, then the colour arrives. Six seconds, once, and the ordinary cards wait. It's the
+payoff for weeks of feeding, so it's the one thing that interrupts. Turn it off in the settings
+if you'd rather have a normal card.
+
+**http://localhost:8778/settings/?overlay=game-center.profile** — position, size, colours, how
+cards appear, how long they stay, and all of the above.
+
 ## Change how it looks
 
 **http://localhost:8778/settings/?overlay=game-center.games** — position, size, colours, how many players

@@ -74,7 +74,12 @@ export function createCommands({ profiles, games, pets, wardrobe, avatars, hub, 
 
         if (command === '!adopt') {
           const result = pets.adopt(profile, args.split(/\s+/)[0]?.toLowerCase());
-          reply(event, result.ok ? pets.card(profile) : { kind: 'note', text: result.message }, result.message);
+          // A hatching always reaches the stream, even in quiet mode — it's
+          // somebody's first minute with the whole feature.
+          reply(event,
+            result.ok ? { ...pets.card(profile), event: 'hatched', note: result.message }
+              : { kind: 'note', text: result.message },
+            result.message);
           return true;
         }
 

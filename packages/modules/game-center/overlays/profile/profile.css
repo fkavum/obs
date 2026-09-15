@@ -1,0 +1,114 @@
+:root {
+  --font: Inter, system-ui, sans-serif;
+  --font-size: 16px;
+  --radius: 16px;
+  --offset: 60px;
+  --bg: rgba(13, 13, 19, .9);
+  --text-color: #fff;
+  --accent: #e8c15a;
+  --muted: rgba(255, 255, 255, .58);
+  --card-w: 300px;
+  --card-h: 120px;
+  --big-w: 600px;
+  --big-h: 400px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+
+#stage {
+  position: fixed; inset: 0; display: flex; padding: var(--offset);
+  font-family: var(--font); font-size: var(--font-size); color: var(--text-color);
+  pointer-events: none;
+}
+#stage[data-hidden="yes"] { opacity: 0; }
+#stage[data-position="top"] { align-items: flex-start; }
+#stage[data-position="center"] { align-items: center; }
+#stage[data-position="bottom"] { align-items: flex-end; }
+#stage[data-align="left"] { justify-content: flex-start; }
+#stage[data-align="center"] { justify-content: center; }
+#stage[data-align="right"] { justify-content: flex-end; }
+#stage[data-shadow="soft"] .card { text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+#stage[data-shadow="hard"] .card { text-shadow: 0 2px 0 rgba(0,0,0,.9); }
+#stage[data-shadow="outline"] .card { -webkit-text-stroke: .6px rgba(0,0,0,.85); }
+
+/* ---- the card ------------------------------------------------------- */
+.card {
+  width: var(--card-w); min-height: var(--card-h); max-width: 100%;
+  background: var(--bg); border-radius: var(--radius);
+  padding: .8em; display: grid; gap: .1em .8em;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "art name" "art body" "art meter";
+  align-content: center;
+}
+.card[data-size="big"] {
+  width: var(--big-w); min-height: var(--big-h);
+  grid-template-columns: 1fr; grid-template-areas: "name" "art" "body" "meter";
+  justify-items: center; text-align: center; gap: .35em; padding: 1.2em;
+}
+.card[data-event="evolved"] { box-shadow: 0 0 0 2px var(--accent), 0 0 40px -8px var(--accent); }
+
+.card .art { grid-area: art; }
+.art { display: grid; place-items: center; position: relative; }
+.art svg { display: block; width: var(--art); height: var(--art); overflow: visible; }
+.card[data-size="small"] { --art: 88px; }
+.card[data-size="big"] { --art: 200px; }
+
+.card .name { grid-area: name; }
+.name { font-weight: 700; display: flex; align-items: center; gap: .4em; min-width: 0; }
+.name .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mark { width: 1.05em; height: 1.05em; flex: none; border-radius: 4px; overflow: hidden; display: grid; place-items: center; }
+.mark img { width: 100%; height: 100%; display: block; }
+.crest { width: 1.5em; height: 1.5em; flex: none; }
+.crest svg { width: 100%; height: 100%; display: block; }
+
+.card .body { grid-area: body; }
+.body { color: var(--muted); font-size: .88em; line-height: 1.35; }
+.body b { color: var(--text-color); font-weight: 600; }
+.coins { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.card .meter { grid-area: meter; }
+.meter { height: .42em; border-radius: 99px; background: rgba(255,255,255,.14); overflow: hidden; margin-top: .3em; width: 100%; }
+.meter > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+
+.rows { display: grid; gap: .25em; width: 100%; }
+.row { display: flex; gap: .5em; align-items: center; font-size: .9em; }
+.row .rank { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+.row .amount { margin-left: auto; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* ---- entrances (transform and opacity only) -------------------------- */
+.card { animation-duration: .32s; animation-timing-function: cubic-bezier(.2,.9,.3,1.2); animation-fill-mode: both; }
+#stage[data-entrance="slide"] .card { animation-name: gc-slide-in; }
+#stage[data-entrance="fade"] .card { animation-name: gc-fade-in; }
+#stage[data-entrance="pop"] .card { animation-name: gc-pop-in; }
+#stage[data-entrance="none"] .card { animation: none; }
+@keyframes gc-slide-in { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes gc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gc-pop-in { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
+
+/* ---- the evolution moment ------------------------------------------- */
+#moment {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  /* A spotlight, not a curtain: it fades to fully transparent well before the
+     edges, so six seconds of drama never dims the whole stream. */
+  background: radial-gradient(circle at 50% 46%,
+    rgba(255,255,255,.16) 0%, rgba(0,0,0,.42) 34%, rgba(0,0,0,0) 62%);
+  pointer-events: none;
+}
+#moment[hidden] { display: none; }
+#moment .art { width: 44vmin; height: 44vmin; }
+#moment .art svg { width: 100%; height: 100%; }
+/* The silhouette: the same creature, filled white, then the colour returns. */
+#moment .silhouette svg { filter: brightness(0) invert(1); }
+#moment .silhouette { animation: gc-throb 1.1s ease-in-out infinite; }
+#moment .reveal { animation: gc-reveal .9s cubic-bezier(.2,.9,.3,1.2) both; }
+#moment .label {
+  position: absolute; bottom: 16%; width: 100%; text-align: center;
+  font-family: var(--font); color: #fff; font-size: 2.2em; font-weight: 800;
+  letter-spacing: .02em; text-shadow: 0 3px 18px rgba(0,0,0,.8);
+}
+@keyframes gc-throb { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes gc-reveal { from { transform: scale(1.25); opacity: .2; } to { transform: scale(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .card, #moment .silhouette, #moment .reveal { animation: none; }
+}

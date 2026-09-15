@@ -1,8 +1,15 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Pet &amp; profile cards</title></head>
-<body style="margin:0;background:transparent">
-<!-- Placeholder: the pet and profile card renderer lands here. -->
-<div id="stage"></div>
+<head>
+  <meta charset="utf-8">
+  <title>Pet &amp; profile cards</title>
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+  <!-- One slot. Nothing renders until there is something to say, and nothing
+       renders at all if the bridge is down. -->
+  <div id="stage"><div id="slot"></div></div>
+  <div id="moment" hidden></div>
+  <script type="module" src="profile.js"></script>
 </body>
 </html>

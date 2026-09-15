@@ -73,11 +73,26 @@ Warns; does not act.
 
 ---
 
-### 🟨 Game Center (chat games · coins · profiles)
-Built 2026-09-15, not yet reviewed. A feature module at `packages/modules/game-center/` —
-three games the whole chat plays together across all three platforms, plus a coin currency and
-a profile per viewer per platform with a deterministic crest. Read-only, so no sign-in needed.
-Phases 3–6 (pets, customisation, avatars, profile cards) are planned in `docs/plans/`.
+### 🟨 Game Center (chat games · coins · profiles · pets)
+Built 2026-09-15, not yet reviewed against a live stream. A feature module at
+`packages/modules/game-center/` — three games the whole chat plays together across all three
+platforms, a coin currency, and a profile per viewer per platform. Read-only, so no sign-in
+needed. All six phases of `docs/plans/game-center.md` are complete:
+
+| Phase | What it added | State |
+| --- | --- | --- |
+| 1–2 | The module, three games, coins, profiles | 🟨 built |
+| 3 | Pets — five species, four stages, feeding and evolution | 🟨 built |
+| 4 | 31 accessories, 12 coats, shiny coats, `!shop`, shop board overlay | 🟨 built |
+| 5 | Avatars — crests from shape, pattern, emblem and colour | 🟨 built |
+| 6 | Pet and profile cards on stream, with the evolution moment | 🟨 built |
+
+Three overlays: `game-center.games`, `game-center.shop`, `game-center.profile`. **Quiet mode is
+on by default** on the card overlay — only level-ups, evolutions, hatchings and earned items
+reach the stream until the streamer turns the noise up.
+
+Everything is verified by 309 tests and by driving real chat commands through the bridge; none
+of it has run against a live audience yet.
 
 ## Tier 3 — after Tier 2 is stable
 
