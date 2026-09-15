@@ -96,7 +96,7 @@ export function renderNav(host, { sections, section, page }) {
   host.append(row);
 }
 
-/** Which section does an overlay id belong to? `game-center.shop` -> game-center. */
+/** Which section does an overlay id belong to? `<module>.<overlay>` -> `<module>`. */
 export function sectionOf(overlayId) {
   const dot = String(overlayId).indexOf('.');
   return dot === -1 ? STREAM_SECTION : String(overlayId).slice(0, dot);
