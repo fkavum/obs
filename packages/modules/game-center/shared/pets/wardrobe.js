@@ -19,6 +19,79 @@ export { SLOTS, SLOT_LABELS, RARITY };
 
 export const EYE_NAMES = Object.keys(EYE_COLOURS);
 
+/**
+ * The shelves, in the order a viewer should meet them: a hat first because it's
+ * the cheapest visible change, coats last because they're the priciest.
+ *
+ * Coats are a shelf here even though they aren't an accessory slot — from the
+ * shopper's side "what can I browse" and "what can my pet wear" are the same
+ * question, and leaving coats out of this list is why `!shop coat` used to
+ * silently show hats instead.
+ */
+export const SHELVES = [...SLOTS, 'coat'];
+
+export const SHELF_LABELS = { ...SLOT_LABELS, coat: 'Coats' };
+
+/** One line each, so the shelf list says what's actually on the shelf. */
+export const SHELF_BLURBS = {
+  hat: 'crowns, beanies, wizard hats',
+  face: 'glasses, shades, an eyepatch',
+  neck: 'scarves, bow ties, gold chains',
+  back: 'capes and wings (stage 3 and up)',
+  paw: 'things to hold — balloons, swords, coffee',
+  coat: 'shiny versions of the twelve colours',
+};
+
+/**
+ * What people actually type. Nobody browsing a shop thinks in slot names, so
+ * "hats", "head", "glasses" and "eyes" all have to land somewhere sensible —
+ * an unrecognised word here means a viewer who tried once and gave up.
+ */
+export const SHELF_WORDS = {
+  hat: ['hat', 'hats', 'head', 'cap', 'caps', 'crown', 'crowns', 'helmet'],
+  face: ['face', 'faces', 'eyes', 'eye', 'glasses', 'shades', 'sunglasses', 'mask'],
+  neck: ['neck', 'necks', 'collar', 'collars', 'scarf', 'scarves', 'tie', 'chain'],
+  back: ['back', 'backs', 'wing', 'wings', 'cape', 'capes', 'bag', 'backpack'],
+  paw: ['paw', 'paws', 'held', 'hold', 'hand', 'hands', 'item', 'items', 'toy', 'toys'],
+  coat: ['coat', 'coats', 'colour', 'colours', 'color', 'colors', 'shiny', 'skin', 'skins', 'fur'],
+};
+
+const WORD_TO_SHELF = new Map(
+  Object.entries(SHELF_WORDS).flatMap(([shelf, words]) => words.map((w) => [w, shelf])),
+);
+
+/** @returns {string|null} the shelf a word means, or null if it means nothing. */
+export function resolveShelf(word) {
+  const key = String(word || '').trim().toLowerCase();
+  if (!key) return null;
+  return WORD_TO_SHELF.get(key) || (SHELVES.includes(key) ? key : null);
+}
+
+/**
+ * The shelf list: what there is to browse, how much of it this viewer already
+ * owns, and the cheapest thing on each shelf. This is what `!shop` on its own
+ * answers — showing one shelf and leaving the other five undiscovered is how a
+ * shop with 43 things in it reads as a shop with 10.
+ */
+export function shelves(profile) {
+  const all = catalogue();
+  return SHELVES.map((slot) => {
+    const items = all.filter((i) => i.slot === slot);
+    const prices = items.map((i) => i.price).filter((p) => p != null);
+    const ownedCount = items.filter((i) => owns(profile, i.id)).length;
+    return {
+      slot,
+      label: SHELF_LABELS[slot],
+      blurb: SHELF_BLURBS[slot],
+      count: items.length,
+      owned: ownedCount,
+      from: prices.length ? Math.min(...prices) : null,
+      to: prices.length ? Math.max(...prices) : null,
+      affordable: prices.some((p) => canAfford(profile, p)),
+    };
+  });
+}
+
 export const shinyId = (coat) => `${SHINY_PREFIX}${coat}`;
 export const isShinyId = (id) => String(id).startsWith(SHINY_PREFIX);
 export const coatOfShiny = (id) => String(id).slice(SHINY_PREFIX.length);

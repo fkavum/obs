@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buy, wear, takeOff, setCoat, setEyes, shopPage, catalogue, grantEarned,
-  itemById, owns, shinyId, SHINY_PRICE, SLOTS,
+  itemById, owns, shinyId, SHINY_PRICE, SLOTS, shelves, resolveShelf,
 } from '../shared/pets/wardrobe.js';
 import { ACCESSORIES, ACCESSORY_LIST, priceOf, RARITY } from '../shared/pets/accessories.js';
 import { createProfile } from '../shared/profiles.js';
@@ -189,4 +189,79 @@ test('the catalogue is what the board and the commands both read', () => {
   }
   assert.equal(itemById('shiny:nonsense'), null);
   assert.equal(itemById('nothing-like-this'), null);
+});
+
+// ---- browsing --------------------------------------------------------------
+
+test('the shelf list covers the whole catalogue, with nothing stranded', () => {
+  const p = profileWith(300);
+  const list = shelves(p);
+  assert.deepEqual(list.map((s) => s.slot), [...SLOTS, 'coat'], 'coats are a shelf too');
+  assert.equal(list.reduce((n, s) => n + s.count, 0), catalogue().length,
+    'every item in the shop is on a shelf someone can reach');
+  for (const shelf of list) {
+    assert.ok(shelf.count > 0, `${shelf.slot} is not an empty shelf`);
+    assert.ok(shelf.label, `${shelf.slot} has a name`);
+    assert.ok(shelf.blurb, `${shelf.slot} says what is on it`);
+  }
+});
+
+test('the shelf list says what this viewer can actually afford', () => {
+  const broke = shelves(profileWith(0));
+  assert.equal(broke.every((s) => !s.affordable), true, 'nothing at zero coins');
+
+  const rich = shelves(profileWith(100));
+  const hats = rich.find((s) => s.slot === 'hat');
+  assert.equal(hats.affordable, true, '100 coins buys a common hat');
+  assert.equal(rich.find((s) => s.slot === 'coat').affordable, false, 'but not a shiny coat');
+  assert.equal(hats.from, RARITY.common.price);
+});
+
+test('the shelf list counts what they already own', () => {
+  const p = profileWith(1000);
+  assert.equal(shelves(p).find((s) => s.slot === 'hat').owned, 0);
+  buy(p, 'partyhat');
+  buy(p, 'beanie');
+  const after = shelves(p);
+  assert.equal(after.find((s) => s.slot === 'hat').owned, 2);
+  assert.equal(after.find((s) => s.slot === 'face').owned, 0);
+});
+
+test('shelf words are the ones people type, not the ones we named the slots', () => {
+  const cases = {
+    hat: ['hat', 'hats', 'head', 'crown', 'helmet'],
+    face: ['face', 'eyes', 'glasses', 'shades', 'sunglasses'],
+    neck: ['neck', 'collar', 'scarf', 'tie'],
+    back: ['back', 'wings', 'cape', 'backpack'],
+    paw: ['paw', 'held', 'hand', 'toys'],
+    coat: ['coat', 'colour', 'color', 'shiny', 'skins'],
+  };
+  for (const [shelf, words] of Object.entries(cases)) {
+    for (const word of words) {
+      assert.equal(resolveShelf(word), shelf, `"${word}" opens the ${shelf} shelf`);
+    }
+  }
+  assert.equal(resolveShelf('HATS'), 'hat', 'and case does not matter');
+  assert.equal(resolveShelf(' face '), 'face');
+});
+
+test('a word that means nothing resolves to nothing, rather than to hats', () => {
+  for (const word of ['banana', '', null, undefined, '2', 'shopping']) {
+    assert.equal(resolveShelf(word), null, `"${word}" is not a shelf`);
+  }
+});
+
+test('every shelf can be opened by its own slot name', () => {
+  for (const slot of [...SLOTS, 'coat']) {
+    assert.equal(resolveShelf(slot), slot);
+    const page = shopPage(profileWith(0), { slot, page: 0 });
+    assert.ok(page.items.length > 0, `${slot} has something on it`);
+  }
+});
+
+test('the coat shelf is reachable — it used to silently show hats', () => {
+  const p = profileWith(5000);
+  const page = shopPage(p, { slot: resolveShelf('coat'), page: 0 });
+  assert.ok(page.items.every((i) => i.id.startsWith('shiny:')), 'coats, not hats');
+  assert.ok(page.items.every((i) => i.price === SHINY_PRICE));
 });

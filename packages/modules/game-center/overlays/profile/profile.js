@@ -127,6 +127,7 @@ function render(card) {
     case 'note': return noteCard(card.text);
     case 'help': return noteCard('Games: !race !attack !heist · Pets: !adopt !feed !pet · Shop: !shop !buy !wear');
     case 'shop': return shopCard(card);
+    case 'shop-index': return shelvesCard(card);
     case 'closet': return noteCard(`${card.name}'s closet: ${card.items.map((i) => i.label).join(' · ') || 'empty'}`);
     case 'avatar': return avatarCard(card);
     case 'coins': return coinsCard(card);
@@ -233,10 +234,31 @@ function leaderboardCard(card) {
   return el;
 }
 
+/** The shelf list: what there is to browse, and what to type to browse it. */
+function shelvesCard(card) {
+  const el = card_('list', 'shop');
+  const title = div('name');
+  title.textContent = card.note || 'What\u2019s in the shop';
+  const rows = div('rows');
+  for (const shelf of card.shelves || []) {
+    const row = div('row');
+    const cmd = div('cmd');
+    cmd.textContent = `!shop ${shelf.slot}`;
+    const blurb = div('blurb');
+    blurb.textContent = shelf.blurb || '';
+    const amount = div('amount');
+    amount.textContent = shelf.from == null ? `${shelf.count}` : `${shelf.count} · from ${shelf.from}`;
+    row.append(cmd, blurb, amount);
+    rows.append(row);
+  }
+  el.append(title, rows);
+  return el;
+}
+
 function shopCard(card) {
   const el = card_('big', 'shop');
   const title = div('name');
-  title.textContent = `${card.slot} shop`;
+  title.textContent = card.label || `${card.slot} shop`;
   const rows = div('rows');
   for (const item of card.items || []) {
     const row = div('row');

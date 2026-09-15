@@ -45,6 +45,21 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
   grid-template-columns: 1fr; grid-template-areas: "name" "art" "body" "meter";
   justify-items: center; text-align: center; gap: .35em; padding: 1.2em;
 }
+/* A list card is as tall as its list. The 600x400 card is sized for a pet
+   portrait; a six-row menu in it is two-thirds empty space. */
+.card[data-size="list"] {
+  width: var(--big-w); min-height: 0;
+  grid-template-columns: 1fr; grid-template-areas: "name" "art" "body" "meter";
+  justify-items: stretch; text-align: left; gap: .5em; padding: 1em 1.2em;
+}
+.card[data-size="list"] .name { justify-content: flex-start; }
+.card[data-size="list"] .row { gap: .8em; }
+.card[data-size="list"] .row .blurb {
+  flex: 1 1 auto; color: var(--muted); font-size: .88em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card[data-size="list"] .row .cmd { flex: none; font-weight: 600; font-variant-numeric: tabular-nums; }
+
 .card[data-event="evolved"] { box-shadow: 0 0 0 2px var(--accent), 0 0 40px -8px var(--accent); }
 
 .card .art { grid-area: art; }

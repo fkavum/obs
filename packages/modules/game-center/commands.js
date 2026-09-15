@@ -9,7 +9,7 @@
 import { formatCoins } from './shared/profiles.js';
 import { SPECIES, STARTER_SPECIES } from './shared/pets/species.js';
 import { FOODS } from './shared/pets/model.js';
-import { SLOTS, SLOT_LABELS, EYE_NAMES } from './shared/pets/wardrobe.js';
+import { SHELVES, SHELF_LABELS, EYE_NAMES, resolveShelf } from './shared/pets/wardrobe.js';
 import { COAT_NAMES } from './shared/profiles.js';
 
 const COOLDOWN_MS = 30000;
@@ -147,13 +147,29 @@ export function createCommands({ profiles, games, pets, wardrobe, avatars, wande
         if (command === '!shop') {
           if (onCooldown(key, command, now)) return true;
           const words = args.toLowerCase().split(/\s+/).filter(Boolean);
-          const slot = SLOTS.find((s) => words.includes(s)) || 'hat';
           const page = Math.max(1, parseInt(words.find((w) => /^\d+$/.test(w)) || '1', 10)) - 1;
+          const asked = words.filter((w) => !/^\d+$/.test(w));
+          const slot = asked.map(resolveShelf).find(Boolean) || null;
+
+          // No shelf named: show what the shelves ARE. Opening on hats and
+          // leaving the other five undiscovered is how a shop with 43 things
+          // in it reads as a shop with ten.
+          if (!slot) {
+            const list = wardrobe.shelves(profile);
+            const unknown = asked.length ? ` — no shelf called "${asked[0]}".` : '';
+            reply(event,
+              { kind: 'shop-index', shelves: list, coins: profile.coins, name: profile.name, note: unknown.trim() || null },
+              `${unknown} Shelves: ${list.map((s) => `${s.slot} (${s.count}${s.from != null ? `, from ${s.from}` : ''})`).join(' · ')}`
+              + ` — pick one with !shop ${list[0].slot}`);
+            return true;
+          }
+
           const view = wardrobe.shop(profile, { slot, page });
+          const more = view.pages > 1 ? ` — !shop ${view.slot} ${((view.page + 1) % view.pages) + 1} for more` : '';
           reply(event,
-            { kind: 'shop', ...view, coins: profile.coins, name: profile.name },
-            `${SLOT_LABELS[view.slot]} shop (${view.page + 1}/${view.pages}): ${view.items
-              .map((i) => `${i.label} ${i.owned ? '✓' : i.price == null ? 'earned' : i.price}`).join(' · ')}`);
+            { kind: 'shop', ...view, label: SHELF_LABELS[view.slot], coins: profile.coins, name: profile.name },
+            `${SHELF_LABELS[view.slot]} (${view.page + 1}/${view.pages}): ${view.items
+              .map((i) => `${i.label} ${i.owned ? '✓' : i.price == null ? 'earned' : i.price}`).join(' · ')}${more}`);
           return true;
         }
 

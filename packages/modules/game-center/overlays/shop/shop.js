@@ -7,7 +7,7 @@
  */
 import { parseSettings } from '/core/settings-schema.js';
 import { SHOP_SETTINGS, SHOP_THEMES } from './settings.js';
-import { catalogue, SLOT_LABELS } from '/m/game-center/pets/wardrobe.js';
+import { catalogue, SHELF_LABELS, resolveShelf } from '/m/game-center/pets/wardrobe.js';
 import { ACCESSORIES } from '/m/game-center/pets/accessories.js';
 import { PALETTE } from '/m/game-center/profiles.js';
 
@@ -55,7 +55,10 @@ function applyStaticStyles() {
 
 /** Split the catalogue into fixed-size pages, section by section. */
 function build() {
-  const wanted = String(settings.slots).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  // Accept the same words chat can type, so the board's sections and the
+  // !shop command can never drift apart.
+  const wanted = String(settings.slots).split(',')
+    .map((s) => resolveShelf(s.trim())).filter(Boolean);
   const perPage = Math.max(1, settings.rows * Number(settings.columns || 1));
   const all = catalogue();
   pages = [];
@@ -76,7 +79,7 @@ function show() {
   if (!page) return;
 
   const head = el('div', 'head', [
-    el('span', 'title', [text(SLOT_LABELS[page.slot] || titleCase(page.slot))]),
+    el('span', 'title', [text(SHELF_LABELS[page.slot] || titleCase(page.slot))]),
     el('span', 'pager', [text(pages.length > 1 ? `${at + 1}/${pages.length}` : '')]),
   ]);
 

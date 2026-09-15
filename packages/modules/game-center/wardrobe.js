@@ -3,7 +3,7 @@
  * can be tested without a disk; this layer only saves and phrases things.
  */
 import {
-  buy, wear, takeOff, setCoat, setEyes, shopPage, catalogue,
+  buy, wear, takeOff, setCoat, setEyes, shopPage, catalogue, shelves,
   grantEarned, itemById, owns, isShinyId, coatOfShiny, SHINY_PRICE,
 } from './shared/pets/wardrobe.js';
 import { ACCESSORIES } from './shared/pets/accessories.js';
@@ -23,6 +23,11 @@ export function createWardrobe({ profiles, pets, log }) {
 
     shop(profile, { slot, page } = {}) {
       return shopPage(profile, { slot, page });
+    },
+
+    /** What there is to browse — the answer to a bare !shop. */
+    shelves(profile) {
+      return shelves(profile);
     },
 
     buy(profile, id) {

@@ -110,13 +110,30 @@ Every pet can wear one thing per slot: a **hat**, something on its **face**, som
 
 | Command | What it does |
 | --- | --- |
-| `!shop` | Show the hat shelf. `!shop neck`, `!shop back`, `!shop paw`, `!shop face`, `!shop coat` for the others, and `!shop hat 2` for the second page. |
+| `!shop` | Show the shelves — what there is to browse, and what to type to browse it. |
+| `!shop face` | Open a shelf. `!shop hat 2` for its second page. |
 | `!buy <item>` | Buy it. `!buy party hat` and `!buy partyhat` both work. |
 | `!wear <item>` | Put it on the pet you have out. |
 | `!off <slot>` | Take it off again — `!off hat`. |
 | `!coat <colour>` | Change the coat. Free, as often as you like. Twelve colours. |
 | `!eyes <colour>` | Change the eyes: onyx, amber, sky, forest, rose, gold. Also free. |
 | `!closet` | Everything they own, and what's currently worn. |
+
+**`!shop` on its own shows the shelves**, not a shelf — six of them, with how many things
+are on each and the cheapest price, so nobody has to guess that `back` or `coat` exist:
+
+```
+!shop hat    crowns, beanies, wizard hats               10 · from 75
+!shop face   glasses, shades, an eyepatch                6 · from 75
+!shop neck   scarves, bow ties, gold chains              5 · from 75
+!shop back   capes and wings (stage 3 and up)            4 · from 600
+!shop paw    things to hold — balloons, swords, coffee   6 · from 75
+!shop coat   shiny versions of the twelve colours       12 · from 1500
+```
+
+**Type whatever word comes to mind.** `!shop glasses`, `!shop eyes` and `!shop face` all open the
+same shelf; so do `!shop hats`, `!shop head` and `!shop crown`. A word that matches nothing shows
+the shelf list again and says so, rather than quietly opening a different shelf.
 
 **Prices.** Common 75, Uncommon 200, Rare 600, Epic 2,000. Coats and eye colours cost nothing —
 that's how someone makes a creature theirs in their first minute. **Shiny** coats are the paid
