@@ -35,7 +35,6 @@ export const DEFAULT_CONFIG = {
     commands: 'commands/commands',
     autoMessages: 'commands/auto-messages',
     timer: 'timer/timer',
-    points: 'games/points',
   },
   // One folder per feature, holding that feature's presets as individual files.
   presets: {

@@ -2,7 +2,7 @@
  * Runs chat games.
  *
  * The games themselves are pure; this part watches the event stream, ticks the
- * simulation, broadcasts state to the overlay, and keeps the points ledger.
+ * simulation, broadcasts state to the overlay, and keeps the coin ledger.
  *
  * Deliberately read-only: a game never needs to SEND a message, so unlike the
  * chatbot these work with no account connected at all - which is also why the
@@ -10,24 +10,24 @@
  */
 import { EventEmitter } from 'node:events';
 import { createLogger } from '#core/index.js';
-import { GAMES, makeRandom, matchesCommand, playerKey } from '#core/games/index.js';
-import { loadData, saveData } from './store.js';
+import { GAMES, makeRandom, matchesCommand, playerKey } from './shared/games/index.js';
 
 const log = createLogger('games');
 const TICK_MS = 250;
 // Everyone starts with something, or the heist is unplayable on day one: you
-// need points to stake, and points only come from playing.
-const STARTING_POINTS = 100;
+// need coins to stake, and coins only come from playing.
+const STARTING_COINS = 100;
 
 export class GameService extends EventEmitter {
-  constructor({ config, hub }) {
+  constructor({ config, hub, store }) {
     super();
     this.config = config;
     this.hub = hub;
+    this.store = store;
     this.state = null;      // the running game, or null
     this.random = makeRandom();
     this.timer = null;
-    this.points = loadData(config, 'points', {}) || {};
+    this.coins = this.store.load('coins', {}) || {};
     this.onEvent = (event) => this.#handleChat(event);
   }
 
@@ -42,35 +42,35 @@ export class GameService extends EventEmitter {
     clearInterval(this.timer);
   }
 
-  // ---------------------------------------------------------------- points
+  // ---------------------------------------------------------------- coins
 
   balanceOf(key) {
-    return this.points[key]?.points ?? STARTING_POINTS;
+    return this.coins[key]?.coins ?? STARTING_COINS;
   }
 
   /** First time we see someone, open an account for them. */
   ensurePlayer(key, name, platform) {
-    if (!this.points[key]) {
-      this.points[key] = { name, platform, points: STARTING_POINTS, wins: 0, played: 0 };
+    if (!this.coins[key]) {
+      this.coins[key] = { name, platform, coins: STARTING_COINS, wins: 0, played: 0 };
     }
-    return this.points[key];
+    return this.coins[key];
   }
 
   /** Records the player even when they earned nothing - turning up still counts. */
   #award(key, name, platform, amount) {
-    const entry = this.points[key] || { name, platform, points: 0, wins: 0, played: 0 };
+    const entry = this.coins[key] || { name, platform, coins: 0, wins: 0, played: 0 };
     entry.name = name;
     entry.platform = platform;
-    entry.points = Math.max(0, entry.points + (amount || 0));
-    this.points[key] = entry;
+    entry.coins = Math.max(0, entry.coins + (amount || 0));
+    this.coins[key] = entry;
     return entry;
   }
 
   /** Top of the leaderboard, for the overlay and the setup page. */
   leaderboard(limit = 10) {
-    return Object.entries(this.points)
+    return Object.entries(this.coins)
       .map(([key, v]) => ({ key, ...v }))
-      .sort((a, b) => b.points - a.points)
+      .sort((a, b) => b.coins - a.coins)
       .slice(0, limit);
   }
 
@@ -151,7 +151,7 @@ export class GameService extends EventEmitter {
       if (result.place === 1 || result.survived === true) entry.wins = (entry.wins || 0) + 1;
     }
     this.state.settled = true;
-    saveData(this.config, 'points', this.points);
+    this.store.save('coins', this.coins);
     log.info(this.state.message);
   }
 

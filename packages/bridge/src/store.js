@@ -96,3 +96,30 @@ export function dataStemsIn(config, folder) {
   }
   return stems;
 }
+
+/**
+ * A data store scoped to one feature module.
+ *
+ * `config/<moduleId>/<name>.initial.config` ships with the module and is never
+ * written to; `<name>.local.config` is the working copy, created by copying it.
+ * Same two-file shape as everything else, but a module gets it without having
+ * to register anything in the shared config - which is the point of the module
+ * contract.
+ */
+export function createModuleStore(moduleId) {
+  if (!/^[a-z0-9-]+$/i.test(moduleId)) throw new Error(`bad module id: ${moduleId}`);
+  const key = (name) => {
+    if (!/^[a-z0-9-]+$/i.test(name)) throw new Error(`bad data name: ${name}`);
+    return `${moduleId}/${name}`;
+  };
+  // A synthetic config whose `files` map is generated, not stored.
+  const shim = { files: new Proxy({}, { get: (_, name) => (typeof name === 'string' ? key(name) : undefined) }) };
+
+  return {
+    load: (name, fallback = null) => loadData(shim, name, fallback),
+    save: (name, data) => saveData(shim, name, data),
+    reset: (name) => resetData(shim, name),
+    seed: (name, data) => seedInitialData(shim, name, data),
+    path: (name) => localPath(shim, name),
+  };
+}

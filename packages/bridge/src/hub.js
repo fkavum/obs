@@ -91,6 +91,7 @@ export class Hub extends EventEmitter {
         emit,
         log: platformLog,
         peers,
+        extraMessages: this.modules?.previewMessages?.() || [],
         saveConfig: (patch) => setPlatformConfig(this.config, id, patch),
       });
       await entry.adapter.start();

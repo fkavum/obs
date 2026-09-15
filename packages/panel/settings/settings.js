@@ -11,7 +11,35 @@ import { OVERLAYS, parseSettings, toQuery, isVisible } from '/core/settings-sche
 // Which overlay this screen is editing: /settings/?overlay=alerts. Everything
 // below reads from the registry entry, so a new overlay needs no code here.
 const overlayId = new URLSearchParams(location.search).get('overlay') || 'chat';
-const overlay = OVERLAYS[overlayId] || OVERLAYS.chat;
+
+/**
+ * Overlays come from two places: the ones built into the toolkit, and any a
+ * feature module provides. A module declares where its settings file is and the
+ * screen imports it - so adding an overlay needs no edit here.
+ */
+async function allOverlays() {
+  const registry = { ...OVERLAYS };
+  try {
+    const { overlays } = await (await fetch('/api/modules')).json();
+    for (const entry of overlays || []) {
+      if (!entry.settings) continue;
+      try {
+        // A module's overlays/ folder is served at /overlays/<module>/, so a
+        // manifest path of "overlays/games/settings.js" is reachable there.
+        const url = `/overlays/${entry.module}/${String(entry.settings).replace(/^overlays\//, '')}`;
+        const mod = await import(url);
+        const found = mod.overlay || mod.default;
+        if (found?.schema) registry[found.id] = found;
+      } catch (err) {
+        console.warn(`overlay settings for ${entry.module}.${entry.id} failed to load:`, err);
+      }
+    }
+  } catch { /* no modules is fine */ }
+  return registry;
+}
+
+const REGISTRY = await allOverlays();
+const overlay = REGISTRY[overlayId] || REGISTRY.chat;
 const STORAGE_KEY = `${overlay.id}-overlay-query`;
 
 const controlsEl = document.getElementById('controls');
@@ -80,7 +108,7 @@ function paintChrome() {
 
   const tabs = document.getElementById('tabs');
   tabs.innerHTML = '<a href="/">Setup</a>';
-  for (const o of Object.values(OVERLAYS)) {
+  for (const o of Object.values(REGISTRY)) {
     const a = document.createElement('a');
     a.href = `/settings/?overlay=${o.id}`;
     a.textContent = `${o.label} style`;

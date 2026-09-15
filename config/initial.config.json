@@ -33,7 +33,6 @@
   "files": {
     "commands": "commands/commands",
     "autoMessages": "commands/auto-messages",
-    "timer": "timer/timer",
-    "points": "games/points"
+    "timer": "timer/timer"
   }
 }

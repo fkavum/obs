@@ -7,11 +7,11 @@ import { join } from 'node:path';
 
 const dir = mkdtempSync(join(tmpdir(), 'obs-games-'));
 process.env.OBS_TOOLKIT_CONFIG_DIR = dir;
-const { GameService } = await import('../src/games.js');
-const { saveData } = await import('../src/store.js');
+const { GameService } = await import('../service.js');
+const { createModuleStore } = await import('#bridge/store.js');
 process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
 
-const FILES = { points: 'games/points' };
+const store = createModuleStore('game-center');
 const chat = (name, platform, text) => ({
   type: 'chat', platform, ts: Date.now(), channel: 'c',
   user: { id: name, name: name.toLowerCase(), displayName: name, roles: [] },
@@ -21,11 +21,11 @@ const chat = (name, platform, text) => ({
 function makeService({ keepPoints = false } = {}) {
   const hub = new EventEmitter();
   hub.platforms = new Map();
-  const config = { files: FILES };
-  // Points persist to a file, so without this each test would inherit the last
+  const config = {};
+  // Coins persist to a file, so without this each test would inherit the last
   // one's leaderboard - which is exactly what caught me out writing these.
-  if (!keepPoints) rmSync(join(dir, 'games', 'points.local.config'), { force: true });
-  const service = new GameService({ config, hub });
+  if (!keepPoints) rmSync(join(dir, 'game-center', 'coins.local.config'), { force: true });
+  const service = new GameService({ config, hub, store });
   service.start();
   return { service, hub, config };
 }
@@ -75,9 +75,9 @@ test('finishing a game pays the players and records a win', () => {
   assert.equal(service.balanceOf('twitch:ann'), 50);
   assert.equal(service.balanceOf('kick:ben'), 25);
   assert.equal(service.balanceOf('kick:cal'), 0, 'turning up still counts as played');
-  assert.equal(service.points['twitch:ann'].wins, 1);
-  assert.equal(service.points['kick:ben'].wins, 0, 'second place is not a win');
-  assert.equal(service.points['kick:cal'].played, 1);
+  assert.equal(service.coins['twitch:ann'].wins, 1);
+  assert.equal(service.coins['kick:ben'].wins, 0, 'second place is not a win');
+  assert.equal(service.coins['kick:cal'].played, 1);
   assert.deepEqual(service.leaderboard().map((p) => p.name), ['Ann', 'Ben', 'Cal']);
   service.stop();
 });
@@ -97,7 +97,7 @@ test('a game is never paid out twice', () => {
 
 test('a lost heist takes points away but never below zero', () => {
   const { service } = makeService();
-  service.points['twitch:ann'] = { name: 'Ann', platform: 'twitch', points: 30 };
+  service.coins['twitch:ann'] = { name: 'Ann', platform: 'twitch', coins: 30 };
   service.begin('heist');
   service.state = {
     ...service.state, phase: 'finished',
@@ -117,17 +117,17 @@ test('points survive a restart because they live in their own file', () => {
   };
   service.settle();
   service.stop();
-  assert.equal(existsSync(join(dir, 'games', 'points.local.config')), true, 'written to its own file');
+  assert.equal(existsSync(join(dir, 'game-center', 'coins.local.config')), true, 'written to its own file');
 
-  const again = new GameService({ config, hub: Object.assign(new EventEmitter(), { platforms: new Map() }) });
+  const again = new GameService({ config, hub: Object.assign(new EventEmitter(), { platforms: new Map() }), store: createModuleStore('game-center') });
   assert.equal(again.balanceOf('twitch:ann'), 120, 'and read back on the next start');
   assert.equal(again.leaderboard()[0].name, 'Ann');
 });
 
 test('the heist uses each viewer’s own balance', () => {
   const { service, hub } = makeService();
-  service.points['twitch:rich'] = { name: 'Rich', platform: 'twitch', points: 400 };
-  service.points['kick:poor'] = { name: 'Poor', platform: 'kick', points: 5 };
+  service.coins['twitch:rich'] = { name: 'Rich', platform: 'twitch', coins: 400 };
+  service.coins['kick:poor'] = { name: 'Poor', platform: 'kick', coins: 5 };
   service.begin('heist');
 
   hub.emit('event', chat('Rich', 'twitch', '!heist all'));

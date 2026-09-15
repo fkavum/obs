@@ -8,13 +8,14 @@
     "node": ">=20"
   },
   "imports": {
-    "#core/*": "./packages/core/src/*"
+    "#core/*": "./packages/core/src/*",
+    "#bridge/*": "./packages/bridge/src/*"
   },
   "dependencies": {},
   "scripts": {
     "start": "node packages/bridge/bin/start.js",
     "demo": "node packages/bridge/bin/start.js --demo",
-    "test": "node --test packages/**/test/*.test.js",
+    "test": "node --test 'packages/**/test/*.test.js'",
     "diagnose": "node packages/bridge/bin/diagnose.js"
   }
 }

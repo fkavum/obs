@@ -12,7 +12,6 @@ import { WSServer, createLogger } from '#core/index.js';
 import { makePreviewEvent } from '#core/preview-feed.js';
 import { parseClock } from '#core/timer-model.js';
 import { TimerService } from '../timer.js';
-import { GameService } from '../games.js';
 import { startModules } from '../modules/loader.js';
 import { ROOT, saveConfig, setPlatformConfig, resetToSeed } from '../config.js';
 import { loadPresets, listPresets, putPreset, deletePreset } from '../presets.js';
@@ -38,10 +37,6 @@ export async function startServer({ hub, config, onQuit = null }) {
 
   // Toolkit state rather than a platform event, so it travels as its own
   // top-level message type instead of being squeezed into the event schema.
-  const games = new GameService({ config, hub });
-  hub.games = games;
-  games.start();
-
   const timer = new TimerService(loadData(config, 'timer', {}) || {});
   // Remember how the timer is set up, so a restart comes back the same.
   timer.on('change', (state) => {
@@ -57,6 +52,8 @@ export async function startServer({ hub, config, onQuit = null }) {
   };
   const http = createServer(requestHandler);
   const ws = new WSServer(http, { path: '/events' });
+  // How a module reaches connected overlays without knowing about sockets.
+  hub.broadcast = (message) => ws.broadcast(message);
 
   // Windows resolves "localhost" to ::1 before 127.0.0.1, and on some setups a
   // connection to an unbound ::1 hangs instead of failing fast, so the browser
@@ -72,7 +69,10 @@ export async function startServer({ hub, config, onQuit = null }) {
     conn.send(JSON.stringify({ type: 'hello', platforms: hub.manifests(), ts: Date.now() }));
     // A freshly opened timer source needs the current state immediately.
     conn.send(JSON.stringify({ type: 'timer', state: timer.get() }));
-    if (games.state) conn.send(JSON.stringify({ type: 'game', state: games.state }));
+    // Anything a module wants a freshly connected overlay to know.
+    for (const m of hub.modules.list) {
+      for (const message of m.instance?.hello?.() || []) conn.send(JSON.stringify(message));
+    }
     if (backlogSize) {
       for (const event of hub.backlog(backlogSize, filter.length ? filter : null)) {
         conn.send(JSON.stringify({ type: 'event', event, replay: true }));
@@ -91,8 +91,6 @@ export async function startServer({ hub, config, onQuit = null }) {
   };
   const onTimer = (state) => ws.broadcast({ type: 'timer', state });
   timer.on('change', onTimer);
-  const onGame = (state) => ws.broadcast({ type: 'game', state });
-  games.on('change', onGame);
   hub.on('event', onEvent);
   hub.on('status', () => ws.broadcast({ type: 'status', platforms: hub.status(), ts: Date.now() }));
 
@@ -120,8 +118,6 @@ export async function startServer({ hub, config, onQuit = null }) {
     altUrl: `http://${host}:${httpPort}`,
     close() {
       modules.stop();
-      games.off('change', onGame);
-      games.stop();
       timer.off('change', onTimer);
       hub.off('event', onEvent);
       ws.close();
@@ -154,6 +150,11 @@ async function handle(req, res, ctx) {
   if (moduleOverlay && ctx.hub.modules?.get(moduleOverlay[1])) {
     const entry = ctx.hub.modules.get(moduleOverlay[1]);
     if (serveStatic(res, join(entry.dir, 'overlays'), `/${moduleOverlay[2]}`)) return;
+  }
+  const moduleShared = /^\/m\/([a-z0-9-]+)\/(.*)$/i.exec(path);
+  if (moduleShared && ctx.hub.modules?.get(moduleShared[1])) {
+    const entry = ctx.hub.modules.get(moduleShared[1]);
+    if (serveStatic(res, join(entry.dir, 'shared'), `/${moduleShared[2]}`)) return;
   }
   const modulePanel = /^\/panel\/([a-z0-9-]+)\/(.*)$/i.exec(path);
   if (modulePanel && ctx.hub.modules?.get(modulePanel[1])) {
@@ -369,21 +370,6 @@ async function api(req, res, url, { hub, config, onQuit }) {
   if (path === '/api/chatbot/test' && req.method === 'POST') {
     const body = await readBody(req);
     return sendJSON(res, 200, hub.chatbot.test(String(body.trigger || '')));
-  }
-
-  if (path === '/api/games' && req.method === 'GET') {
-    return sendJSON(res, 200, hub.games.status());
-  }
-
-  if (path === '/api/games' && req.method === 'POST') {
-    const body = await readBody(req);
-    try {
-      if (body.action === 'cancel') return sendJSON(res, 200, { ok: true, state: hub.games.cancel() });
-      hub.games.begin(body.game, body);
-      return sendJSON(res, 200, { ok: true, ...hub.games.status() });
-    } catch (err) {
-      return sendJSON(res, 400, { error: err.message });
-    }
   }
 
   if (path === '/api/timer' && req.method === 'GET') {

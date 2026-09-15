@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GAMES, race, boss, heist, makeRandom, playerKey, matchesCommand } from '#core/games/index.js';
+import { GAMES, race, boss, heist, makeRandom, playerKey, matchesCommand } from '../shared/games/index.js';
 
 const T0 = 1_000_000;
 const chatter = (name, platform = 'twitch', text = '') => ({

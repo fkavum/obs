@@ -40,8 +40,6 @@ const MESSAGES = [
   'KEKW',
   'skill issue honestly',
   'how do i get that border on my chat',
-  // Game commands, so the demo chat can actually play a game while you test.
-  '!race', '!race', '!attack', '!attack', '!attack', '!heist 50', '!heist all',
 ];
 
 const ROLE_SETS = [[], [], [], ['subscriber'], ['subscriber'], ['moderator'], ['moderator', 'subscriber'], ['vip']];
@@ -53,7 +51,7 @@ const uuid = () =>
     : `fake-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 /** Build one fake normalized event. */
-export function makePreviewEvent(platforms = ['twitch', 'youtube', 'kick'], forceType = null) {
+export function makePreviewEvent(platforms = ['twitch', 'youtube', 'kick'], forceType = null, extraMessages = []) {
   const platform = pick(platforms.length ? platforms : ['fake']);
   const name = pick(NAMES);
   const user = {
@@ -80,7 +78,7 @@ export function makePreviewEvent(platforms = ['twitch', 'youtube', 'kick'], forc
       return { ...base, type: 'raid', data: { viewers: 10 + Math.floor(Math.random() * 500), fromChannel: pick(NAMES).toLowerCase() } };
     case 'chat':
     default: {
-      const text = pick(MESSAGES);
+      const text = pick(extraMessages.length ? [...MESSAGES, ...extraMessages] : MESSAGES);
       return { ...base, type: 'chat', data: { text, fragments: [{ type: 'text', text }] } };
     }
   }
@@ -90,16 +88,16 @@ export function makePreviewEvent(platforms = ['twitch', 'youtube', 'kick'], forc
  * Emit fake events on a human-ish rhythm: bursts, then lulls, the way real chat behaves.
  * @returns {() => void} stop function
  */
-export function startPreviewFeed(emit, { platforms, minMs = 700, maxMs = 3500, burstChance = 0.25 } = {}) {
+export function startPreviewFeed(emit, { platforms, minMs = 700, maxMs = 3500, burstChance = 0.25, extraMessages = [] } = {}) {
   let timer = null;
   let stopped = false;
 
   const tick = () => {
     if (stopped) return;
-    emit(makePreviewEvent(platforms));
+    emit(makePreviewEvent(platforms, null, extraMessages));
     // Occasionally fire a quick second message, so chat doesn't look metronomic.
     if (Math.random() < burstChance) {
-      setTimeout(() => !stopped && emit(makePreviewEvent(platforms)), 120 + Math.random() * 400);
+      setTimeout(() => !stopped && emit(makePreviewEvent(platforms, null, extraMessages)), 120 + Math.random() * 400);
     }
     timer = setTimeout(tick, minMs + Math.random() * (maxMs - minMs));
     timer.unref?.();

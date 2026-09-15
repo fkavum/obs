@@ -11,16 +11,51 @@ import { OVERLAYS } from '/core/settings-schema.js';
 // Built from the overlay registry, so a new overlay gets its tab automatically
 // instead of needing this page's markup edited.
 const tabs = document.getElementById('tabs');
-for (const o of Object.values(OVERLAYS)) {
+function addTab(id, label) {
   const a = document.createElement('a');
-  a.href = `/settings/?overlay=${o.id}`;
-  a.textContent = `${o.label} style`;
+  a.href = `/settings/?overlay=${id}`;
+  a.textContent = `${label} style`;
   tabs.append(a);
 }
+for (const o of Object.values(OVERLAYS)) addTab(o.id, o.label);
+// Module overlays get a tab the same way, without this page naming them.
+fetch('/api/modules')
+  .then((r) => r.json())
+  .then(({ overlays }) => {
+    for (const o of overlays || []) if (o.settings) addTab(`${o.module}.${o.id}`, o.label);
+  })
+  .catch(() => {});
 const commandsTab = document.createElement('a');
 commandsTab.href = '/commands/';
 commandsTab.textContent = 'Chat commands';
 tabs.append(commandsTab);
+
+// Feature modules supply their own setup-page cards; this page never names one.
+async function loadModuleCards() {
+  const host = document.getElementById('moduleCards');
+  if (!host) return;
+  let cards = [];
+  try {
+    cards = (await (await fetch('/api/modules')).json()).cards || [];
+  } catch {
+    return;
+  }
+  for (const card of cards) {
+    try {
+      const html = await (await fetch(card.src)).text();
+      const holder = document.createElement('div');
+      holder.innerHTML = html;
+      host.append(...holder.children);
+      // A card may ship behaviour alongside its markup.
+      const script = card.src.replace(/\.html$/, '.js');
+      const head = await fetch(script, { method: 'HEAD' }).catch(() => null);
+      if (head?.ok) await import(script);
+    } catch (err) {
+      console.warn(`module card ${card.module} failed:`, err);
+    }
+  }
+}
+loadModuleCards();
 
 const platformsEl = document.getElementById('platforms');
 const healthEl = document.getElementById('health');
@@ -33,75 +68,6 @@ document.getElementById('healthUrl').value = `${location.origin}/overlays/health
 document.getElementById('copyHealth').addEventListener('click', () => {
   copy(document.getElementById('healthUrl').value, 'Health link copied — add it as a Custom Browser Dock in OBS');
 });
-
-// ---- Chat games ----
-document.getElementById('gamesUrl').value = `${location.origin}/overlays/games/`;
-document.getElementById('copyGames').addEventListener('click', () => {
-  copy(document.getElementById('gamesUrl').value, 'Games link copied — add it to OBS as a full-screen Browser Source');
-});
-
-async function refreshGames() {
-  let status;
-  try {
-    status = await (await fetch('/api/games')).json();
-  } catch {
-    return;
-  }
-
-  const buttons = document.getElementById('gameButtons');
-  if (!buttons.dataset.built) {
-    for (const game of status.games) {
-      const btn = document.createElement('button');
-      btn.className = 'primary';
-      btn.textContent = `${game.emoji} Start ${game.label}`;
-      btn.title = `Chat joins by typing ${game.joinCommand}`;
-      btn.addEventListener('click', async () => {
-        const res = await post('/api/games', { game: game.id });
-        if (res.error) toast(res.error);
-        else toast(`${game.label} started — chat types ${game.joinCommand}`);
-        refreshGames();
-      });
-      buttons.append(btn);
-    }
-    buttons.dataset.built = '1';
-  }
-
-  const pill = document.getElementById('gameStatus');
-  const running = status.running;
-  pill.innerHTML = `<span class="dot ${running ? 'ok' : ''}"></span>${escape(
-    running ? `${status.state.message || 'in progress'} · ${status.state.players?.length || 0} playing` : 'no game running',
-  )}`;
-  document.getElementById('gameCancel').hidden = !running;
-  for (const btn of buttons.children) btn.disabled = running;
-
-  const board = document.getElementById('gameBoard');
-  board.replaceChildren();
-  if (status.leaderboard?.length) {
-    const title = document.createElement('p');
-    title.className = 'sub';
-    title.style.margin = '0 0 8px';
-    title.textContent = 'Points leaderboard';
-    board.append(title);
-    const row = document.createElement('div');
-    row.className = 'row';
-    row.style.flexWrap = 'wrap';
-    status.leaderboard.slice(0, 8).forEach((p, i) => {
-      const chip = document.createElement('span');
-      chip.className = 'pill';
-      chip.textContent = `${i + 1}. ${p.name} — ${p.points}`;
-      row.append(chip);
-    });
-    board.append(row);
-  }
-}
-
-document.getElementById('gameCancel').addEventListener('click', async () => {
-  await post('/api/games', { action: 'cancel' });
-  refreshGames();
-});
-
-refreshGames();
-setInterval(refreshGames, 2000);
 
 // ---- Timer ----
 const timerFields = {

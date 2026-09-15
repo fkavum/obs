@@ -4,8 +4,9 @@
  * Preview mode runs the real game modules against made-up players, so what you
  * style is exactly what viewers will see - not a mock-up that drifts from it.
  */
-import { parseSettings, GAMES_SETTINGS, GAMES_THEMES } from '/core/settings-schema.js';
-import { GAMES, makeRandom } from '/core/games/index.js';
+import { parseSettings } from '/core/settings-schema.js';
+import { GAMES_SETTINGS, GAMES_THEMES } from './settings.js';
+import { GAMES, makeRandom } from '/m/game-center/games/index.js';
 
 let retryDelay = 1000;
 let retryTimer = null;

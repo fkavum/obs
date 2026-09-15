@@ -5,7 +5,7 @@ game, which no platform's own features can do.*
 
 ## What you need
 
-- [ ] The toolkit running (see [Starting the toolkit](getting-started.md))
+- [ ] The toolkit running (see [Starting the toolkit](../../../docs/guides/getting-started.md))
 - [ ] At least one channel's name typed in
 
 **No account needed.** Games only *read* chat, so they work with nothing signed in — unlike
@@ -60,7 +60,7 @@ scores.
 
 ## Change how it looks
 
-**http://localhost:8778/settings/?overlay=games** — position, size, colours, how many players
+**http://localhost:8778/settings/?overlay=game-center.games** — position, size, colours, how many players
 to list, and how long results stay up.
 
 To style one game in particular, add its name to the preview: `?preview=on&game=heist`.

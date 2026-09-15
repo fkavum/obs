@@ -1,6 +1,7 @@
 # Game Center — implementation plan
 
-*Status: plan only. Nothing here is built. Written 2026-09-15.*
+*Written 2026-09-15. **Phase 0 and Phase 1 are built** — the module contract exists and the
+chat games now live inside it. Phases 2–6 are still plan only.*
 
 A shared world for chat across Twitch, Kick and YouTube: coins earned by playing chat games,
 spent on a profile with an avatar and a pet you feed, level up, evolve and dress up.

@@ -111,6 +111,11 @@ export async function startModules({ config, hub, dir } = {}) {
         })),
       );
     },
+    /** Lines a module wants the demo chat to sometimes type, for testing. */
+    previewMessages() {
+      return running.flatMap((m) => m.manifest.previewMessages || []);
+    },
+
     /** Setup-page cards, in manifest order. */
     panelCards() {
       return running
