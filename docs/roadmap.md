@@ -98,9 +98,9 @@ of it has run against a live audience yet.
 
 ## Tier 3 — after Tier 2 is stable
 
-- 🟨 **Chat commands & auto-messages** — built 2026-09-14. Matching, permissions, cooldowns and variables are verified; *sending* needs a signed-in platform and has not run live. Twitch now requests the chat:edit scope, so an existing Twitch login must sign in again to let the bot talk.
+- 🟨 **Chat commands & auto-messages** — built 2026-09-14. Matching, permissions, cooldowns and variables are verified; *sending* needs a signed-in platform and has not run live. Twitch now requests the chat:edit scope, so an existing Twitch login must sign in again to let the bot talk. Since 2026-09-16 a reply the bot cannot send is shown on the overlays as **Bot** instead of vanishing, which is what makes commands testable in the rehearsal room.
 - ✅ **Countdown / BRB / starting-soon timers** — built 2026-09-14. State lives on the bridge, so controls reach a source already open in OBS and a refreshed source resumes correctly.
-- 🟨 **Rehearsal room** — built 2026-09-15. A pretend stream at `/rehearsal/`: fake chat and alerts through the real bridge, your real overlays over a backdrop, each toggleable. Composites by clipping each frame to what it draws, because browsers paint embedded frames opaque — accurate for placement and readability, not for soft edges.
+- 🟨 **Rehearsal room** — built 2026-09-15. A pretend stream at `/rehearsal/`: fake chat and alerts through the real bridge, your real overlays over a backdrop, each toggleable. Composites by clipping each frame to what it draws, because browsers paint embedded frames opaque — accurate for placement and readability, not for soft edges. Chat commands answer here as of 2026-09-16; it still needs *Answer commands* switched on, since the bot ignores every message while it is off.
 - ⬜ **Clip / highlight marker** — a hotkey saves a replay-buffer clip and writes a timestamped VOD marker.
 - ⬜ **Polls overlay** — chat-voted polls that work across all three audiences at once.
 - ⬜ **Giveaway tool** — entries from all chats, deduped, drawn on stream.

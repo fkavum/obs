@@ -7,8 +7,15 @@
  * Reading commands needs no account. REPLYING does - a platform will not let an
  * anonymous connection talk - so the bot stays quiet on any platform that is not
  * signed in, rather than failing loudly every message.
+ *
+ * When it cannot talk, the answer still goes onto your own overlays as a local
+ * chat line. A reply that was sent for real needs no help: the platform echoes
+ * our own message back and the overlays draw it like any other. It is only the
+ * reply that never left the building that would otherwise vanish, which is why
+ * a command looks broken in the rehearsal room and on any channel the bot is
+ * not signed in to.
  */
-import { createLogger } from '#core/index.js';
+import { createLogger, makeEvent } from '#core/index.js';
 import {
   createCommand, createRuntime, handleMessage, dueAutoMessage, markAutoSent, sanitizeOutgoing,
 } from '#core/command-engine.js';
@@ -17,6 +24,9 @@ import { saveConfig } from './config.js';
 import { loadData, saveData, resetData } from './store.js';
 
 const log = createLogger('chatbot');
+// What an unsent reply is attributed to on the overlays. Not a platform name,
+// and not the operator's channel, so it means the same thing on every install.
+const BOT_NAME = 'Bot';
 
 export function createChatbot({ config, hub }) {
   const runtime = createRuntime();
@@ -105,8 +115,28 @@ export function createChatbot({ config, hub }) {
 
     // Answer where it was asked, which is what a viewer expects.
     const ok = await sendTo(result.platform, result.reply);
-    log[ok ? 'info' : 'debug'](`${result.command.trigger} on ${result.platform}${ok ? '' : ' (could not send)'}`);
+    if (!ok) showLocally(result.platform, result.reply);
+    log[ok ? 'info' : 'debug'](`${result.command.trigger} on ${result.platform}${ok ? '' : ' (shown locally only)'}`);
   };
+
+  /**
+   * Put a reply the bot could not send onto the overlays anyway.
+   *
+   * Tagged with the platform it was asked on so it sits in the right place in a
+   * chat overlay, and recorded as ours first - `user.self` does not survive
+   * makeEvent, so `recentlySent` is what actually stops the bot answering its
+   * own answer if a reply happens to contain a trigger.
+   */
+  function showLocally(platform, reply) {
+    recentlySent.push({ text: reply, at: Date.now() });
+    while (recentlySent.length > 20) recentlySent.shift();
+    hub.inject(makeEvent({
+      type: 'chat',
+      platform,
+      user: { id: 'bot', name: 'bot', displayName: BOT_NAME },
+      data: { text: reply, fragments: [{ type: 'text', text: reply }] },
+    }));
+  }
 
   async function tickAuto() {
     if (!config.chatbot?.enabled) return;

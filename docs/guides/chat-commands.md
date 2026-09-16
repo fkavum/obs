@@ -84,11 +84,17 @@ is stripped before sending.
 
 **It won't talk to itself.** A reply that happens to contain a trigger doesn't set off a loop.
 
+**An answer it can't send still shows on your overlays.** On a channel the bot isn't signed in
+to, viewers there won't see the reply in their chat — but it appears on your chat overlay,
+credited to **Bot**, so you can see the command worked. This is what makes commands testable in
+the [rehearsal room](rehearsal.md) before anything is signed in.
+
 ## If something goes wrong
 
 **The bot reads commands but never answers**
 Nothing is signed in. The top of the commands page says where it can talk — if it says
-"nowhere", sign in on the Setup page.
+"nowhere", sign in on the Setup page. Until then the answers still show on your own chat
+overlay as **Bot**; they just don't reach your viewers.
 
 **It answers on Kick but not Twitch**
 Sign in to Twitch again. Permission to send messages is granted at sign-in, and a login made

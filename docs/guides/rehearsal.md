@@ -21,6 +21,12 @@ here changes nothing in OBS — this is a rehearsal room, not a control panel.
 `!race`, `!shop`, `!adopt dog`. It all goes through the real toolkit, so whatever happens here
 is what will happen on stream.
 
+Your own chat commands — the ones on the *Chat commands* page, like `!socials` — work too, as
+long as *Answer commands* is switched on over there. The bot can't talk on a platform you
+haven't signed in to, so in rehearsal its answer appears on your chat overlay as **Bot** rather
+than being typed into a real chat. That is exactly what happens on stream on a channel the bot
+isn't signed in to.
+
 **Keep chat busy.** Switch on *Demo chat* and a room full of pretend viewers starts talking,
 including the game commands, so you can see how things look when it's noisy. *Send a burst*
 fires eight messages at once — useful for checking that your pet cards and alerts queue up
@@ -53,3 +59,7 @@ The black terminal window has been closed. Start the toolkit again and reload th
 
 **A pet doesn't appear when I type**
 Only viewers who actually have a pet appear. Type `!adopt dog` as that name first.
+
+**My own commands do nothing**
+Open the *Chat commands* page and switch on *Answer commands*. With that off the bot ignores
+every message, in rehearsal and on stream alike.

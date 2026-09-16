@@ -19,7 +19,15 @@ process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
 function makeHub({ canSend = true } = {}) {
   const hub = new EventEmitter();
   const sent = [];
+  const injected = [];
   hub.sent = sent;
+  hub.injected = injected;
+  // The real hub fans an injected event straight back out to every listener,
+  // and the loop guard depends on that, so the stub must do it too.
+  hub.inject = (event) => {
+    injected.push(event);
+    hub.emit('event', event);
+  };
   hub.platforms = new Map([
     ['twitch', {
       adapter: canSend
@@ -97,6 +105,43 @@ test('a platform that is connected but NOT signed in cannot talk', async () => {
   await settle();
   assert.deepEqual(hub.sent, []);
   assert.deepEqual(bot.status().canSendOn, [], 'and it reports that it cannot talk anywhere');
+  bot.stop();
+});
+
+test('a reply it could not send still reaches the overlays', async () => {
+  // The rehearsal room, and any channel the bot is not signed in to: without
+  // this the command matches, the reply goes nowhere, and it looks broken.
+  const { hub, bot } = setup({ hub: { canSend: false } });
+  hub.emit('event', chat('!socials'));
+  await settle();
+  assert.equal(hub.injected.length, 1);
+  const [event] = hub.injected;
+  assert.equal(event.type, 'chat');
+  assert.equal(event.data.text, 'Find me at example.com');
+  assert.deepEqual(event.data.fragments, [{ type: 'text', text: 'Find me at example.com' }]);
+  assert.equal(event.platform, 'twitch', 'tagged with the platform it was asked on');
+  bot.stop();
+});
+
+test('a reply that WAS sent is not also shown locally', async () => {
+  // The platform echoes our own message back, so echoing it ourselves too would
+  // draw every bot reply twice on stream.
+  const { hub, bot } = setup();
+  hub.emit('event', chat('!socials'));
+  await settle();
+  assert.deepEqual(hub.sent, ['Find me at example.com']);
+  assert.deepEqual(hub.injected, []);
+  bot.stop();
+});
+
+test('a locally shown reply does not set the bot answering itself', async () => {
+  const { hub, bot } = setup({
+    hub: { canSend: false },
+    commands: [{ id: 'loop', trigger: '!loop', response: '!loop again', enabled: true, permission: 'everyone', cooldownSec: 0, userCooldownSec: 0, aliases: [], platforms: [] }],
+  });
+  hub.emit('event', chat('!loop'));
+  await settle();
+  assert.equal(hub.injected.length, 1, 'shown once, and its own echo did not retrigger it');
   bot.stop();
 });
 
