@@ -18,6 +18,7 @@ every guide feels the same.
 | [Timer](timer.md) | Starting-soon countdown, be-right-back clock, count-up |
 | [Chat commands](chat-commands.md) | !commands the bot answers, plus auto-messages |
 | [Chat games](../../packages/modules/game-center/guide.md) | Race, Raid Boss and Heist — all three chats playing together |
+| [To-do list](../../packages/modules/todo/guide.md) | A checklist on stream, run from your chat; viewers can add one each |
 
 ## Writing rules
 

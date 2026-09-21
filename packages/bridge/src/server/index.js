@@ -8,7 +8,7 @@
 import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
-import { WSServer, createLogger } from '#core/index.js';
+import { WSServer, createLogger, ROLES } from '#core/index.js';
 import { makePreviewEvent } from '#core/preview-feed.js';
 import { parseClock } from '#core/timer-model.js';
 import { TimerService } from '../timer.js';
@@ -440,6 +440,12 @@ async function api(req, res, url, { hub, config, onQuit }) {
       event.user.name = body.user.toLowerCase();
       event.user.displayName = body.user;
       event.user.id = body.user.toLowerCase();
+    }
+    // ...and optionally wearing a badge. A command only the channel owner or a
+    // mod may run is otherwise untestable off-stream, because a made-up viewer
+    // never holds a role.
+    if (Array.isArray(body.roles) && event.user) {
+      event.user.roles = body.roles.filter((role) => ROLES.includes(role));
     }
     hub.inject(event);
     return sendJSON(res, 200, { ok: true, event });

@@ -96,6 +96,28 @@ reach the stream until the streamer turns the noise up.
 Everything is verified by 329 tests and by driving real chat commands through the bridge; none
 of it has run against a live audience yet.
 
+### 🟨 To-do list
+Built 2026-09-21, not yet run against a live audience. A feature module at
+`packages/modules/todo/` — a checklist on stream that the streamer runs from their own chat
+(`!task add`, `!task done 2`, `!task move 3 1`, `!task remove 2`, `!task clear done`) or from
+the setup page, whichever is nearer to hand. Tasks are addressed by the number shown on the
+overlay, so there is no id to remember and no second numbering to learn.
+
+The streamer is recognised by the **broadcaster badge the platform already puts on their
+messages** — nothing to configure, and not even a moderator can run the list.
+
+A switch on the setup page lets **chat keep one task each**: `!create <what they are doing>`
+puts it up with their name and platform colour, typing it again replaces it, and `!done` ticks
+it before it clears itself a few seconds later.
+
+The list lives in `config/todo/tasks.local.config` and the bridge watches that file, so it can
+also be written out by hand in a text editor mid-stream — a broken file leaves whatever is on
+screen alone. One overlay: `todo.list`.
+
+*Also added, because a broadcaster-only command was otherwise untestable off-stream:* the
+rehearsal room can send a line **as you, the streamer**, and `/api/test-event` accepts a
+`roles` list.
+
 ## Tier 3 — after Tier 2 is stable
 
 - 🟨 **Chat commands & auto-messages** — built 2026-09-14. Matching, permissions, cooldowns and variables are verified; *sending* needs a signed-in platform and has not run live. Twitch now requests the chat:edit scope, so an existing Twitch login must sign in again to let the bot talk. Since 2026-09-16 a reply the bot cannot send is shown on the overlays as **Bot** instead of vanishing, which is what makes commands testable in the rehearsal room.

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>To-do list</title>
+  <link rel="stylesheet" href="list.css">
+</head>
+<body>
+  <!-- Nothing renders until the bridge answers: an overlay must never show an
+       error on stream. -->
+  <div id="stage" data-hidden="yes">
+    <div class="panel" id="panel">
+      <div class="head" id="head">
+        <span class="title" id="title"></span>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="rows" id="rows"></div>
+    </div>
+  </div>
+  <script type="module" src="list.js"></script>
+</body>
+</html>

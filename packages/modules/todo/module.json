@@ -1,0 +1,28 @@
+{
+  "id": "todo",
+  "label": "To-do list",
+  "version": "0.1.0",
+  "order": 30,
+  "description": "A to-do list on your stream. You run it from chat or from this page, and chat can keep a task each.",
+  "overlays": [
+    {
+      "id": "list",
+      "label": "To-do list",
+      "settings": "overlays/list/settings.js",
+      "obsSize": {
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  ],
+  "panel": {
+    "card": "card.html",
+    "script": "card.js"
+  },
+  "previewMessages": [
+    "!tasks",
+    "!create finishing my homework",
+    "!create building a new base",
+    "!done"
+  ]
+}

@@ -315,7 +315,14 @@ lineInput.addEventListener('keydown', (e) => {
 function say(text) {
   const message = String(text || '').trim();
   if (!message) return;
-  fire({ type: 'chat', text: message, user: document.getElementById('who').value.trim() || 'PixelPete' });
+  // Wearing your own badge or not: a command only you may run has to be
+  // testable here, and so does what everyone else sees when they try it.
+  const asStreamer = document.getElementById('asStreamer').checked;
+  const line = { type: 'chat', text: message, user: document.getElementById('who').value.trim() || 'PixelPete' };
+  // Unchecked, the line keeps the mixed badges the pretend chat gives it, which
+  // is what the chat overlay is being styled against.
+  if (asStreamer) Object.assign(line, { user: 'You', roles: ['broadcaster'] });
+  fire(line);
   if (lineInput.value.trim() === message) lineInput.value = '';
 }
 
