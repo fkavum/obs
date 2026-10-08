@@ -10,7 +10,7 @@
 <div class="wrap wide">
   <header class="top">
     <h1 id="title">Overlay style</h1>
-    <p>Change anything on the left and watch it update on the right. When you like it, press <strong>Copy link for OBS</strong>.</p>
+    <p>Change anything on the left and watch it update on the right. When you like it, press <strong>Add to OBS</strong>.</p>
   </header>
 
   <div id="nav"></div>
@@ -27,16 +27,17 @@
       </div>
       <div class="urlbar">
         <input id="url" class="grow" type="text" readonly>
-        <button class="primary" id="copy">Copy link for OBS</button>
+        <button id="copy">Copy link</button>
       </div>
       <div class="row" style="margin-top:12px;justify-content:space-between">
         <label class="switch"><input type="checkbox" id="fakeToggle" checked><span>Use fake messages in this preview</span></label>
         <button class="ghost" id="reset">Reset everything</button>
       </div>
       <div class="row" id="testRow" style="margin-top:12px;gap:8px" hidden></div>
-      <div class="note">
-        In OBS set the source to <strong><span id="obsSize">400 × 1080</span></strong>. Already added it? Double-click the
-        source, delete the old link and paste the new one.
+      <div class="note" id="obsNote">
+        <strong>Add to OBS</strong> puts it into the scene OBS is showing. Changed the look later? Press it again and
+        OBS updates. Copying the link instead? Make the Browser Source
+        <strong><span id="obsSize">400 × 1080</span></strong>.
       </div>
     </div>
   </div>

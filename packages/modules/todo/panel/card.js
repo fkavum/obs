@@ -6,6 +6,8 @@
  * and redraws what comes back - which is why a task added from chat appears
  * here, and one added here appears on stream, without either side syncing.
  */
+import { addToObsButton } from '/obs-add.js';
+
 const API = '/api/m/todo';
 const POLL_MS = 2500;
 
@@ -181,6 +183,13 @@ document.getElementById('todoClearAll').addEventListener('click', () => {
 
 const url = `${location.origin}/overlays/todo/list/`;
 document.getElementById('todoUrl').value = url;
+document.getElementById('todoCopy').before(addToObsButton({
+  name: 'To-do list',
+  url,
+  size: { width: 1920, height: 1080 },
+  keepLook: true,
+  toast,
+}));
 document.getElementById('todoCopy').addEventListener('click', () => {
   navigator.clipboard?.writeText(url).then(
     () => toast('Link copied - add it to OBS as a Browser Source'),

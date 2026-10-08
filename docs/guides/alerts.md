@@ -12,7 +12,14 @@ and YouTube alike, one at a time.*
 
 ## Add it to OBS
 
-1. Open **http://localhost:8778** and press **Copy** next to the **Alerts overlay** link.
+1. In OBS, click the scene you want it in.
+2. Open **http://localhost:8778** and press **Add to OBS** next to the **Alerts overlay** link.
+3. That's it. It appears in the scene at the right size, on top of everything else.
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](add-to-obs.md)). Or add it by hand:
+
+1. Press **Copy** next to the **Alerts overlay** link.
 2. In OBS, under **Sources**, click **+**, choose **Browser**, name it `Alerts`, click **OK**.
 3. Paste the link into the **URL** box.
 4. Set **Width** to `1920` and **Height** to `1080` — the full screen. The style page decides
@@ -42,7 +49,7 @@ one would travel — it appears in OBS. Use them to check position, size and sou
      `{months}` the resub streak, `{count}` gifted subs, `{viewers}` the raid size.
    - **Sound** — the built-in chime (tips brighter, raids bigger), the volume, or your own
      sound file's web address.
-3. Press **Copy link for OBS**, double-click your `Alerts` source in OBS, paste over the old link.
+3. Press **Add to OBS**. The alerts already in OBS change to the new look.
 
 > **Tip:** switch on **Fire fake alerts in this preview** while styling. Switch it off to see
 > real (or test-button) alerts in the preview instead.

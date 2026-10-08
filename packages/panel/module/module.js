@@ -6,6 +6,7 @@
  * its page with it. Nothing here names a module.
  */
 import { mountNav } from '/nav.js';
+import { addToObsButton } from '/obs-add.js';
 
 const moduleId = new URLSearchParams(location.search).get('id') || '';
 const titleEl = document.getElementById('title');
@@ -79,11 +80,15 @@ function listOverlays() {
     size.textContent = overlay.obsSize ? `${overlay.obsSize.width} × ${overlay.obsSize.height}` : '';
 
     const copy = document.createElement('button');
-    copy.className = 'primary';
     copy.textContent = 'Copy link';
     copy.addEventListener('click', () => copyText(url, `${overlay.label} link copied`));
 
-    row.append(label, input, size, copy);
+    row.append(label, input, size);
+    // A plain link, so an overlay already in OBS keeps the look it was given.
+    if (overlay.obsSize) {
+      row.append(addToObsButton({ name: overlay.label, url, size: overlay.obsSize, keepLook: true, toast }));
+    }
+    row.append(copy);
     if (overlay.settings) {
       const style = document.createElement('a');
       style.className = 'btn';

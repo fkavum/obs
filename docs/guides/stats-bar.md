@@ -12,10 +12,14 @@ long you've been live, and this stream's new followers and subs — with an opti
 
 ## Add it to OBS
 
-1. Open **http://localhost:8778** and press **Copy** next to **Stats bar**.
-2. In OBS: **Sources** → **+** → **Browser** → name it `Stats` → **OK**.
-3. Paste the link into **URL**. Set **Width** `1920`, **Height** `90`. Click **OK**.
-4. Drag it to the top or bottom edge of your scene.
+1. In OBS, click the scene you want it in.
+2. Open **http://localhost:8778** and press **Add to OBS** next to **Stats bar**.
+3. In OBS, drag it to the top or bottom edge of your scene.
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](add-to-obs.md)). Or add it by hand: press **Copy**, then in OBS **Sources** → **+** →
+**Browser** → name it `Stats` → **OK**, paste the link into **URL**, set **Width** `1920`,
+**Height** `90`, and click **OK**.
 
 For a stacked panel in a corner instead, pick the **Panel** quick look on the style page and
 use a source about `360 × 300`.
@@ -46,7 +50,7 @@ pick something else.
 
 **http://localhost:8778/settings/?overlay=stats** — pick what to show, a quick look (*Platform*
 tints each chip by its platform, *Panel* stacks vertically, *Neon* glows), sizes and colours.
-Copy the link, paste over the old one in OBS.
+Press **Add to OBS** and the bar already in OBS changes to the new look.
 
 ## If something goes wrong
 

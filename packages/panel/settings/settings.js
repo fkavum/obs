@@ -8,6 +8,7 @@
  */
 import { OVERLAYS, parseSettings, toQuery, isVisible } from '/core/settings-schema.js';
 import { mountNav, sectionOf } from '/nav.js';
+import { addToObsButton } from '/obs-add.js';
 
 // Which overlay this screen is editing: /settings/?overlay=alerts. Everything
 // below reads from the registry entry, so a new overlay needs no code here.
@@ -88,6 +89,20 @@ document.getElementById('copy').addEventListener('click', () => {
     () => toast('Could not copy; select the link and copy it yourself'),
   );
 });
+
+// A streamer-only overlay belongs in a dock, which OBS gives no way to add
+// from outside - so it keeps just the Copy button.
+if (!overlay.streamerOnly) {
+  document.getElementById('copy').before(addToObsButton({
+    name: overlay.label,
+    url: () => overlayUrl(false),
+    size: suggestedObsSize,
+    toast,
+  }));
+} else {
+  document.getElementById('obsNote').innerHTML = 'This one is for your eyes only. Copy the link and add it in OBS under ' +
+    '<strong>View → Docks → Custom Browser Docks</strong>. It becomes a panel inside OBS instead of going on your stream.';
+}
 
 document.getElementById('reset').addEventListener('click', () => {
   settings = parseSettings('', overlay.schema, overlay.themes);

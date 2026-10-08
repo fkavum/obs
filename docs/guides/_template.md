@@ -17,19 +17,19 @@
 
 ## Add it to OBS
 
-1. In OBS, under **Sources**, click **+**.
-2. Choose **Browser**.
-3. Give it a name and click **OK**.
-4. Paste the URL you copied into the **URL** box.
-5. Set **Width** and **Height** to [values].
-6. Click **OK**.
+1. In OBS, click the scene you want it in.
+2. Open **http://localhost:8778** and press **Add to OBS** next to [the feature's link].
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](add-to-obs.md)). Or add it by hand: press **Copy**, then in OBS
+**Sources** → **+** → **Browser** → name it → **OK**, paste the link, set **Width** and
+**Height** to [values], and click **OK**.
 
 ## Change how it looks
 
 1. Open the settings screen at **http://127.0.0.1:8778/settings**.
 2. [Which controls do what — grouped, with a sentence each.]
-3. Click **Copy URL**.
-4. In OBS, double-click your source and paste the new URL over the old one.
+3. Press **Add to OBS**. The source already in OBS changes to the new look.
 
 > **Tip:** turn on **Preview mode** to see fake messages while you style it, so you don't
 > have to be live.

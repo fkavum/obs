@@ -20,15 +20,16 @@
     <div class="row between">
       <div>
         <h2>Chat overlay</h2>
-        <p class="sub">Copy this link and add it to OBS as a <strong>Browser Source</strong>.</p>
+        <p class="sub">Press <strong>Add to OBS</strong> and it appears in the scene OBS is showing.</p>
       </div>
       <a class="btn" href="/settings/">Change how it looks</a>
     </div>
     <div class="urlbar">
       <input id="overlayUrl" class="grow" type="text" readonly>
-      <button class="primary" id="copyOverlay">Copy</button>
+      <button id="copyOverlay">Copy</button>
     </div>
     <div class="note">
+      <strong>Add to OBS</strong> needs the <strong>OBS connection</strong> further down this page. Adding it by hand instead?
       In OBS: <strong>Sources</strong> → <strong>+</strong> → <strong>Browser</strong> → paste the link →
       set Width <code class="inline">400</code> and Height <code class="inline">1080</code> → OK.
     </div>
@@ -44,10 +45,10 @@
     </div>
     <div class="urlbar">
       <input id="alertsUrl" class="grow" type="text" readonly>
-      <button class="primary" id="copyAlerts">Copy</button>
+      <button id="copyAlerts">Copy</button>
     </div>
     <div class="note">
-      Set Width <code class="inline">1920</code> and Height <code class="inline">1080</code> (full screen) and let the
+      It fills the screen (<code class="inline">1920</code> × <code class="inline">1080</code>). Let the
       style page decide where on the screen alerts appear. Alerts need a channel to be <strong>signed in</strong> — chat works without, alerts don't.
     </div>
   </section>
@@ -62,10 +63,10 @@
     </div>
     <div class="urlbar">
       <input id="statsUrl" class="grow" type="text" readonly>
-      <button class="primary" id="copyStats">Copy</button>
+      <button id="copyStats">Copy</button>
     </div>
     <div class="note">
-      Set Width <code class="inline">1920</code> and Height <code class="inline">90</code>. Viewer counts need a channel to be
+      A strip <code class="inline">1920</code> × <code class="inline">90</code>. Drag it to the top or bottom in OBS. Viewer counts need a channel to be
       <strong>signed in</strong>; follows and subs count from when the overlay opened.
     </div>
   </section>
@@ -117,11 +118,11 @@
 
     <div class="urlbar" style="margin-top:16px">
       <input id="timerUrl" class="grow" type="text" readonly>
-      <button class="primary" id="copyTimer">Copy</button>
+      <button id="copyTimer">Copy</button>
     </div>
     <div class="note">
-      Add as a Browser Source at <code class="inline">1920</code> × <code class="inline">1080</code> on your starting-soon
-      or BRB scene. One source works for all of them — it shows whatever you start here.
+      Switch OBS to your starting-soon or BRB scene, then press <strong>Add to OBS</strong>. Press it again on the next
+      scene: it is the same source in both, and it shows whatever you start here.
     </div>
   </section>
 
@@ -149,9 +150,9 @@
           <span class="pill" id="obsStatus"><span class="dot"></span>off</span>
         </div>
       </div>
-      <label class="switch"><input type="checkbox" id="obsEnabled"><span>Watch OBS</span></label>
+      <label class="switch"><input type="checkbox" id="obsEnabled"><span>Connect to OBS</span></label>
     </div>
-    <p class="sub" style="margin-top:14px">Lets the toolkit see how your stream is doing — dropped frames, encoder lag, bitrate. It only watches; it never changes anything in OBS.</p>
+    <p class="sub" style="margin-top:14px">Lets the toolkit see how your stream is doing — dropped frames, encoder lag, bitrate — and lets the <strong>Add to OBS</strong> buttons put overlays into your scenes. That is the only thing it ever changes in OBS.</p>
     <ol class="steps">
       <li>In OBS: <strong>Tools</strong> → <strong>WebSocket Server Settings</strong>.</li>
       <li>Tick <strong>Enable WebSocket server</strong>.</li>

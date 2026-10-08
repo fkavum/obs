@@ -20,7 +20,7 @@ encoder, a struggling graphics card. It watches OBS; it never changes anything.*
    is off, leave the password box empty.
 4. Click **OK** in OBS, then press **Test the connection** on the setup page. It should say
    *Works — OBS 30.x*.
-5. Switch **Watch OBS** on.
+5. Switch **Connect to OBS** on.
 
 ## Where to put it
 

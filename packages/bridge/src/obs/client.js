@@ -2,8 +2,9 @@
  * obs-websocket v5 client.
  *
  * Talks to OBS itself rather than a streaming platform, so it lives outside the
- * adapter system. Scope is deliberately small: connect, authenticate, poll two
- * requests, reconnect forever. No control of OBS - this feature only watches.
+ * adapter system. Scope is deliberately small: connect, authenticate, send
+ * requests, reconnect forever. The only change ever made to OBS is adding the
+ * toolkit's own overlays when the operator asks (see sources.js).
  *
  * Protocol (opcodes): 0 Hello -> 1 Identify -> 2 Identified, then 6 Request /
  * 7 RequestResponse. Verified against the published spec; the auth steps below

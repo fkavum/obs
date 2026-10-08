@@ -13,9 +13,15 @@ alerts or the chatbot.
 
 ## Add it to OBS
 
-1. Open **http://localhost:8778** and press **Copy** in the **Chat games** section.
-2. In OBS: **Sources** → **+** → **Browser** → name it `Games` → **OK**.
-3. Paste the link. Set **Width** `1920`, **Height** `1080`. Click **OK**.
+1. In OBS, click the scene you want it in.
+2. Open **http://localhost:8778**, go to **Game Center** and press **Add to OBS** in the
+   **Chat games** section. The shop board, pet cards and wandering pets each have their own
+   **Add to OBS** button further down that page.
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](../../docs/guides/add-to-obs.md)). Or add it by hand: press
+**Copy**, then in OBS **Sources** → **+** → **Browser** → name it `Games` → **OK**, paste the
+link, set **Width** `1920`, **Height** `1080`, and click **OK**.
 
 Nothing shows until you start a game, so it never sits on your scene doing nothing.
 

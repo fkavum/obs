@@ -90,6 +90,15 @@ export function createHealthService({ config, emit, log }) {
       };
     },
 
+    /**
+     * The live OBS connection, for the one thing besides watching that the
+     * toolkit does: adding its own overlays as sources (see sources.js).
+     * Null when OBS is switched off here or not reachable right now.
+     */
+    connection() {
+      return client?.identified ? client : null;
+    },
+
     /** Used by the setup screen's Test button. */
     async test() {
       const probe = new ObsClient({

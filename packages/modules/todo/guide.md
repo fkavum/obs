@@ -14,9 +14,13 @@ answer, so nothing depends on it.
 
 ## Add it to OBS
 
-1. Open **http://localhost:8778**, go to **To-do list** and press **Copy** under *Add it to OBS*.
-2. In OBS: **Sources** → **+** → **Browser** → name it `To-do` → **OK**.
-3. Paste the link. Set **Width** `1920`, **Height** `1080`. Click **OK**.
+1. In OBS, click the scene you want it in.
+2. Open **http://localhost:8778**, go to **To-do list** and press **Add to OBS** under *Add it to OBS*.
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](../../docs/guides/add-to-obs.md)). Or add it by hand: press
+**Copy**, then in OBS **Sources** → **+** → **Browser** → name it `To-do` → **OK**, paste the
+link, set **Width** `1920`, **Height** `1080`, and click **OK**.
 
 The panel hides itself while the list is empty, so it never sits on your scene doing nothing.
 
@@ -74,7 +78,7 @@ the list stays until you clear it with **Remove all viewer tasks**.
    readable over video.
 5. **What it shows** is the heading, the numbers, whether ticked tasks stay up, whether they
    get crossed out, and whether viewer names show.
-6. Click **Copy URL**, then in OBS double-click your source and paste the new URL over the old.
+6. Press **Add to OBS**. The list already in OBS changes to the new look.
 
 > **Tip:** turn on **Preview mode** to style it against a pretend list, without being live.
 

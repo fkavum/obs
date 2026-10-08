@@ -11,11 +11,15 @@ That's all — the timer doesn't need any channel connected.
 
 ## Add it to OBS
 
-1. Open **http://localhost:8778** and press **Copy** in the **Timer** section.
-2. In OBS: **Sources** → **+** → **Browser** → name it `Timer` → **OK**.
-3. Paste the link into **URL**. Set **Width** `1920`, **Height** `1080`. Click **OK**.
-4. Add the same source to every scene that needs it — starting soon, BRB, ending. One source,
-   used everywhere; it shows whatever you start from the setup page.
+1. In OBS, click your starting-soon scene.
+2. Open **http://localhost:8778** and press **Add to OBS** in the **Timer** section.
+3. In OBS, click your BRB scene and press **Add to OBS** again. Do the same for any other scene
+   that needs it. It's the same timer everywhere, showing whatever you start from the setup page.
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](add-to-obs.md)). Or add it by hand: press **Copy**, then in OBS **Sources** → **+** →
+**Browser** → name it `Timer` → **OK**, paste the link into **URL**, set **Width** `1920`,
+**Height** `1080`, and click **OK**.
 
 > Until you press **Start**, it shows nothing at all, so it never sits on a scene looking
 > broken. (Turn that off with *Show nothing until the timer is started* if you'd rather.)

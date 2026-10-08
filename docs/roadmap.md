@@ -2,7 +2,13 @@
 
 Status: ⬜ not started · 🟨 in progress · ✅ done
 
-Items 1-5 are built and tested. This file stays the proposal + tracker.
+This file stays the proposal + tracker. Priorities and the reasoning behind them are in
+[`product-review.md`](product-review.md). The check before anything reaches `main` is
+[`live-test-checklist.md`](live-test-checklist.md).
+
+> **Feature freeze since 2026-09-29.** No new features until what's built has passed the live
+> checklist and reached `main`. Existing features, Game Center included, may still be
+> improved. The Tier 3 items still marked ⬜ are not planned for now.
 
 Every item is judged against the two hard constraints in `introduction.md` §3:
 **near-zero maintenance** and **usable with zero technical knowledge**. Items that fail
@@ -49,6 +55,11 @@ multi-streaming.
 Controls for every overlay option, the real overlay live-previewing beside them, one-click
 theme presets, and a **Copy URL** button to paste into OBS.
 *Ships with #4 — the overlay is not "done" until it can be restyled without touching a URL.*
+
+🟨 **Add to OBS** (2026-09-29, not yet run against real OBS): a button beside every Copy link
+puts the overlay into the scene OBS is showing at the right size, or updates the source that
+already shows it. It only ever touches Browser Sources that point at the toolkit. Guide:
+[`guides/add-to-obs.md`](guides/add-to-obs.md).
 
 ### ✅ 6. Unified chat overlay — horizontal
 Same overlay, same settings screen, `layout=horizontal`. Card row along the top or bottom.

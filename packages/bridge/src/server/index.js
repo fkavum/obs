@@ -17,6 +17,7 @@ import { ROOT, saveConfig, setPlatformConfig, resetToSeed } from '../config.js';
 import { loadPresets, listPresets, putPreset, deletePreset } from '../presets.js';
 import { loadData, saveData } from '../store.js';
 import { serveStatic, sendJSON, sendHTML, readBody } from './static.js';
+import { validateSourceRequest, placeBrowserSource, isToolkitUrl } from '../obs/sources.js';
 import {
   beginAuth, completeAuth, callbackPage, redirectUriFor,
   startDeviceLogin, deviceLoginStatus, cancelDeviceLogin,
@@ -415,6 +416,43 @@ async function api(req, res, url, { hub, config, onQuit }) {
   if (path === '/api/obs/test' && req.method === 'POST') {
     if (!hub.health) return sendJSON(res, 200, { ok: false, detail: 'health service not running' });
     return sendJSON(res, 200, await hub.health.test());
+  }
+
+  // "Add to OBS for me": the overlay goes into the current scene as a Browser Source.
+  if (path === '/api/obs/sources' && req.method === 'POST') {
+    // This one changes what is on stream, so a web page open in some other tab
+    // must not be able to call it. Browsers always say where a request came from.
+    const origin = req.headers.origin;
+    if (origin && !isToolkitUrl(origin, config.bridge.httpPort)) {
+      return sendJSON(res, 403, { ok: false, message: 'Only the toolkit’s own pages can add sources to OBS.' });
+    }
+    const wanted = validateSourceRequest(await readBody(req), config.bridge.httpPort);
+    if (!wanted.ok) return sendJSON(res, 400, wanted);
+    if (!config.obs?.enabled) {
+      return sendJSON(res, 200, {
+        ok: false,
+        needsObs: true,
+        message: 'Connect the toolkit to OBS first: on the Setup page, turn on “Connect to OBS” and press Test the connection.',
+      });
+    }
+    const obs = hub.health?.connection();
+    if (!obs) {
+      const why = hub.health?.status()?.detail;
+      return sendJSON(res, 200, {
+        ok: false,
+        needsObs: true,
+        message: `OBS isn’t reachable right now${why ? ` (${why})` : ''}. Is OBS open? Check the OBS connection on the Setup page.`,
+      });
+    }
+    try {
+      const result = await placeBrowserSource((type, data) => obs.request(type, data), {
+        ...wanted, port: config.bridge.httpPort,
+      });
+      return sendJSON(res, 200, result);
+    } catch (err) {
+      log.warn(`adding a source to OBS failed: ${err.message}`);
+      return sendJSON(res, 200, { ok: false, message: `OBS said no: ${err.message}` });
+    }
   }
 
   // Fire one fake alert through the real pipeline so the OBS source shows it.

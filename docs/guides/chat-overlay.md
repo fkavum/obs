@@ -9,7 +9,14 @@
 
 ## Add it to OBS
 
-1. Open **http://localhost:8778** and press **Copy** next to the chat overlay link.
+1. In OBS, click the scene you want it in.
+2. Open **http://localhost:8778** and press **Add to OBS** next to the chat overlay link.
+3. That's it. It appears in the scene at the right size.
+
+**Nothing happened?** *Add to OBS* needs the **OBS connection** on the setup page switched on
+(see [How Add to OBS works](add-to-obs.md)). Or add it by hand:
+
+1. Press **Copy** next to the chat overlay link.
 2. In OBS, under **Sources**, click **+**.
 3. Choose **Browser**.
 4. Type a name like `Chat`, then click **OK**.
@@ -35,8 +42,8 @@ Chat now appears in your scene. Drag it where you want it.
      the easiest way to tell platforms apart at a glance.
    - **Platform display** — turn the little Twitch/Kick/YouTube icons on or off and change their style.
    - **Behaviour** — hide `!commands`, hide bots, or make messages disappear after a while.
-3. Press **Copy link for OBS**.
-4. In OBS, double-click your `Chat` source, delete the old link, paste the new one, click **OK**.
+3. Press **Add to OBS**. The chat already in OBS changes to the new look.
+   (Added it by hand? It's found anyway, whatever you named it.)
 
 > **Tip:** leave **Use fake messages in this preview** switched on while you're styling, so
 > you can see what it looks like without being live.

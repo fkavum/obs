@@ -2,6 +2,8 @@
  * Behaviour for the Game Center setup-page card. Loaded by the panel after the
  * card's markup is inserted; nothing in the shared panel code knows about it.
  */
+import { addToObsButton } from '/obs-add.js';
+
 const API = '/api/m/game-center';
 
 function toast(message) {
@@ -24,6 +26,13 @@ function copy(text, message) {
 }
 
 document.getElementById('gamesUrl').value = `${location.origin}/overlays/game-center/games/`;
+document.getElementById('copyGames').before(addToObsButton({
+  name: 'Chat games',
+  url: () => document.getElementById('gamesUrl').value,
+  size: { width: 1920, height: 1080 },
+  keepLook: true,
+  toast,
+}));
 document.getElementById('copyGames').addEventListener('click', () => {
   copy(document.getElementById('gamesUrl').value, 'Games link copied — add it to OBS as a full-screen Browser Source');
 });

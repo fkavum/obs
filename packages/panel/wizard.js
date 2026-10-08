@@ -7,6 +7,8 @@
  * no edit to this file.
  */
 import { mountNav, STREAM_SECTION } from '/nav.js';
+import { OVERLAYS } from '/core/settings-schema.js';
+import { addToObsButton } from '/obs-add.js';
 
 // Two rows: the sections across the top, this section's pages beneath. Feature
 // modules become sections of their own, so this page never names one.
@@ -20,6 +22,23 @@ document.getElementById('overlayUrl').value = `${location.origin}/overlays/chat/
 document.getElementById('alertsUrl').value = `${location.origin}/overlays/alerts/`;
 document.getElementById('statsUrl').value = `${location.origin}/overlays/stats/`;
 document.getElementById('healthUrl').value = `${location.origin}/overlays/health/`;
+// "Add to OBS" beside each overlay's Copy button. These links carry no look,
+// so an overlay already in OBS keeps the one it was given on its style page.
+for (const [id, inputId, copyId] of [
+  ['chat', 'overlayUrl', 'copyOverlay'],
+  ['alerts', 'alertsUrl', 'copyAlerts'],
+  ['stats', 'statsUrl', 'copyStats'],
+  ['timer', 'timerUrl', 'copyTimer'],
+]) {
+  const overlay = OVERLAYS[id];
+  document.getElementById(copyId).before(addToObsButton({
+    name: overlay.label,
+    url: () => document.getElementById(inputId).value,
+    size: overlay.obsSize,
+    keepLook: true,
+    toast,
+  }));
+}
 document.getElementById('copyHealth').addEventListener('click', () => {
   copy(document.getElementById('healthUrl').value, 'Health link copied — add it as a Custom Browser Dock in OBS');
 });
